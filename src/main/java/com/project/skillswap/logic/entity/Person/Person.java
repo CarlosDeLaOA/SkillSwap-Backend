@@ -8,7 +8,10 @@ import com.project.skillswap.logic.entity.WeeklyReport.WeeklyReport;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -17,9 +20,9 @@ import java.util.List;
         @Index(name = "idx_person_oauth", columnList = "google_oauth_id")
 })
 @Entity
-public class Person {
+public class Person implements UserDetails {
 
-    //<editor-fold desc="Fields">
+    //#region Fields
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -70,13 +73,50 @@ public class Person {
 
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<WeeklyReport> weeklyReports;
-    //</editor-fold>
+    //#endregion
 
-    //<editor-fold desc="Constructors">
+    //#region Constructors
     public Person() {}
-    //</editor-fold>
+    //#endregion
 
-    //<editor-fold desc="Getters and Setters">
+    //#region UserDetails Implementation
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    @Override
+    public String getPassword() {
+        return passwordHash;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return active;
+    }
+    //#endregion
+
+    //#region Getters and Setters
     public Long getId() {
         return id;
     }
@@ -204,5 +244,5 @@ public class Person {
     public void setWeeklyReports(List<WeeklyReport> weeklyReports) {
         this.weeklyReports = weeklyReports;
     }
-    //</editor-fold>
+    //#endregion
 }
