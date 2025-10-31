@@ -6,6 +6,7 @@ import com.project.skillswap.logic.entity.Person.PersonRepository;
 import com.project.skillswap.logic.entity.auth.AuthenticationService;
 import com.project.skillswap.logic.entity.auth.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -67,4 +68,5 @@ public class AuthRestController {
 
         return ResponseEntity.ok(loginResponse);
     }
+
 }

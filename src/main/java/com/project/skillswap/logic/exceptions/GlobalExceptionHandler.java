@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleSecurityException(Exception exception) {
         ProblemDetail errorDetail = null;
@@ -19,10 +20,10 @@ public class GlobalExceptionHandler {
         // TODO send this stack trace to an observability tool
         exception.printStackTrace();
 
+        // Manejo de excepciones comunes
         if (exception instanceof BadCredentialsException) {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), exception.getMessage());
             errorDetail.setProperty("description", "The username or password is incorrect");
-
             return errorDetail;
         }
 
@@ -46,6 +47,14 @@ public class GlobalExceptionHandler {
             errorDetail.setProperty("description", "The JWT token has expired");
         }
 
+        // Manejo de errores de registro de usuario (por ejemplo, email duplicado)
+        if (exception instanceof RuntimeException) {
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), exception.getMessage());
+            errorDetail.setProperty("description", "Registration failed: " + exception.getMessage());
+            return errorDetail;
+        }
+
+        // Si no se ha manejado el error, retornamos un error genérico
         if (errorDetail == null) {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), exception.getMessage());
             errorDetail.setProperty("description", "Unknown internal server error.");

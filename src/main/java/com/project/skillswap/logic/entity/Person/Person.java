@@ -244,5 +244,7 @@ public class Person implements UserDetails {
     public void setWeeklyReports(List<WeeklyReport> weeklyReports) {
         this.weeklyReports = weeklyReports;
     }
+
+
     //#endregion
 }
