@@ -33,7 +33,7 @@ public class Person implements UserDetails {
     @Column(unique = true, length = 255, nullable = false)
     private String email;
 
-    @JsonIgnore // ⚠️ NO enviar el hash de password al frontend
+    @JsonIgnore 
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -71,15 +71,15 @@ public class Person implements UserDetails {
     @JsonIgnoreProperties({"person"}) // ⚠️ Evitar referencia circular
     private Learner learner;
 
-    @JsonIgnore // ⚠️ NO enviar transactions en el login
+    @JsonIgnore
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Transaction> transactions;
 
-    @JsonIgnore // ⚠️ NO enviar notifications en el login
+    @JsonIgnore
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Notification> notifications;
 
-    @JsonIgnore // ⚠️ NO enviar weeklyReports en el login
+    @JsonIgnore
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<WeeklyReport> weeklyReports;
     //#endregion
@@ -90,19 +90,19 @@ public class Person implements UserDetails {
 
     //#region UserDetails Implementation
     @Override
-    @JsonIgnore // ⚠️ NO enviar authorities
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
     }
 
     @Override
-    @JsonIgnore // ⚠️ NO enviar password
+    @JsonIgnore
     public String getPassword() {
         return passwordHash;
     }
 
     @Override
-    @JsonIgnore // ⚠️ NO enviar username (ya está como email)
+    @JsonIgnore
     public String getUsername() {
         return email;
     }
