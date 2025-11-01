@@ -230,6 +230,14 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
+                "carlos.dela@skillswap.com", "Password123!", "carlos delao",
+                "https://i.pravatar.cc/150?img=11", "ko", "google_oauth_carlos506", true, true,
+                true, "carlosd.paypal@example.com", new BigDecimal("350.00"),
+                true, new BigDecimal("4.8"), 40, new BigDecimal("4000.00"),
+                "Software architecture and system design mentor."
+        ));
+
+        users.add(new PersonData(
                 "natalie.blanc@skillswap.com", "password123", "Natalie Blanc",
                 "https://i.pravatar.cc/150?img=12", "fr", null, true, true,
                 false, new BigDecimal("220.00"), 18, 7
