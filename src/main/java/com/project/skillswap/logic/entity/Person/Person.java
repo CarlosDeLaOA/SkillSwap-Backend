@@ -1,5 +1,7 @@
 package com.project.skillswap.logic.entity.Person;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Transaction.Transaction;
@@ -20,6 +22,7 @@ import java.util.List;
         @Index(name = "idx_person_oauth", columnList = "google_oauth_id")
 })
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Person implements UserDetails {
 
     //#region Fields
@@ -30,6 +33,7 @@ public class Person implements UserDetails {
     @Column(unique = true, length = 255, nullable = false)
     private String email;
 
+    @JsonIgnore 
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -60,17 +64,22 @@ public class Person implements UserDetails {
     private Date lastConnection;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"person"}) // ⚠️ Evitar referencia circular
     private Instructor instructor;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"person"}) // ⚠️ Evitar referencia circular
     private Learner learner;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Transaction> transactions;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Notification> notifications;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<WeeklyReport> weeklyReports;
     //#endregion
@@ -81,36 +90,43 @@ public class Person implements UserDetails {
 
     //#region UserDetails Implementation
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
     }
 
     @Override
+    @JsonIgnore
     public String getPassword() {
         return passwordHash;
     }
 
     @Override
+    @JsonIgnore
     public String getUsername() {
         return email;
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonExpired() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonLocked() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isEnabled() {
         return active;
     }
