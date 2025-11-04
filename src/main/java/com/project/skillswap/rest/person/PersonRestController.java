@@ -6,6 +6,8 @@ import com.project.skillswap.logic.entity.Learner.LearnerRepository;
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Instructor.InstructorRepository;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
+import com.project.skillswap.logic.entity.verification.VerificationService;
+import jakarta.mail.MessagingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,26 +18,35 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Controlador REST para gestionar el registro de usuarios.
+ */
 @RestController
 @RequestMapping("/register")
 @CrossOrigin(origins = "*")
 public class PersonRestController {
 
+    //#region Dependencies
     private final PersonRepository personRepository;
     private final LearnerRepository learnerRepository;
     private final InstructorRepository instructorRepository;
     private final PasswordEncoder passwordEncoder;
+    private final VerificationService verificationService;
 
     public PersonRestController(PersonRepository personRepository,
                                 LearnerRepository learnerRepository,
                                 InstructorRepository instructorRepository,
-                                PasswordEncoder passwordEncoder) {
+                                PasswordEncoder passwordEncoder,
+                                VerificationService verificationService) {
         this.personRepository = personRepository;
         this.learnerRepository = learnerRepository;
         this.instructorRepository = instructorRepository;
         this.passwordEncoder = passwordEncoder;
+        this.verificationService = verificationService;
     }
+    //#endregion
 
+    //#region Endpoints
     /**
      * Registra un nuevo usuario como Learner (estudiante).
      *
@@ -64,18 +75,25 @@ public class PersonRestController {
             }
 
             person.setPasswordHash(passwordEncoder.encode(person.getPasswordHash()));
-
+            person.setEmailVerified(false);
             personRepository.save(person);
 
             Learner learner = new Learner();
             learner.setPerson(person);
             learnerRepository.save(learner);
 
+            try {
+                verificationService.createAndSendVerificationToken(person);
+            } catch (MessagingException e) {
+                System.err.println("Error enviando correo de verificación: " + e.getMessage());
+            }
+
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Estudiante registrado exitosamente");
+            response.put("message", "Estudiante registrado exitosamente. Por favor verifica tu correo electrónico");
             response.put("userId", person.getId());
             response.put("email", person.getEmail());
             response.put("userType", "LEARNER");
+            response.put("emailVerified", false);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
@@ -112,19 +130,27 @@ public class PersonRestController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("Debe seleccionar al menos una categoría de habilidad");
             }
-            person.setPasswordHash(passwordEncoder.encode(person.getPasswordHash()));
 
+            person.setPasswordHash(passwordEncoder.encode(person.getPasswordHash()));
+            person.setEmailVerified(false);
             personRepository.save(person);
 
             Instructor instructor = new Instructor();
             instructor.setPerson(person);
             instructorRepository.save(instructor);
 
+            try {
+                verificationService.createAndSendVerificationToken(person);
+            } catch (MessagingException e) {
+                System.err.println("Error enviando correo de verificación: " + e.getMessage());
+            }
+
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Instructor registrado exitosamente");
+            response.put("message", "Instructor registrado exitosamente. Por favor verifica tu correo electrónico");
             response.put("userId", person.getId());
             response.put("email", person.getEmail());
             response.put("userType", "INSTRUCTOR");
+            response.put("emailVerified", false);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
@@ -154,9 +180,14 @@ public class PersonRestController {
 
         return ResponseEntity.ok(response);
     }
+    //#endregion
 
+    //#region Private Methods
     /**
      * Extrae y crea un objeto Person desde el request Map.
+     *
+     * @param request mapa con los datos del request
+     * @return objeto Person creado
      */
     private Person extractPersonFromRequest(Map<String, Object> request) {
         Person person = new Person();
@@ -208,7 +239,7 @@ public class PersonRestController {
                     .body(passwordValidationResult);
         }
 
-        return null; // Todo válido
+        return null;
     }
 
     /**
@@ -238,4 +269,5 @@ public class PersonRestController {
 
         return message.length() == 0 ? "valid" : message.toString().trim();
     }
+    //#endregion
 }
