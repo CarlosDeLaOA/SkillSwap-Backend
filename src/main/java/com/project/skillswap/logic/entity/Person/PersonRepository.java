@@ -21,4 +21,6 @@ public interface PersonRepository extends JpaRepository<Person, Long> {
      * @return an Optional containing the person if found
      */
     Optional<Person> findByGoogleOauthId(String googleOauthId);
+
+    Optional<Person> findByEmailIgnoreCase(String email);
 }

@@ -11,9 +11,9 @@ import java.util.Optional;
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
 
     @Query("""
-     SELECT COUNT(t) FROM PasswordResetToken t
-     WHERE t.person = :person AND t.createdAt >= :since
-  """)
+        SELECT COUNT(t) FROM PasswordResetToken t
+        WHERE t.person = :person AND t.createdAt >= :since
+    """)
     long countRequestsSince(@Param("person") Person person, @Param("since") Instant since);
 
     Optional<PasswordResetToken> findByTokenHash(String tokenHash);

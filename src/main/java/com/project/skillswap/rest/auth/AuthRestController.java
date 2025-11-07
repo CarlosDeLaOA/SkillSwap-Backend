@@ -44,12 +44,56 @@ public class AuthRestController {
 
     //#region Traditional Authentication
     /**
-     * Acepta JSON con:
-     * { "email": "...", "password": "..." }
-     *  o bien
-     * { "email": "...", "passwordHash": "..." }
-     * Internamente lo mapea a Person.passwordHash para que el AuthenticationService compare
-     * contra el hash de la BD usando passwordEncoder.matches(raw, hash).
+     * Registro clásico (sin DTO): espera JSON con
+     * { "name": "...", "lastname": "...", "email": "...", "password": "..." }
+     */
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody Map<String, Object> payload) {
+        String name = payload.get("name") != null ? payload.get("name").toString().trim() : null;
+        String lastname = payload.get("lastname") != null ? payload.get("lastname").toString().trim() : null;
+        String email = payload.get("email") != null ? payload.get("email").toString().trim().toLowerCase() : null;
+        String password = payload.get("password") != null ? payload.get("password").toString() : null;
+
+        // Validaciones básicas
+        if (name == null || name.isBlank() ||
+                lastname == null || lastname.isBlank() ||
+                email == null || email.isBlank() ||
+                password == null || password.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Faltan campos obligatorios: name, lastname, email, password"));
+        }
+
+        // Email duplicado
+        if (personRepository.findByEmail(email).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(createErrorResponse("El email ya está registrado"));
+        }
+
+        // Crear y persistir persona
+        Person p = new Person();
+        p.setFullName(name + " " + lastname);
+        p.setEmail(email);
+        p.setPasswordHash(passwordEncoder.encode(password));
+        // Defaults opcionales:
+        // p.setPreferredLanguage("es");
+
+        Person saved = personRepository.save(p);
+
+        // Responder como en login (token + expiresIn + authPerson)
+        String jwtToken = jwtService.generateToken(saved);
+
+        LoginResponse resp = new LoginResponse();
+        resp.setToken(jwtToken);
+        resp.setExpiresIn(jwtService.getExpirationTime());
+        resp.setAuthPerson(saved);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+    }
+
+    /**
+     * Login clásico (mantengo tu comportamiento actual).
+     * Acepta:
+     * { "email": "...", "password": "..." } o { "email": "...", "passwordHash": "..." }
      */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody Map<String, Object> payload) {
@@ -82,11 +126,6 @@ public class AuthRestController {
     //#endregion
 
     //#region Google OAuth Endpoints
-    /**
-     * Endpoint para autenticación con Google OAuth2.
-     * @param requestBody Mapa con code y redirectUri
-     * @return ResponseEntity con JWT y datos del usuario
-     */
     @PostMapping("/google")
     public ResponseEntity<Map<String, Object>> authenticateWithGoogle(@RequestBody Map<String, String> requestBody) {
         try {
@@ -132,9 +171,6 @@ public class AuthRestController {
         }
     }
 
-    /**
-     * Obtiene la URL de autorización de Google
-     */
     @GetMapping("/google/url")
     public ResponseEntity<Map<String, String>> getGoogleAuthUrl() {
         String authUrl = "https://accounts.google.com/o/oauth2/v2/auth?" +
@@ -150,9 +186,6 @@ public class AuthRestController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Verifica el estado de la sesión de Google
-     */
     @GetMapping("/google/status")
     public ResponseEntity<Map<String, Object>> checkGoogleAuthStatus(@RequestHeader("Authorization") String token) {
         try {
@@ -170,9 +203,6 @@ public class AuthRestController {
         }
     }
 
-    /**
-     * Cierra sesión de Google
-     */
     @PostMapping("/google/logout")
     public ResponseEntity<Map<String, Object>> googleLogout(@RequestHeader("Authorization") String token) {
         try {

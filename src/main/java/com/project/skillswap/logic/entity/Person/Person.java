@@ -34,7 +34,7 @@ public class Person implements UserDetails {
     @Column(unique = true, length = 255, nullable = false)
     private String email;
 
-    @JsonIgnore 
+    @JsonIgnore
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -83,6 +83,10 @@ public class Person implements UserDetails {
     @JsonIgnore
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<WeeklyReport> weeklyReports;
+
+    @Version
+    @Column(name = "token_version", nullable = false)
+    private Integer tokenVersion;
     //#endregion
 
     //#region Constructors
@@ -238,6 +242,15 @@ public class Person implements UserDetails {
         this.learner = learner;
     }
 
+    public Integer getTokenVersion() {
+        return tokenVersion;
+    }
+
+    public void setTokenVersion(Integer tokenVersion) {
+        this.tokenVersion = tokenVersion;
+    }
+
+
     public List<Transaction> getTransactions() {
         return transactions;
     }
@@ -261,6 +274,14 @@ public class Person implements UserDetails {
     public void setWeeklyReports(List<WeeklyReport> weeklyReports) {
         this.weeklyReports = weeklyReports;
     }
+
+    @PrePersist
+    public void prePersist_setDefaultVersion() {
+        if (tokenVersion == null) {
+            tokenVersion = 0;
+        }
+    }
+
 
 
     //#endregion

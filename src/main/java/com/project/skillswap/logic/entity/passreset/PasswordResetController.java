@@ -17,7 +17,7 @@ public class PasswordResetController {
     }
 
     @PostMapping("/request")
-    public ResponseEntity<?> requestReset(
+    public ResponseEntity<String> requestReset(
             @RequestParam("email") String email,
             HttpServletRequest request
     ) {
