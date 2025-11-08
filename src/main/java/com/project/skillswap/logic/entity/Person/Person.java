@@ -34,7 +34,7 @@ public class Person implements UserDetails {
     @Column(unique = true, length = 255, nullable = false)
     private String email;
 
-    @JsonIgnore 
+    @JsonIgnore
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -65,11 +65,11 @@ public class Person implements UserDetails {
     private Date lastConnection;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"}) // ⚠️ Evitar referencia circular
+    @JsonIgnoreProperties({"person"}) // ⚠ Evitar referencia circular
     private Instructor instructor;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"}) // ⚠️ Evitar referencia circular
+    @JsonIgnoreProperties({"person"}) // ⚠ Evitar referencia circular
     private Learner learner;
 
     @JsonIgnore
@@ -261,7 +261,6 @@ public class Person implements UserDetails {
     public void setWeeklyReports(List<WeeklyReport> weeklyReports) {
         this.weeklyReports = weeklyReports;
     }
-
 
     //#endregion
 }

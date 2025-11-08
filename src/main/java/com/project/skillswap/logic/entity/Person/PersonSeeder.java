@@ -148,7 +148,7 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         List<PersonData> users = new ArrayList<>();
 
         users.add(new PersonData(
-                "maria.rodriguez@skillswap.com", "password123", "María Rodríguez",
+                "maria.rodriguez@skillswap.com", "Password123!", "María Rodríguez",
                 "https://i.pravatar.cc/150?img=1", "es", null, true, true,
                 true, "maria.paypal@example.com", new BigDecimal("150.00"),
                 true, new BigDecimal("4.8"), 25, new BigDecimal("2500.00"),
@@ -156,13 +156,13 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "john.smith@skillswap.com", "password123", "John Smith",
+                "john.smith@skillswap.com", "Password123!!", "John Smith",
                 "https://i.pravatar.cc/150?img=2", "en", null, true, true,
                 false, new BigDecimal("200.00"), 10, 3
         ));
 
         users.add(new PersonData(
-                "sophie.chen@skillswap.com", "password123", "Sophie Chen",
+                "sophie.chen@skillswap.com", "Password123!", "Sophie Chen",
                 "https://i.pravatar.cc/150?img=3", "en", null, true, true,
                 true, "sophie.paypal@example.com", new BigDecimal("300.00"),
                 true, new BigDecimal("4.9"), 50, new BigDecimal("5000.00"),
@@ -170,7 +170,7 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "lucas.santos@skillswap.com", "password123", "Lucas Santos",
+                "lucas.santos@skillswap.com", "Password123!", "Lucas Santos",
                 "https://i.pravatar.cc/150?img=4", "pt", null, false, true,
                 true, "lucas.paypal@example.com", new BigDecimal("50.00"),
                 false, new BigDecimal("4.5"), 10, new BigDecimal("800.00"),
@@ -178,13 +178,13 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "emma.wilson@skillswap.com", "password123", "Emma Wilson",
+                "emma.wilson@skillswap.com", "Password123!", "Emma Wilson",
                 "https://i.pravatar.cc/150?img=5", "en", null, false, true,
                 false, new BigDecimal("150.00"), 8, 2
         ));
 
         users.add(new PersonData(
-                "ahmed.hassan@skillswap.com", "password123", "Ahmed Hassan",
+                "ahmed.hassan@skillswap.com", "Password123!", "Ahmed Hassan",
                 "https://i.pravatar.cc/150?img=6", "ar", null, true, true,
                 true, "ahmed.paypal@example.com", new BigDecimal("400.00"),
                 true, new BigDecimal("4.7"), 35, new BigDecimal("3500.00"),
@@ -192,7 +192,7 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "ana.garcia@skillswap.com", "password123", "Ana García",
+                "ana.garcia@skillswap.com", "Password123!", "Ana García",
                 "https://i.pravatar.cc/150?img=7", "es", null, true, false,
                 true, "ana.paypal@example.com", new BigDecimal("100.00"),
                 false, new BigDecimal("4.6"), 15, new BigDecimal("1200.00"),
@@ -200,13 +200,13 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "oliver.brown@skillswap.com", "password123", "Oliver Brown",
+                "oliver.brown@skillswap.com", "Password123!", "Oliver Brown",
                 "https://i.pravatar.cc/150?img=8", "en", "google_oauth_oliver123", true, true,
                 false, new BigDecimal("300.00"), 25, 10
         ));
 
         users.add(new PersonData(
-                "yuki.tanaka@skillswap.com", "password123", "Yuki Tanaka",
+                "yuki.tanaka@skillswap.com", "Password123!", "Yuki Tanaka",
                 "https://i.pravatar.cc/150?img=9", "ja", null, true, true,
                 true, "yuki.paypal@example.com", new BigDecimal("500.00"),
                 true, new BigDecimal("5.0"), 60, new BigDecimal("6000.00"),
@@ -214,7 +214,7 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "isabella.rossi@skillswap.com", "password123", "Isabella Rossi",
+                "isabella.rossi@skillswap.com", "Password123!", "Isabella Rossi",
                 "https://i.pravatar.cc/150?img=10", "it", null, false, true,
                 true, "isabella.paypal@example.com", new BigDecimal("75.00"),
                 false, new BigDecimal("4.4"), 8, new BigDecimal("600.00"),
@@ -222,7 +222,7 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "david.kim@skillswap.com", "password123", "David Kim",
+                "david.kim@skillswap.com", "Password123!", "David Kim",
                 "https://i.pravatar.cc/150?img=11", "ko", "google_oauth_david456", true, true,
                 true, "david.paypal@example.com", new BigDecimal("350.00"),
                 true, new BigDecimal("4.8"), 40, new BigDecimal("4000.00"),
@@ -238,13 +238,13 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "natalie.blanc@skillswap.com", "password123", "Natalie Blanc",
+                "natalie.blanc@skillswap.com", "Password123!", "Natalie Blanc",
                 "https://i.pravatar.cc/150?img=12", "fr", null, true, true,
                 false, new BigDecimal("220.00"), 18, 7
         ));
 
         users.add(new PersonData(
-                "marco.silva@skillswap.com", "password123", "Marco Silva",
+                "marco.silva@skillswap.com", "Password123!", "Marco Silva",
                 "https://i.pravatar.cc/150?img=13", "pt", null, false, true,
                 true, "marco.paypal@example.com", new BigDecimal("125.00"),
                 false, new BigDecimal("4.3"), 12, new BigDecimal("1000.00"),
@@ -252,13 +252,13 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "sara.anderson@skillswap.com", "password123", "Sara Anderson",
+                "sara.anderson@skillswap.com", "Password123!", "Sara Anderson",
                 "https://i.pravatar.cc/150?img=14", "en", null, false, false,
                 false, new BigDecimal("100.00"), 5, 1
         ));
 
         users.add(new PersonData(
-                "miguel.lopez@skillswap.com", "password123", "Miguel López",
+                "miguel.lopez@skillswap.com", "Password123!", "Miguel López",
                 "https://i.pravatar.cc/150?img=15", "es", "google_oauth_miguel789", true, true,
                 true, "miguel.paypal@example.com", new BigDecimal("275.00"),
                 true, new BigDecimal("4.7"), 30, new BigDecimal("3000.00"),
@@ -266,7 +266,7 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "elena.popov@skillswap.com", "password123", "Elena Popov",
+                "elena.popov@skillswap.com", "Password123!", "Elena Popov",
                 "https://i.pravatar.cc/150?img=16", "ru", null, true, true,
                 true, "elena.paypal@example.com", new BigDecimal("200.00"),
                 true, new BigDecimal("4.9"), 45, new BigDecimal("4500.00"),
@@ -274,13 +274,13 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "james.taylor@skillswap.com", "password123", "James Taylor",
+                "james.taylor@skillswap.com", "Password123!", "James Taylor",
                 "https://i.pravatar.cc/150?img=17", "en", null, false, true,
                 false, new BigDecimal("180.00"), 14, 6
         ));
 
         users.add(new PersonData(
-                "li.wei@skillswap.com", "password123", "Li Wei",
+                "li.wei@skillswap.com", "Password123!", "Li Wei",
                 "https://i.pravatar.cc/150?img=18", "zh", null, true, true,
                 true, "li.paypal@example.com", new BigDecimal("450.00"),
                 true, new BigDecimal("4.8"), 55, new BigDecimal("5500.00"),
@@ -288,7 +288,7 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "clara.mueller@skillswap.com", "password123", "Clara Müller",
+                "clara.mueller@skillswap.com", "Password123!", "Clara Müller",
                 "https://i.pravatar.cc/150?img=19", "de", null, true, true,
                 true, "clara.paypal@example.com", new BigDecimal("180.00"),
                 false, new BigDecimal("4.5"), 18, new BigDecimal("1800.00"),
@@ -296,7 +296,7 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "thomas.martin@skillswap.com", "password123", "Thomas Martin",
+                "thomas.martin@skillswap.com", "Password123!", "Thomas Martin",
                 "https://i.pravatar.cc/150?img=20", "en", "google_oauth_thomas321", false, true,
                 false, new BigDecimal("90.00"), 3, 0
         ));

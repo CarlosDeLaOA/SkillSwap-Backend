@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Instructor;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import jakarta.persistence.*;
@@ -20,6 +21,7 @@ public class Instructor {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false, unique = true)
+    @JsonIgnore   // 👈 evita Person -> Instructor -> Person -> ...
     private Person person;
 
     @Column(name = "paypal_account", length = 255)
@@ -44,7 +46,9 @@ public class Instructor {
     private String biography;
 
     @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore   // 👈 evita Instructor -> Sessions -> Instructor -> ...
     private List<LearningSession> learningSessions;
+
     //</editor-fold>
 
     //<editor-fold desc="Constructors">

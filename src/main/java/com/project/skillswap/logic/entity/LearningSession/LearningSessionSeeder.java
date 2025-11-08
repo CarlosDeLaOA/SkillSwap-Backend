@@ -89,9 +89,6 @@ public class LearningSessionSeeder implements ApplicationListener<ContextRefresh
         List<LearningSessionData> sessions = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
 
-        // ========== SESIONES DE CARLOS DELAO (Instructor ID = 6) ==========
-
-        // 🔹 Sesiones COMPLETADAS (pasadas) para generar feedbacks
         sessions.add(new LearningSessionData(
                 6L, 21L, "Introduction to Data Science",
                 "Learn the fundamentals of data science and analytics",
@@ -119,12 +116,11 @@ public class LearningSessionSeeder implements ApplicationListener<ContextRefresh
         sessions.add(new LearningSessionData(
                 6L, 21L, "Advanced Machine Learning Techniques",
                 "Explore advanced ML concepts and neural networks",
-                toDate(now.minusDays(15)), 180, SessionType.SCHEDULED,
+                toDate(now.minusDays(15)), 180, SessionType.IMMEDIATE,
                 8, true, new BigDecimal("25.00"), "en", SessionStatus.FINISHED,
                 "https://meet.google.com/carlos-aml-004"
         ));
 
-        // 🔹 Sesiones PRÓXIMAS (futuras) para el dashboard
         sessions.add(new LearningSessionData(
                 6L, 21L, "Deep Learning Workshop",
                 "Hands-on workshop on deep learning architectures",
@@ -165,9 +161,6 @@ public class LearningSessionSeeder implements ApplicationListener<ContextRefresh
                 "https://meet.google.com/carlos-ethics-009"
         ));
 
-        // ========== SESIONES PARA JOHN SMITH (Learner ID = 2) ==========
-
-        // 🔹 Sesiones COMPLETADAS donde John participó
         sessions.add(new LearningSessionData(
                 1L, 1L, "Java Basics Workshop",
                 "Introduction to Java programming",
@@ -233,7 +226,6 @@ public class LearningSessionSeeder implements ApplicationListener<ContextRefresh
                 "https://meet.google.com/spring-boot-008"
         ));
 
-        // Otras sesiones existentes...
         sessions.add(new LearningSessionData(
                 9L, 16L, "Guitar for Beginners",
                 "Learn to play guitar from scratch",
