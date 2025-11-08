@@ -148,7 +148,7 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         List<PersonData> users = new ArrayList<>();
 
         users.add(new PersonData(
-                "maria.rodriguez@skillswap.com", "password123", "María Rodríguez",
+                "maria.rodriguez@skillswap.com", "Password123!", "María Rodríguez",
                 "https://i.pravatar.cc/150?img=1", "es", null, true, true,
                 true, "maria.paypal@example.com", new BigDecimal("150.00"),
                 true, new BigDecimal("4.8"), 25, new BigDecimal("2500.00"),

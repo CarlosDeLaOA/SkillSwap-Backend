@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -11,26 +12,21 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
-    //#region Dependencies
+    //#region Deps
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    //#endregion
 
-    //#region Constructor
-    /**
-     * Creates a new SecurityConfiguration instance.
-     *
-     * @param jwtAuthenticationFilter the JWT authentication filter
-     * @param authenticationProvider the authentication provider
-     */
     public SecurityConfiguration(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             AuthenticationProvider authenticationProvider
@@ -40,34 +36,65 @@ public class SecurityConfiguration {
     }
     //#endregion
 
-    //#region Security Configuration
-    /**
-     * Configures the security filter chain.
-     *
-     * @param http the HttpSecurity object to configure
-     * @return the configured SecurityFilterChain
-     * @throws Exception if configuration fails
-     */
+    //#region Security
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> {}) // usa tu CorsFilter/CorsConfig existente
+                .cors(Customizer.withDefaults())
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers("/register/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/auth/status").permitAll()  // <--- clave
+                        // Preflight
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Docs / error
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/error").permitAll()
+
+                        // Auxiliares públicos
+                        .requestMatchers("/auth/password/reset/**", "/dev/mail/**").permitAll()
+
+                        // Auth públicas
+                        .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/auth/status", "/auth/register/check-email").permitAll()
+
+                        // Google OAuth (si aplican)
+                        .requestMatchers(HttpMethod.GET,  "/auth/google/url").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/google").permitAll()
+
+                        //#region Onboarding
+                        // Permitir lectura pública
+                        .requestMatchers(HttpMethod.GET, "/onboarding/ping").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/onboarding/categories").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/onboarding/skills").permitAll()
+                        //#endregion
+
+                        // Rutas que requieren token
+                        .requestMatchers("/onboarding/selection").authenticated()
+                        .requestMatchers("/onboarding/person-skills").authenticated()
+                        //#endregion
+
+                        // El resto requiere JWT
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+    //#endregion
 
+    //#region CORS
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration cfg = new CorsConfiguration();
+        cfg.setAllowedOrigins(List.of("http://localhost:4200"));
+        cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
+        cfg.setAllowedHeaders(List.of("*"));
+        cfg.setAllowCredentials(true);
 
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", cfg);
+        return source;
+    }
     //#endregion
 }

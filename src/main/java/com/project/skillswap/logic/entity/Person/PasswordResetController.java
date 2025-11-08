@@ -1,10 +1,13 @@
-package com.project.skillswap.logic.entity.passreset;
+package com.project.skillswap.logic.entity.Person;
 
-import com.project.skillswap.logic.entity.passreset.PasswordResetService.TooManyResetRequestsException;
+import com.project.skillswap.logic.entity.Person.PasswordResetService.TooManyResetRequestsException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.project.skillswap.logic.entity.Person.PasswordResetToken;
+import com.project.skillswap.logic.entity.Person.PasswordResetTokenRepository;
+import com.project.skillswap.logic.entity.Person.Person;
 
 @RestController
 @RequestMapping("/auth/password-reset")
