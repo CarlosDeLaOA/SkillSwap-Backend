@@ -53,6 +53,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/register/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
+                        .requestMatchers("/dashboard/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
