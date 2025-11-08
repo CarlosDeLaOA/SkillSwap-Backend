@@ -1,5 +1,7 @@
 package com.project.skillswap.logic.entity.Learner;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Booking.Booking;
 import com.project.skillswap.logic.entity.Credential.Credential;
@@ -17,15 +19,16 @@ import java.util.List;
         @Index(name = "idx_learner_person", columnList = "person_id", unique = true)
 })
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Learner {
 
-    //<editor-fold desc="Fields">
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false, unique = true)
+    @JsonIgnore // 👈 evita Person -> Learner -> Person -> ...
     private Person person;
 
     @Column(name = "skillcoins_balance", precision = 10, scale = 2)
@@ -38,32 +41,35 @@ public class Learner {
     private Integer credentialsObtained = 0;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore // 👈 evita Learner -> bookings -> learner -> ...
     private List<Booking> bookings;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Credential> credentials;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Certification> certifications;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Feedback> feedbacks;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Quiz> quizzes;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<CommunityMember> communityMemberships;
 
     @OneToMany(mappedBy = "uploadedBy", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<CommunityDocument> uploadedDocuments;
-    //</editor-fold>
 
-    //<editor-fold desc="Constructors">
     public Learner() {}
-    //</editor-fold>
 
-    //<editor-fold desc="Getters and Setters">
     public Long getId() {
         return id;
     }
@@ -159,5 +165,4 @@ public class Learner {
     public void setUploadedDocuments(List<CommunityDocument> uploadedDocuments) {
         this.uploadedDocuments = uploadedDocuments;
     }
-    //</editor-fold>
 }
