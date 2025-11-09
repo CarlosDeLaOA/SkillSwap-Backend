@@ -41,6 +41,9 @@ public class DatabaseInitializer implements CommandLineRunner {
             createLearningHoursProcedure();
             createUpcomingSessionsProcedure();
             createRecentAchievementsProcedure();
+            createAccountBalanceProcedure();
+            createMonthlyAchievementsProcedure();
+            createSkillSessionStatsProcedure();
             System.out.println("All stored procedures created successfully");
         } catch (Exception e) {
             System.err.println("Error creating stored procedures: " + e.getMessage());
@@ -55,7 +58,10 @@ public class DatabaseInitializer implements CommandLineRunner {
         String[] dropStatements = {
                 "DROP PROCEDURE IF EXISTS sp_get_learning_hours",
                 "DROP PROCEDURE IF EXISTS sp_get_upcoming_sessions",
-                "DROP PROCEDURE IF EXISTS sp_get_recent_achievements"
+                "DROP PROCEDURE IF EXISTS sp_get_recent_achievements",
+                "DROP PROCEDURE IF EXISTS sp_get_account_balance",
+                "DROP PROCEDURE IF EXISTS sp_get_monthly_achievements",
+                "DROP PROCEDURE IF EXISTS sp_get_skill_session_stats"
         };
 
         for (String sql : dropStatements) {
@@ -193,4 +199,63 @@ public class DatabaseInitializer implements CommandLineRunner {
         System.out.println(" Stored procedure 'sp_get_recent_achievements' created");
     }
     //#endregion
+
+    private void createAccountBalanceProcedure() {
+        String sql =
+                "CREATE PROCEDURE sp_get_account_balance(IN p_person_id BIGINT) " +
+                        "BEGIN " +
+                        "    SELECT COALESCE(l.skill_coins, 0) AS skill_coins " +
+                        "    FROM learner l " +
+                        "    WHERE l.person_id = p_person_id; " +
+                        "END";
+
+        jdbcTemplate.execute(sql);
+        System.out.println("✓ Stored procedure 'sp_get_account_balance' created");
+    }
+
+    /**
+     * Creates stored procedure to get monthly achievements for last 4 months
+     */
+    private void createMonthlyAchievementsProcedure() {
+        String sql =
+                "CREATE PROCEDURE sp_get_monthly_achievements(IN p_person_id BIGINT) " +
+                        "BEGIN " +
+                        "    SELECT " +
+                        "        DATE_FORMAT(c.obtained_date, '%b') AS month, " +
+                        "        COUNT(CASE WHEN c.percentage_achieved >= 100 THEN 1 END) AS certificates, " +
+                        "        COUNT(CASE WHEN c.percentage_achieved < 100 THEN 1 END) AS credentials " +
+                        "    FROM credential c " +
+                        "    INNER JOIN learner l ON c.learner_id = l.id " +
+                        "    WHERE l.person_id = p_person_id " +
+                        "    AND c.obtained_date >= DATE_SUB(CURDATE(), INTERVAL 4 MONTH) " +
+                        "    GROUP BY YEAR(c.obtained_date), MONTH(c.obtained_date) " +
+                        "    ORDER BY YEAR(c.obtained_date) DESC, MONTH(c.obtained_date) DESC " +
+                        "    LIMIT 4; " +
+                        "END";
+
+        jdbcTemplate.execute(sql);
+        System.out.println("✓ Stored procedure 'sp_get_monthly_achievements' created");
+    }
+
+    private void createSkillSessionStatsProcedure() {
+        String sql =
+                "CREATE PROCEDURE sp_get_skill_session_stats(IN p_person_id BIGINT) " +
+                        "BEGIN " +
+                        "    SELECT " +
+                        "        s.name AS skill_name, " +
+                        "        COUNT(CASE WHEN ls.status = 'COMPLETED' THEN 1 END) AS completed, " +
+                        "        COUNT(CASE WHEN ls.status IN ('SCHEDULED', 'CONFIRMED') THEN 1 END) AS pending " +
+                        "    FROM learning_session ls " +
+                        "    INNER JOIN booking b ON b.learning_session_id = ls.id " +
+                        "    INNER JOIN learner l ON b.learner_id = l.id " +
+                        "    INNER JOIN skill s ON ls.skill_id = s.id " +
+                        "    WHERE l.person_id = p_person_id " +
+                        "    GROUP BY s.id, s.name " +
+                        "    HAVING (completed + pending) > 0 " +
+                        "    ORDER BY (completed + pending) DESC; " +
+                        "END";
+
+        jdbcTemplate.execute(sql);
+        System.out.println("✓ Stored procedure 'sp_get_skill_session_stats' created");
+    }
 }

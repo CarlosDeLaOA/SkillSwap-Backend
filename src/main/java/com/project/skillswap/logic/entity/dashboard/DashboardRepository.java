@@ -66,7 +66,40 @@ public class DashboardRepository {
         String sql = "CALL sp_get_recent_achievements(?, ?)";
         return jdbcTemplate.query(sql, this::mapFeedback, personId, "INSTRUCTOR");
     }
-    //#endregion
+
+    /**
+     * Gets account balance for a learner
+     *
+     * @param personId Person ID
+     * @return Account balance in SkillCoins
+     */
+    public Integer getAccountBalance(Long personId) {
+        String sql = "CALL sp_get_account_balance(?)";
+        return jdbcTemplate.queryForObject(sql, Integer.class, personId);
+    }
+
+    /**
+     * Gets monthly achievements for last 4 months
+     *
+     * @param personId Person ID
+     * @return List of monthly achievements
+     */
+    public List<MonthlyAchievementsResponse> getMonthlyAchievements(Long personId) {
+        String sql = "CALL sp_get_monthly_achievements(?)";
+        return jdbcTemplate.query(sql, this::mapMonthlyAchievement, personId);
+    }
+
+    /**
+     * Gets session statistics grouped by skill
+     *
+     * @param personId Person ID
+     * @return List of skill session statistics
+     */
+    public List<SkillSessionStatsResponse> getSkillSessionStats(Long personId) {
+        String sql = "CALL sp_get_skill_session_stats(?)";
+        return jdbcTemplate.query(sql, this::mapSkillSessionStats, personId);
+    }
+//#endregion
 
     //#region Private Mappers
     /**
@@ -125,6 +158,38 @@ public class DashboardRepository {
         feedback.setLearnerName(rs.getString("learner_name"));
         feedback.setSessionTitle(rs.getString("session_title"));
         return feedback;
+    }
+
+    /**
+     * Maps ResultSet to MonthlyAchievementsResponse
+     *
+     * @param rs ResultSet
+     * @param rowNum Row number
+     * @return MonthlyAchievementsResponse object
+     * @throws SQLException If mapping fails
+     */
+    private MonthlyAchievementsResponse mapMonthlyAchievement(ResultSet rs, int rowNum) throws SQLException {
+        MonthlyAchievementsResponse achievement = new MonthlyAchievementsResponse();
+        achievement.setMonth(rs.getString("month"));
+        achievement.setCertificates(rs.getInt("certificates"));
+        achievement.setCredentials(rs.getInt("credentials"));
+        return achievement;
+    }
+
+    /**
+     * Maps ResultSet to SkillSessionStatsResponse
+     *
+     * @param rs ResultSet
+     * @param rowNum Row number
+     * @return SkillSessionStatsResponse object
+     * @throws SQLException If mapping fails
+     */
+    private SkillSessionStatsResponse mapSkillSessionStats(ResultSet rs, int rowNum) throws SQLException {
+        SkillSessionStatsResponse stats = new SkillSessionStatsResponse();
+        stats.setSkillName(rs.getString("skill_name"));
+        stats.setCompleted(rs.getInt("completed"));
+        stats.setPending(rs.getInt("pending"));
+        return stats;
     }
     //#endregion
 }

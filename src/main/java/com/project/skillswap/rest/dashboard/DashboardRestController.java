@@ -223,5 +223,125 @@ public class DashboardRestController {
         errorResponse.put("message", message);
         return errorResponse;
     }
+
+    /**
+     * Gets account balance for authenticated learner
+     *
+     * Endpoint: GET /dashboard/account-balance
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with account balance data
+     */
+    @GetMapping("/account-balance")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getAccountBalance(HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            AccountBalanceResponse response = dashboardService.getAccountBalance(
+                    authenticatedPerson.getId()
+            );
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Account balance retrieved successfully",
+                    response,
+                    HttpStatus.OK,
+                    request
+            );
+        } catch (ClassCastException e) {
+            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (Exception e) {
+            System.err.println("Error getting account balance: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving account balance",
+                            "Error retrieving account balance: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Gets monthly achievements for last 4 months for authenticated learner
+     *
+     * Endpoint: GET /dashboard/monthly-achievements
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with monthly achievements data
+     */
+    @GetMapping("/monthly-achievements")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getMonthlyAchievements(HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            List<MonthlyAchievementsResponse> achievements = dashboardService.getMonthlyAchievements(
+                    authenticatedPerson.getId()
+            );
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Monthly achievements retrieved successfully",
+                    achievements,
+                    HttpStatus.OK,
+                    request
+            );
+        } catch (ClassCastException e) {
+            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (Exception e) {
+            System.err.println("Error getting monthly achievements: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving monthly achievements",
+                            "Error retrieving monthly achievements: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Gets session statistics by skill for authenticated learner
+     *
+     * Endpoint: GET /dashboard/skill-session-stats
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with skill session statistics
+     */
+    @GetMapping("/skill-session-stats")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getSkillSessionStats(HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            List<SkillSessionStatsResponse> stats = dashboardService.getSkillSessionStats(
+                    authenticatedPerson.getId()
+            );
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Skill session stats retrieved successfully",
+                    stats,
+                    HttpStatus.OK,
+                    request
+            );
+        } catch (ClassCastException e) {
+            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (Exception e) {
+            System.err.println("Error getting skill session stats: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving skill session stats",
+                            "Error retrieving skill session stats: " + e.getMessage()));
+        }
+    }
     //#endregion
 }

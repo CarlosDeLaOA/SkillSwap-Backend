@@ -65,5 +65,39 @@ public class DashboardService {
     public List<FeedbackResponse> getRecentFeedbacks(Long personId) {
         return dashboardRepository.getRecentFeedbacks(personId);
     }
+
+    /**
+     * Gets account balance for a learner
+     *
+     * @param personId Person ID
+     * @return Account balance response
+     */
+    @Transactional(readOnly = true)
+    public AccountBalanceResponse getAccountBalance(Long personId) {
+        Integer skillCoins = dashboardRepository.getAccountBalance(personId);
+        return new AccountBalanceResponse(skillCoins != null ? skillCoins : 0);
+    }
+
+    /**
+     * Gets monthly achievements for last 4 months
+     *
+     * @param personId Person ID
+     * @return List of monthly achievements
+     */
+    @Transactional(readOnly = true)
+    public List<MonthlyAchievementsResponse> getMonthlyAchievements(Long personId) {
+        return dashboardRepository.getMonthlyAchievements(personId);
+    }
+
+    /**
+     * Gets session statistics grouped by skill
+     *
+     * @param personId Person ID
+     * @return List of skill session statistics
+     */
+    @Transactional(readOnly = true)
+    public List<SkillSessionStatsResponse> getSkillSessionStats(Long personId) {
+        return dashboardRepository.getSkillSessionStats(personId);
+    }
     //#endregion
 }
