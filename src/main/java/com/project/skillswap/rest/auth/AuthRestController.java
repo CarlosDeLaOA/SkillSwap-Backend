@@ -4,114 +4,155 @@ import com.project.skillswap.logic.entity.Person.LoginResponse;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
 import com.project.skillswap.logic.entity.auth.AuthenticationService;
-import com.project.skillswap.logic.entity.auth.JwtService;
 import com.project.skillswap.logic.entity.auth.GoogleOAuthService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.project.skillswap.logic.entity.auth.JwtService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@RequestMapping("/auth")
 @RestController
+@RequestMapping("/auth") // con context-path /api -> /api/auth/**
+@CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
 public class AuthRestController {
-    //#region Dependencies
-    @Autowired
-    private PersonRepository personRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
+    private final PersonRepository personRepository;
+    private final PasswordEncoder passwordEncoder;
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
     private final GoogleOAuthService googleOAuthService;
-    //#endregion
 
-    //#region Constructor
     public AuthRestController(
-            JwtService jwtService,
+            PersonRepository personRepository,
+            PasswordEncoder passwordEncoder,
             AuthenticationService authenticationService,
-            GoogleOAuthService googleOAuthService) {
-        this.jwtService = jwtService;
+            JwtService jwtService,
+            GoogleOAuthService googleOAuthService
+    ) {
+        this.personRepository = personRepository;
+        this.passwordEncoder = passwordEncoder;
         this.authenticationService = authenticationService;
+        this.jwtService = jwtService;
         this.googleOAuthService = googleOAuthService;
     }
-    //#endregion
 
-    //#region Traditional Authentication
-    /**
-     * Acepta JSON con:
-     * { "email": "...", "password": "..." }
-     *  o bien
-     * { "email": "...", "passwordHash": "..." }
-     * Internamente lo mapea a Person.passwordHash para que el AuthenticationService compare
-     * contra el hash de la BD usando passwordEncoder.matches(raw, hash).
-     */
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> authenticate(@RequestBody Map<String, Object> payload) {
-        String email = payload.get("email") != null ? payload.get("email").toString() : null;
+    // =========================
+    // Registro tradicional
+    // =========================
+    @PostMapping(path = "/register", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<?> register(@RequestBody Map<String, Object> payload) {
+        final String name      = str(payload.get("name"));
+        final String lastname  = str(payload.get("lastname"));
+        final String email     = str(payload.get("email")).toLowerCase();
+        final String password  = str(payload.get("password"));
 
-        String rawPassword = null;
-        if (payload.get("password") != null) {
-            rawPassword = payload.get("password").toString();
-        } else if (payload.get("passwordHash") != null) {
-            rawPassword = payload.get("passwordHash").toString();
+        // Validaciones básicas
+        if (isBlank(name) || isBlank(lastname) || isBlank(email) || isBlank(password)) {
+            return badRequest("Faltan campos obligatorios: name, lastname, email, password");
         }
+
+        // Duplicado
+        if (personRepository.findByEmail(email).isPresent()) {
+            return conflict("El email ya está registrado");
+        }
+
+        // Persistencia
+        Person p = new Person();
+        p.setFullName(name + " " + lastname);
+        p.setEmail(email);
+        p.setPasswordHash(passwordEncoder.encode(password));
+
+        Person saved = personRepository.save(p);
+
+        // Respuesta: token + usuario (estilo login)
+        String jwtToken = jwtService.generateToken(saved);
+
+        LoginResponse resp = new LoginResponse();
+        resp.setToken(jwtToken);
+        resp.setExpiresIn(jwtService.getExpirationTime());
+        resp.setAuthPerson(saved);
+
+        // 201 Created + Location
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create("/api/auth/status"));
+        return new ResponseEntity<>(resp, headers, HttpStatus.CREATED);
+    }
+    @GetMapping(path = "/register/check-email", produces = "application/json")
+    public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestParam("email") String email) {
+        boolean exists =
+                personRepository.findByEmailIgnoreCase(email).isPresent(); // o existsByEmailIgnoreCase si lo tienes
+        Map<String, Boolean> body = new HashMap<>();
+        body.put("exists", exists);
+        return ResponseEntity.ok(body);
+    }
+
+    // =========================
+    // Login tradicional
+    // =========================
+    @PostMapping(path = "/login", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<LoginResponse> authenticate(@RequestBody Map<String, Object> payload) {
+        final String email = str(payload.get("email"));
+        final String rawPassword =
+                payload.get("password") != null ? str(payload.get("password"))
+                        : payload.get("passwordHash") != null ? str(payload.get("passwordHash"))
+                        : null;
 
         Person loginPerson = new Person();
         loginPerson.setEmail(email);
         loginPerson.setPasswordHash(rawPassword);
 
         Person authenticatedUser = authenticationService.authenticate(loginPerson);
-
         String jwtToken = jwtService.generateToken(authenticatedUser);
 
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setToken(jwtToken);
         loginResponse.setExpiresIn(jwtService.getExpirationTime());
 
-        Optional<Person> foundedUser = personRepository.findByEmail(email);
-        foundedUser.ifPresent(loginResponse::setAuthPerson);
+        Optional<Person> found = personRepository.findByEmail(email);
+        found.ifPresent(loginResponse::setAuthPerson);
 
         return ResponseEntity.ok(loginResponse);
     }
-    //#endregion
 
-    //#region Google OAuth Endpoints
-    /**
-     * Endpoint para autenticación con Google OAuth2.
-     * @param requestBody Mapa con code y redirectUri
-     * @return ResponseEntity con JWT y datos del usuario
-     */
-    @PostMapping("/google")
+    // =========================
+    // Estado rápido
+    // =========================
+    @GetMapping(path = "/status", produces = "application/json")
+    public ResponseEntity<Map<String, Object>> status() {
+        Map<String, Object> ok = new HashMap<>();
+        ok.put("status", "OK");
+        return ResponseEntity.ok(ok);
+    }
+
+    // =========================
+    // Google OAuth
+    // =========================
+    @PostMapping(path = "/google", consumes = "application/json", produces = "application/json")
     public ResponseEntity<Map<String, Object>> authenticateWithGoogle(@RequestBody Map<String, String> requestBody) {
         try {
-            String code = requestBody.get("code");
-            String redirectUri = requestBody.get("redirectUri");
+            String code = str(requestBody.get("code"));
+            String redirectUri = str(requestBody.get("redirectUri"));
 
-            if (code == null || code.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(createErrorResponse("Código de autorización requerido"));
+            if (isBlank(code)) {
+                return badRequest("Código de autorización requerido");
             }
-
-            if (redirectUri == null || redirectUri.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(createErrorResponse("URI de redirección requerida"));
+            if (isBlank(redirectUri)) {
+                return badRequest("URI de redirección requerida");
             }
 
             Map<String, Object> tokenResponse = googleOAuthService.exchangeCodeForToken(code, redirectUri);
             String accessToken = (String) tokenResponse.get("accessToken");
 
             Map<String, Object> userInfo = googleOAuthService.getUserInfo(accessToken);
-
             Boolean verifiedEmail = (Boolean) userInfo.get("verifiedEmail");
             if (userInfo.get("email") == null || !Boolean.TRUE.equals(verifiedEmail)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(createErrorResponse("Email no verificado"));
+                return badRequest("Email no verificado");
             }
 
             Person person = googleOAuthService.processGoogleUser(userInfo);
@@ -127,69 +168,52 @@ public class AuthRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Error al autenticar con Google: " + e.getMessage()));
+            return serverError("Error al autenticar con Google: " + e.getMessage());
         }
     }
 
-    /**
-     * Obtiene la URL de autorización de Google
-     */
-    @GetMapping("/google/url")
+    @GetMapping(path = "/google/url", produces = "application/json")
     public ResponseEntity<Map<String, String>> getGoogleAuthUrl() {
-        String authUrl = "https://accounts.google.com/o/oauth2/v2/auth?" +
-                "client_id=355722441377-enqh4cmujnjnmt0thtl0nbsfinlhsq78.apps.googleusercontent.com&" +
-                "redirect_uri=http://localhost:4200/auth/callback&" +
-                "response_type=code&" +
-                "scope=openid%20profile%20email&" +
-                "access_type=offline&" +
-                "prompt=consent";
+        String authUrl = "https://accounts.google.com/o/oauth2/v2/auth?"
+                + "client_id=355722441377-enqh4cmujnjnmt0thtl0nbsfinlhsq78.apps.googleusercontent.com&"
+                + "redirect_uri=http://localhost:4200/auth/callback&"
+                + "response_type=code&"
+                + "scope=openid%20profile%20email&"
+                + "access_type=offline&"
+                + "prompt=consent";
 
         Map<String, String> response = new HashMap<>();
         response.put("url", authUrl);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Verifica el estado de la sesión de Google
-     */
-    @GetMapping("/google/status")
-    public ResponseEntity<Map<String, Object>> checkGoogleAuthStatus(@RequestHeader("Authorization") String token) {
-        try {
-            String jwt = token.replace("Bearer ", "");
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("authenticated", true);
-            response.put("token", jwt);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse("Sesión inválida"));
-        }
+    @GetMapping(path = "/google/status", produces = "application/json")
+    public ResponseEntity<Map<String, Object>> checkGoogleAuthStatus(@RequestHeader(value = "Authorization", required = false) String token) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("authenticated", token != null && token.startsWith("Bearer "));
+        response.put("token", token != null ? token.replace("Bearer ", "") : null);
+        return ResponseEntity.ok(response);
     }
 
-    /**
-     * Cierra sesión de Google
-     */
-    @PostMapping("/google/logout")
-    public ResponseEntity<Map<String, Object>> googleLogout(@RequestHeader("Authorization") String token) {
-        try {
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Sesión cerrada exitosamente");
-            response.put("success", true);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Error al cerrar sesión"));
-        }
+    @PostMapping(path = "/google/logout", produces = "application/json")
+    public ResponseEntity<Map<String, Object>> googleLogout(@RequestHeader(value = "Authorization", required = false) String token) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Sesión cerrada exitosamente");
+        response.put("success", true);
+        return ResponseEntity.ok(response);
     }
-    //#endregion
 
-    //#region Helper Methods
+    // =========================
+    // Helpers
+    // =========================
+    private static String str(Object o) {
+        return o == null ? null : o.toString().trim();
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
+    }
+
     private Map<String, Object> createUserResponse(Person person) {
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("id", person.getId());
@@ -201,11 +225,24 @@ public class AuthRestController {
         return userMap;
     }
 
-    private Map<String, Object> createErrorResponse(String message) {
+    private ResponseEntity<Map<String, Object>> badRequest(String msg) {
         Map<String, Object> error = new HashMap<>();
-        error.put("error", message);
+        error.put("error", msg);
         error.put("success", false);
-        return error;
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
-    //#endregion
+
+    private ResponseEntity<Map<String, Object>> conflict(String msg) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", msg);
+        error.put("success", false);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    private ResponseEntity<Map<String, Object>> serverError(String msg) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", msg);
+        error.put("success", false);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
 }
