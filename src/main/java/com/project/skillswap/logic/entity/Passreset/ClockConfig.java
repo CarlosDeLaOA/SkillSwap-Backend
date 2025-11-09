@@ -1,4 +1,4 @@
-package com.project.skillswap.logic.entity.passreset;
+package com.project.skillswap.logic.entity.Passreset;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

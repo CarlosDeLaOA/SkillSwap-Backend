@@ -1,14 +1,14 @@
-// src/main/java/com/project/skillswap/logic/entity/PasswordResetToken/PasswordResetToken.java
 package com.project.skillswap.logic.entity.Person;
 
 import jakarta.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "password_reset_tokens",
+@Table(
+        name = "password_reset_tokens",
         indexes = {
-                @Index(name = "ix_prt_person_time", columnList = "person_id, createdAt"),
-                @Index(name = "ix_prt_token_hash", columnList = "tokenHash", unique = true)
+                @Index(name = "ix_prt_person_time", columnList = "person_id, created_at"),
+                @Index(name = "ix_prt_token_hash", columnList = "token_hash", unique = true)
         }
 )
 public class PasswordResetToken {
@@ -17,31 +17,41 @@ public class PasswordResetToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Relación con la persona que solicita el reset
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", nullable = false)
     private Person person;
 
-    /** SHA-256 del token en claro (no guardes el token plano) */
-    @Column(nullable = false, length = 64)
+    /** SHA-256 del token en claro (no guardar el token plano) */
+    @Column(name = "token_hash", nullable = false, length = 64, updatable = false)
     private String tokenHash;
 
-    @Column(nullable = false)
-    private Instant createdAt = Instant.now();
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
-    /** Válido por 1 hora (lo seteamos al crear) */
-    @Column(nullable = false)
+    /** Válido por 1 hora (o el tiempo que definas al crearlo) */
+    @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
-    @Column(nullable = false)
+    @Column(name = "used", nullable = false)
     private boolean used = false;
 
+    @Column(name = "used_at")
     private Instant usedAt;
 
     /** Metadatos opcionales */
+    @Column(name = "request_ip", length = 64)
     private String requestIp;
+
+    @Column(name = "user_agent", length = 255)
     private String userAgent;
 
-    // Getters & setters
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = Instant.now();
+    }
+
+    // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

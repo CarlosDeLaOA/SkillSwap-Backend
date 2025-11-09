@@ -65,11 +65,11 @@ public class Person implements UserDetails {
     private Date lastConnection;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"}) // ⚠ Evitar referencia circular
+    @JsonIgnoreProperties({"person"}) // ⚠️ Evitar referencia circular
     private Instructor instructor;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"}) // ⚠ Evitar referencia circular
+    @JsonIgnoreProperties({"person"}) // ⚠️ Evitar referencia circular
     private Learner learner;
 
     @JsonIgnore
@@ -83,6 +83,10 @@ public class Person implements UserDetails {
     @JsonIgnore
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<WeeklyReport> weeklyReports;
+
+    @Version
+    @Column(name = "token_version", nullable = false)
+    private Integer tokenVersion;
     //#endregion
 
     //#region Constructors
@@ -238,6 +242,15 @@ public class Person implements UserDetails {
         this.learner = learner;
     }
 
+    public Integer getTokenVersion() {
+        return tokenVersion;
+    }
+
+    public void setTokenVersion(Integer tokenVersion) {
+        this.tokenVersion = tokenVersion;
+    }
+
+
     public List<Transaction> getTransactions() {
         return transactions;
     }
@@ -261,6 +274,15 @@ public class Person implements UserDetails {
     public void setWeeklyReports(List<WeeklyReport> weeklyReports) {
         this.weeklyReports = weeklyReports;
     }
+
+    @PrePersist
+    public void prePersist_setDefaultVersion() {
+        if (tokenVersion == null) {
+            tokenVersion = 0;
+        }
+    }
+
+
 
     //#endregion
 }

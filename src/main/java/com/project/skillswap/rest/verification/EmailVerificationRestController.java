@@ -8,9 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Controlador REST para gestionar la verificación de correo electrónico.
- */
+
 @RestController
 @RequestMapping("/verification")
 @CrossOrigin(origins = "*")
@@ -25,12 +23,7 @@ public class EmailVerificationRestController {
     //#endregion
 
     //#region Endpoints
-    /**
-     * Verifica un token de correo electrónico.
-     *
-     * @param token el token a verificar
-     * @return respuesta con el resultado de la verificación
-     */
+
     @GetMapping("/verify")
     public ResponseEntity<?> verifyEmail(@RequestParam String token) {
         if (token == null || token.trim().isEmpty()) {
@@ -53,12 +46,7 @@ public class EmailVerificationRestController {
         }
     }
 
-    /**
-     * Reenvía un correo de verificación a un usuario.
-     *
-     * @param request mapa con el email del usuario
-     * @return respuesta con el resultado del reenvío
-     */
+
     @PostMapping("/resend")
     public ResponseEntity<?> resendVerification(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -92,12 +80,7 @@ public class EmailVerificationRestController {
     //#endregion
 
     //#region Private Methods
-    /**
-     * Crea un mapa de respuesta de error.
-     *
-     * @param message mensaje de error
-     * @return mapa con el error
-     */
+
     private Map<String, Object> createErrorResponse(String message) {
         Map<String, Object> response = new HashMap<>();
         response.put("success", false);
@@ -105,12 +88,7 @@ public class EmailVerificationRestController {
         return response;
     }
 
-    /**
-     * Determina el código HTTP apropiado según el estado de verificación.
-     *
-     * @param status estado de verificación
-     * @return código HTTP correspondiente
-     */
+
     private HttpStatus determineHttpStatus(VerificationService.VerificationStatus status) {
         return switch (status) {
             case INVALID_TOKEN -> HttpStatus.NOT_FOUND;
