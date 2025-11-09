@@ -1,7 +1,5 @@
 package com.project.skillswap.logic.entity.KnowledgeArea;
 
-import com.project.skillswap.logic.entity.KnowledgeArea.KnowledgeArea;
-import com.project.skillswap.logic.entity.KnowledgeArea.KnowledgeAreaRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
