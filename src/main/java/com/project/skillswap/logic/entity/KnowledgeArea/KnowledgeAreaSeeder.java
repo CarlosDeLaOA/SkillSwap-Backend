@@ -1,4 +1,4 @@
-package com.project.skillswap.logic.entity.Onboarding;
+package com.project.skillswap.logic.entity.KnowledgeArea;
 
 import com.project.skillswap.logic.entity.KnowledgeArea.KnowledgeArea;
 import com.project.skillswap.logic.entity.KnowledgeArea.KnowledgeAreaRepository;
