@@ -3,7 +3,6 @@ package com.project.skillswap.logic.entity.dashboard;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 
 /**
@@ -77,7 +76,6 @@ public class DashboardService {
         Integer skillCoins = dashboardRepository.getAccountBalance(personId);
         return new AccountBalanceResponse(skillCoins != null ? skillCoins : 0);
     }
-
     /**
      * Gets monthly achievements for last 4 months
      *

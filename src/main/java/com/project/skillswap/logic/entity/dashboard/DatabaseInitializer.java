@@ -204,7 +204,7 @@ public class DatabaseInitializer implements CommandLineRunner {
         String sql =
                 "CREATE PROCEDURE sp_get_account_balance(IN p_person_id BIGINT) " +
                         "BEGIN " +
-                        "    SELECT COALESCE(l.skill_coins, 0) AS skill_coins " +
+                        "    SELECT COALESCE(l.skillcoins_balance, 0) AS skill_coins " +  // ← IMPORTANTE: skill_coins con guion bajo
                         "    FROM learner l " +
                         "    WHERE l.person_id = p_person_id; " +
                         "END";

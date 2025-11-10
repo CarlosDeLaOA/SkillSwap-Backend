@@ -73,9 +73,35 @@ public class DashboardRepository {
      * @param personId Person ID
      * @return Account balance in SkillCoins
      */
+
     public Integer getAccountBalance(Long personId) {
         String sql = "CALL sp_get_account_balance(?)";
-        return jdbcTemplate.queryForObject(sql, Integer.class, personId);
+        try {
+            // Intenta obtener el resultado como Map primero
+            java.util.Map<String, Object> resultado = jdbcTemplate.queryForMap(sql, personId);
+            Object skillCoinsObj = resultado.get("skill_coins");
+
+            if (skillCoinsObj == null) {
+                System.out.println("⚠️ skill_coins es NULL para personId: " + personId);
+                return 0;
+            }
+
+            // Convierte BigDecimal a Integer
+            if (skillCoinsObj instanceof java.math.BigDecimal) {
+                return ((java.math.BigDecimal) skillCoinsObj).intValue();
+            } else if (skillCoinsObj instanceof Number) {
+                return ((Number) skillCoinsObj).intValue();
+            }
+
+            return 0;
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            System.err.println("⚠️ No se encontró learner para personId: " + personId);
+            return 0;
+        } catch (Exception e) {
+            System.err.println("❌ Error obteniendo balance: " + e.getMessage());
+            e.printStackTrace();
+            return 0;
+        }
     }
 
     /**
