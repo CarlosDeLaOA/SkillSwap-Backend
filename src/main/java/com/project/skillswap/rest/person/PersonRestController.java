@@ -78,6 +78,10 @@ public class PersonRestController {
             person.setEmailVerified(false);
             personRepository.save(person);
 
+            //  (DEV): marcar verificado para permitir login inmediato en desarrollo
+            person.setEmailVerified(true);                 //  (DEV)
+            personRepository.save(person);                 //  (DEV)
+
             Learner learner = new Learner();
             learner.setPerson(person);
             learnerRepository.save(learner);
@@ -93,7 +97,7 @@ public class PersonRestController {
             response.put("userId", person.getId());
             response.put("email", person.getEmail());
             response.put("userType", "LEARNER");
-            response.put("emailVerified", false);
+            response.put("emailVerified", person.getEmailVerified()); // reflejar estado actual
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
@@ -135,6 +139,10 @@ public class PersonRestController {
             person.setEmailVerified(false);
             personRepository.save(person);
 
+            //  (DEV): marcar verificado para permitir login inmediato en desarrollo
+            person.setEmailVerified(true);                 //  (DEV)
+            personRepository.save(person);                 //  (DEV)
+
             Instructor instructor = new Instructor();
             instructor.setPerson(person);
             instructorRepository.save(instructor);
@@ -150,7 +158,7 @@ public class PersonRestController {
             response.put("userId", person.getId());
             response.put("email", person.getEmail());
             response.put("userType", "INSTRUCTOR");
-            response.put("emailVerified", false);
+            response.put("emailVerified", person.getEmailVerified()); // reflejar estado actual
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 

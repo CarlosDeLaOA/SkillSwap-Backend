@@ -56,15 +56,15 @@ public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
         List<SkillData> skillsToCreate = createSkillDataList();
 
         for (SkillData skillData : skillsToCreate) {
-            Optional<KnowledgeArea> knowledgeArea = knowledgeAreaRepository.findByName(skillData.knowledgeAreaName);
+            Optional<KnowledgeArea> knowledgeArea = knowledgeAreaRepository.findByNameIgnoreCase(skillData.knowledgeAreaName);
 
             if (knowledgeArea.isEmpty()) {
                 continue;
             }
 
-            Optional<Skill> existingSkill = skillRepository.findByNameAndKnowledgeArea(
+            Optional<Skill> existingSkill = skillRepository.findByNameIgnoreCaseAndKnowledgeAreaId(
                     skillData.name,
-                    knowledgeArea.get()
+                    knowledgeArea.get().getId()
             );
 
             if (existingSkill.isPresent()) {

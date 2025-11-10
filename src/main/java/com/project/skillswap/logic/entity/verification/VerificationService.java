@@ -5,6 +5,8 @@ import com.project.skillswap.logic.entity.Person.PersonRepository;
 import jakarta.mail.MessagingException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
+
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -24,6 +26,11 @@ public class VerificationService {
     private final VerificationTokenRepository tokenRepository;
     private final PersonRepository personRepository;
     private final EmailVerificationService emailVerificationService;
+
+    // ==== NUEVO  - Flag para habilitar/deshabilitar envío de correos
+    @Value("${app.mail.enabled:true}")
+    private boolean mailEnabled;
+    // ==== NUEVO
 
     public VerificationService(VerificationTokenRepository tokenRepository,
                                PersonRepository personRepository,
@@ -49,7 +56,20 @@ public class VerificationService {
         VerificationToken verificationToken = new VerificationToken(token, person, expiresAt);
         tokenRepository.save(verificationToken);
 
-        emailVerificationService.sendVerificationEmail(person.getEmail(), person.getFullName(), token);
+        // ==== - No romper el flujo si el correo está deshabilitado o falla el SMTP
+        if (!mailEnabled) {
+            System.err.println("[VerificationService] app.mail.enabled=false → se omite el envío de correo para " + person.getEmail());
+            return; // solo no enviamos correo; el registro/flujo continúa
+        }
+        try {
+            emailVerificationService.sendVerificationEmail(person.getEmail(), person.getFullName(), token);
+        } catch (MessagingException e) {
+            // Logueamos y NO relanzamos para no interrumpir el registro
+            System.err.println("[VerificationService] No se pudo enviar correo de verificación a "
+                    + person.getEmail() + " (continuando): " + e.getMessage());
+            // Opcional: return; // evitar propagar la excepción aunque el método la declare
+        }
+        // ====
     }
 
     /**
@@ -87,11 +107,17 @@ public class VerificationService {
         tokenRepository.save(verificationToken);
         personRepository.save(person);
 
-        try {
-            emailVerificationService.sendWelcomeEmail(person.getEmail(), person.getFullName());
-        } catch (MessagingException e) {
-            System.err.println("Error enviando correo de bienvenida: " + e.getMessage());
+        // ====  - Enviar correo de bienvenida solo si está habilitado y sin romper el flujo
+        if (mailEnabled) {
+            try {
+                emailVerificationService.sendWelcomeEmail(person.getEmail(), person.getFullName());
+            } catch (MessagingException e) {
+                System.err.println("Error enviando correo de bienvenida (continuando): " + e.getMessage());
+            }
+        } else {
+            System.err.println("[VerificationService] app.mail.enabled=false → se omite correo de bienvenida para " + person.getEmail());
         }
+        // ====
 
         return new VerificationResult(true, "Cuenta verificada exitosamente", VerificationStatus.SUCCESS);
     }
@@ -125,6 +151,7 @@ public class VerificationService {
             createAndSendVerificationToken(person);
             return new ResendResult(true, "Se ha enviado un nuevo correo de verificación", person.getEmail());
         } catch (MessagingException e) {
+            // Si el correo está deshabilitado o falla SMTP, devolvemos mensaje acorde sin romper
             return new ResendResult(false, "Error al enviar el correo. Intenta nuevamente", null);
         }
     }

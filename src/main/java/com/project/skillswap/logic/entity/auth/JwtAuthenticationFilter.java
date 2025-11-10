@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
+import org.springframework.util.AntPathMatcher;
+import java.util.Set;
 import java.io.IOException;
 
 
@@ -26,6 +28,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     //#endregion
+
+
+    // =========================
+    // #region NUEVA: WHITELIST
+    // =========================
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher(); // NUEVO
+    private static final Set<String> PUBLIC_PATTERNS = Set.of( // NUEVO
+            "/auth/**",
+            "/api/auth/**",
+            "/register/**",
+            "/api/register/**",
+            "/onboarding/**",
+            "/api/onboarding/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/error"
+    );
+
+    /** Saltar filtro para preflight y rutas públicas */ // NUEVO
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        // Preflight CORS
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
+
+        String path = request.getRequestURI();
+        for (String pattern : PUBLIC_PATTERNS) {
+            if (PATH_MATCHER.match(pattern, path)) return true;
+        }
+        return false;
+    }
+    // #endregion NUEVO
 
     //#region Constructor
     /**

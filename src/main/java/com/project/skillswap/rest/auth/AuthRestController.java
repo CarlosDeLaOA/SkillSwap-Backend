@@ -11,10 +11,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import com.project.skillswap.logic.entity.PersonRoleSkill.PersonRoleSkillRepository;
+import com.project.skillswap.logic.entity.PersonRoleSkill.PersonRoleSkill;
+
+
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.List;
 
 @RequestMapping("/auth")
 @RestController
@@ -25,6 +30,9 @@ public class AuthRestController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private PersonRoleSkillRepository personRoleSkillRepository;
 
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
@@ -43,10 +51,11 @@ public class AuthRestController {
     //#endregion
 
     //#region Traditional Authentication
+
     /**
      * Acepta JSON con:
      * { "email": "...", "password": "..." }
-     *  o bien
+     * o bien
      * { "email": "...", "passwordHash": "..." }
      * Internamente lo mapea a Person.passwordHash para que el AuthenticationService compare
      * contra el hash de la BD usando passwordEncoder.matches(raw, hash).
@@ -82,8 +91,10 @@ public class AuthRestController {
     //#endregion
 
     //#region Google OAuth Endpoints
+
     /**
      * Endpoint para autenticación con Google OAuth2.
+     *
      * @param requestBody Mapa con code y redirectUri
      * @return ResponseEntity con JWT y datos del usuario
      */
@@ -208,4 +219,76 @@ public class AuthRestController {
         return error;
     }
     //#endregion
+    /**
+     * Verifica status de log in para iniciar onboarding
+     */
+
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Object>> getAuthStatus() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // Si no hay auth, no tirar excepción
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || auth.getName() == null) {
+                response.put("authenticated", false);
+                response.put("onboardingCompleted", false);
+                response.put("role", null);
+                response.put("id", null);
+                return ResponseEntity.ok(response);
+            }
+
+            Person user = personRepository.findByEmail(auth.getName())
+                    .orElse(null);
+
+            if (user == null) {
+                response.put("authenticated", false);
+                response.put("onboardingCompleted", false);
+                response.put("role", null);
+                response.put("id", null);
+                return ResponseEntity.ok(response);
+            }
+
+            String roleCode = null;
+            if (!personRoleSkillRepository.findByPersonIdAndRoleCode(user.getId(), "INSTRUCTOR").isEmpty()) {
+                roleCode = "INSTRUCTOR";
+            } else if (!personRoleSkillRepository.findByPersonIdAndRoleCode(user.getId(), "LEARNER").isEmpty()) {
+                roleCode = "LEARNER";
+            }
+
+            boolean hasSkillForRole = false;
+            if (roleCode != null) {
+                hasSkillForRole = personRoleSkillRepository
+                        .findByPersonIdAndRoleCode(user.getId(), roleCode)
+                        .stream()
+                        .anyMatch(prs -> prs.getSkill() != null);
+            }
+
+            response.put("authenticated", true);
+            response.put("onboardingCompleted", hasSkillForRole);
+            response.put("role", roleCode);
+            response.put("id", user.getId());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("authenticated", false);
+            response.put("onboardingCompleted", false);
+            response.put("role", null);
+            response.put("id", null);
+            return ResponseEntity.ok(response);
+        }
+    }
+    //Helper
+    private Person getCurrentUser() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        if (auth == null || auth.getName() == null) {
+            throw new RuntimeException("No authenticated principal");
+        }
+
+        String email = auth.getName(); // normalmente es el username/email
+        return personRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + email));
+    }
 }

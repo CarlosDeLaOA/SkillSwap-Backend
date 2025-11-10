@@ -4,6 +4,8 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import com.project.skillswap.logic.entity.Knowledgearea.KnowledgeAreaRepository;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +53,7 @@ public class KnowledgeAreaSeeder implements ApplicationListener<ContextRefreshed
         List<KnowledgeAreaData> areasToCreate = createKnowledgeAreaDataList();
 
         for (KnowledgeAreaData areaData : areasToCreate) {
-            Optional<KnowledgeArea> existingArea = knowledgeAreaRepository.findByName(areaData.name);
+            Optional<KnowledgeArea> existingArea = knowledgeAreaRepository.findByNameIgnoreCase(areaData.name);
 
             if (existingArea.isPresent()) {
                 continue;
@@ -73,8 +75,8 @@ public class KnowledgeAreaSeeder implements ApplicationListener<ContextRefreshed
     private KnowledgeArea createKnowledgeArea(KnowledgeAreaData data) {
         KnowledgeArea area = new KnowledgeArea();
         area.setName(data.name);
-        area.setDescription(data.description);
-        area.setIconUrl(data.iconUrl);
+        //area.setDescription(data.description);
+        //area.setIconUrl(data.iconUrl);
         area.setActive(data.active);
         return area;
     }
