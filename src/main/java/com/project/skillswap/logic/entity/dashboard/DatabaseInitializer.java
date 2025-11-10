@@ -41,7 +41,6 @@ public class DatabaseInitializer implements CommandLineRunner {
             createLearningHoursProcedure();
             createUpcomingSessionsProcedure();
             createRecentAchievementsProcedure();
-            System.out.println("All stored procedures created successfully");
         } catch (Exception e) {
             System.err.println("Error creating stored procedures: " + e.getMessage());
             e.printStackTrace();
@@ -80,7 +79,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "        FROM learning_session ls " +
                         "        INNER JOIN instructor i ON ls.instructor_id = i.id " +
                         "        WHERE i.person_id = p_person_id " +
-                        "        AND ls.status = 'COMPLETED'; " +
+                        "        AND ls.status = 'FINISHED'; " +
                         "    ELSE " +
                         "        SELECT COALESCE(SUM(ls.duration_minutes), 0) AS total_minutes " +
                         "        FROM learning_session ls " +
@@ -88,12 +87,11 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "        INNER JOIN learner l ON b.learner_id = l.id " +
                         "        WHERE l.person_id = p_person_id " +
                         "        AND b.attended = TRUE " +
-                        "        AND ls.status = 'COMPLETED'; " +
+                        "        AND ls.status = 'FINISHED'; " +
                         "    END IF; " +
                         "END";
 
         jdbcTemplate.execute(sql);
-        System.out.println(" Stored procedure 'sp_get_learning_hours' created");
     }
 
     /**
@@ -146,7 +144,6 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "END";
 
         jdbcTemplate.execute(sql);
-        System.out.println(" Stored procedure 'sp_get_upcoming_sessions' created");
     }
 
     /**
@@ -190,7 +187,6 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "END";
 
         jdbcTemplate.execute(sql);
-        System.out.println(" Stored procedure 'sp_get_recent_achievements' created");
     }
     //#endregion
 }

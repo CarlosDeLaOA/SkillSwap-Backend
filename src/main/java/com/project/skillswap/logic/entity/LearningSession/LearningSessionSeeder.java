@@ -185,7 +185,6 @@ public class LearningSessionSeeder implements ApplicationListener<ContextRefresh
                 "https://meet.google.com/js-fund-003"
         ));
 
-        // 🔹 Sesiones PRÓXIMAS donde John está registrado
         sessions.add(new LearningSessionData(
                 1L, 1L, "Advanced Java Programming",
                 "Deep dive into Java frameworks",
@@ -233,6 +232,159 @@ public class LearningSessionSeeder implements ApplicationListener<ContextRefresh
                 5, false, BigDecimal.ZERO, "en", SessionStatus.SCHEDULED,
                 "https://meet.google.com/stu-vwxy-zab"
         ));
+
+        sessions.add(new LearningSessionData(
+                12L, 21L, "Data Science Fundamentals",
+                "Introduction to data analysis and statistical methods",
+                toDate(now.minusDays(50)), 120, SessionType.SCHEDULED,
+                15, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-ds-101"
+        ));
+
+        sessions.add(new LearningSessionData(
+                12L, 21L, "Python for Data Analysis",
+                "Using pandas and numpy for data manipulation",
+                toDate(now.minusDays(48)), 150, SessionType.SCHEDULED,
+                12, true, new BigDecimal("15.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-py-102"
+        ));
+
+        sessions.add(new LearningSessionData(
+                12L, 21L, "Machine Learning Basics",
+                "Introduction to supervised and unsupervised learning",
+                toDate(now.minusDays(45)), 180, SessionType.SCHEDULED,
+                10, true, new BigDecimal("20.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-ml-103"
+        ));
+
+        sessions.add(new LearningSessionData(
+                12L, 21L, "Data Visualization with Python",
+                "Creating insightful visualizations using matplotlib and seaborn",
+                toDate(now.minusDays(42)), 120, SessionType.SCHEDULED,
+                15, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-viz-104"
+        ));
+
+        sessions.add(new LearningSessionData(
+                12L, 21L, "SQL for Data Scientists",
+                "Advanced SQL queries and database optimization",
+                toDate(now.minusDays(38)), 150, SessionType.SCHEDULED,
+                12, true, new BigDecimal("12.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-sql-105"
+        ));
+
+        sessions.add(new LearningSessionData(
+                12L, 21L, "Statistical Analysis Workshop",
+                "Hypothesis testing and statistical inference",
+                toDate(now.minusDays(35)), 120, SessionType.SCHEDULED,
+                10, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-stats-106"
+        ));
+
+        sessions.add(new LearningSessionData(
+                12L, 21L, "Deep Learning Introduction",
+                "Neural networks and deep learning fundamentals",
+                toDate(now.minusDays(30)), 180, SessionType.SCHEDULED,
+                8, true, new BigDecimal("25.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-dl-107"
+        ));
+
+        sessions.add(new LearningSessionData(
+                12L, 21L, "Time Series Analysis",
+                "Forecasting and time series modeling",
+                toDate(now.minusDays(25)), 120, SessionType.SCHEDULED,
+                12, true, new BigDecimal("18.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-ts-108"
+        ));
+
+        sessions.add(new LearningSessionData(
+                9L, 18L, "Japanese Calligraphy Basics",
+                "Introduction to traditional Japanese brush writing",
+                toDate(now.minusDays(55)), 120, SessionType.SCHEDULED,
+                8, false, BigDecimal.ZERO, "ja", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-cal-201"
+        ));
+
+        sessions.add(new LearningSessionData(
+                9L, 18L, "Advanced Calligraphy Techniques",
+                "Mastering different calligraphy styles",
+                toDate(now.minusDays(52)), 150, SessionType.SCHEDULED,
+                8, true, new BigDecimal("20.00"), "ja", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-cal-202"
+        ));
+
+        sessions.add(new LearningSessionData(
+                9L, 18L, "Ink Painting Workshop",
+                "Traditional sumi-e painting techniques",
+                toDate(now.minusDays(48)), 180, SessionType.SCHEDULED,
+                6, true, new BigDecimal("25.00"), "ja", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-ink-203"
+        ));
+
+        sessions.add(new LearningSessionData(
+                9L, 18L, "Japanese Art History",
+                "Understanding the evolution of Japanese art",
+                toDate(now.minusDays(45)), 120, SessionType.SCHEDULED,
+                10, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-hist-204"
+        ));
+
+        sessions.add(new LearningSessionData(
+                9L, 18L, "Origami and Paper Arts",
+                "Traditional Japanese paper folding techniques",
+                toDate(now.minusDays(42)), 90, SessionType.SCHEDULED,
+                12, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-orig-205"
+        ));
+
+        sessions.add(new LearningSessionData(
+                9L, 18L, "Ikebana - Flower Arrangement",
+                "Japanese art of flower arrangement",
+                toDate(now.minusDays(38)), 120, SessionType.SCHEDULED,
+                8, true, new BigDecimal("15.00"), "ja", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-ike-206"
+        ));
+
+        sessions.add(new LearningSessionData(
+                9L, 18L, "Tea Ceremony Introduction",
+                "Understanding the Japanese tea ceremony tradition",
+                toDate(now.minusDays(35)), 150, SessionType.SCHEDULED,
+                10, true, new BigDecimal("22.00"), "ja", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-tea-207"
+        ));
+
+        sessions.add(new LearningSessionData(
+                9L, 18L, "Zen Meditation and Art",
+                "Combining meditation with artistic expression",
+                toDate(now.minusDays(32)), 120, SessionType.SCHEDULED,
+                12, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-zen-208"
+        ));
+
+        sessions.add(new LearningSessionData(
+                9L, 18L, "Modern Japanese Design",
+                "Contemporary applications of traditional aesthetics",
+                toDate(now.minusDays(28)), 150, SessionType.SCHEDULED,
+                10, true, new BigDecimal("18.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-mod-209"
+        ));
+
+        sessions.add(new LearningSessionData(
+                9L, 18L, "Calligraphy Masterclass",
+                "Advanced techniques for experienced practitioners",
+                toDate(now.minusDays(25)), 180, SessionType.SCHEDULED,
+                6, true, new BigDecimal("30.00"), "ja", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-master-210"
+        ));
+
+        sessions.add(new LearningSessionData(
+                9L, 18L, "Japanese Aesthetics Philosophy",
+                "Wabi-sabi and other aesthetic principles",
+                toDate(now.minusDays(20)), 120, SessionType.SCHEDULED,
+                15, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-aes-211"
+        ));
+
 
         return sessions;
     }
