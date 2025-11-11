@@ -1,5 +1,8 @@
 package com.project.skillswap.rest.person;
 
+import com.project.skillswap.logic.entity.UserSkill.UserSkill;
+import java.util.List;
+import java.util.stream.Collectors;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
 import com.project.skillswap.logic.entity.http.GlobalResponseHandler;
@@ -43,17 +46,25 @@ public class PersonProfileRestController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getAuthenticatedPerson(HttpServletRequest request) {
         try {
-            // Obtener el usuario autenticado desde el contexto de seguridad
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            // Recargar desde BD para obtener todas las relaciones (Instructor, Learner)
             Optional<Person> fullPerson = personRepository.findById(authenticatedPerson.getId());
 
             if (fullPerson.isPresent()) {
+                Person person = fullPerson.get();
+
+                // Filtrar solo los userSkills activos
+                if (person.getUserSkills() != null) {
+                    List<UserSkill> activeSkills = person.getUserSkills().stream()
+                            .filter(us -> us.getActive() != null && us.getActive())
+                            .collect(Collectors.toList());
+                    person.setUserSkills(activeSkills);
+                }
+
                 return new GlobalResponseHandler().handleResponse(
                         "User profile retrieved successfully",
-                        fullPerson.get(),
+                        person,
                         HttpStatus.OK,
                         request
                 );
