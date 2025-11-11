@@ -119,11 +119,12 @@ public class DashboardRepository {
      * Gets session statistics grouped by skill
      *
      * @param personId Person ID
+     * @param role User role
      * @return List of skill session statistics
      */
-    public List<SkillSessionStatsResponse> getSkillSessionStats(Long personId) {
-        String sql = "CALL sp_get_skill_session_stats(?)";
-        return jdbcTemplate.query(sql, this::mapSkillSessionStats, personId);
+    public List<SkillSessionStatsResponse> getSkillSessionStats(Long personId, String role) {
+        String sql = "CALL sp_get_skill_session_stats(?, ?)";
+        return jdbcTemplate.query(sql, this::mapSkillSessionStats, personId, role);
     }
 //#endregion
 

@@ -320,8 +320,11 @@ public class DashboardRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
+            String role = determineUserRole(authenticatedPerson);
+
             List<SkillSessionStatsResponse> stats = dashboardService.getSkillSessionStats(
-                    authenticatedPerson.getId()
+                    authenticatedPerson.getId(),
+                    role
             );
 
             return new GlobalResponseHandler().handleResponse(

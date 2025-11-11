@@ -91,11 +91,12 @@ public class DashboardService {
      * Gets session statistics grouped by skill
      *
      * @param personId Person ID
+     * @param role User role
      * @return List of skill session statistics
      */
     @Transactional(readOnly = true)
-    public List<SkillSessionStatsResponse> getSkillSessionStats(Long personId) {
-        return dashboardRepository.getSkillSessionStats(personId);
+    public List<SkillSessionStatsResponse> getSkillSessionStats(Long personId, String role) {
+        return dashboardRepository.getSkillSessionStats(personId, role);
     }
     //#endregion
 }
