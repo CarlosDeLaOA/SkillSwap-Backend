@@ -12,11 +12,13 @@ public class KnowledgeAreaService {
     @Autowired
     private KnowledgeAreaRepository knowledgeAreaRepository;
 
+    //<region desc="Public Methods">
     /**
-     * Obtiene todas las áreas de conocimiento activas
+     * Obtiene todas las áreas de conocimiento activas ordenadas por nombre
      */
     @Transactional(readOnly = true)
     public List<KnowledgeArea> getAllActiveKnowledgeAreas() {
         return knowledgeAreaRepository.findAllActiveOrderByName();
     }
+    //</region>
 }

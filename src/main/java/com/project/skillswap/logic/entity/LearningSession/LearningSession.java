@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.LearningSession;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Skill.Skill;
 import com.project.skillswap.logic.entity.Booking.Booking;
@@ -20,6 +21,7 @@ import java.util.List;
         @Index(name = "idx_learning_session_status_datetime", columnList = "status, scheduled_datetime")
 })
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class LearningSession {
 
     //<editor-fold desc="Fields">
@@ -27,12 +29,14 @@ public class LearningSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "instructor_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"learningSessions", "person.instructor", "person.learner"})
     private Instructor instructor;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "skill_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"learningSessions", "instructorSkills"})
     private Skill skill;
 
     @Column(nullable = false, length = 200)
@@ -81,12 +85,15 @@ public class LearningSession {
     private Date creationDate;
 
     @OneToMany(mappedBy = "learningSession", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"learningSession"})
     private List<Booking> bookings;
 
     @OneToOne(mappedBy = "learningSession", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"learningSession"})
     private ClassNote classNote;
 
     @OneToOne(mappedBy = "learningSession", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"learningSession"})
     private AttendanceRecord attendanceRecord;
     //</editor-fold>
 
@@ -253,6 +260,24 @@ public class LearningSession {
 
     public void setAttendanceRecord(AttendanceRecord attendanceRecord) {
         this.attendanceRecord = attendanceRecord;
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Transient Methods">
+    /**
+     * Obtiene el número de reservas actuales
+     */
+    @Transient
+    public Integer getCurrentBookings() {
+        return bookings != null ? bookings.size() : 0;
+    }
+
+    /**
+     * Obtiene los cupos disponibles
+     */
+    @Transient
+    public Integer getAvailableSpots() {
+        return maxCapacity - getCurrentBookings();
     }
     //</editor-fold>
 }

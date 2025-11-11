@@ -14,6 +14,7 @@ public class LearningSessionService {
     @Autowired
     private LearningSessionRepository learningSessionRepository;
 
+    //<region desc="Public Methods">
     /**
      * Obtiene todas las sesiones disponibles (SCHEDULED o ACTIVE recientes)
      */
@@ -33,11 +34,33 @@ public class LearningSessionService {
         Date currentDate = new Date();
         Date fiveMinutesAgo = getFiveMinutesAgo(currentDate);
 
-        return learningSessionRepository.findFilteredSessions(
-                currentDate, fiveMinutesAgo, categoryId, language
-        );
-    }
+        // Si ambos filtros están presentes
+        if (categoryId != null && language != null && !language.isEmpty()) {
+            return learningSessionRepository.findSessionsByCategoryAndLanguage(
+                    currentDate, fiveMinutesAgo, categoryId, language
+            );
+        }
 
+        // Si solo hay filtro de categoría
+        if (categoryId != null) {
+            return learningSessionRepository.findSessionsByCategory(
+                    currentDate, fiveMinutesAgo, categoryId
+            );
+        }
+
+        // Si solo hay filtro de idioma
+        if (language != null && !language.isEmpty()) {
+            return learningSessionRepository.findSessionsByLanguage(
+                    currentDate, fiveMinutesAgo, language
+            );
+        }
+
+        // Si no hay filtros, devolver todas las disponibles
+        return getAvailableSessions();
+    }
+    //</region>
+
+    //<region desc="Private Helper Methods">
     /**
      * Calcula la fecha de hace 5 minutos
      */
@@ -47,4 +70,5 @@ public class LearningSessionService {
         calendar.add(Calendar.MINUTE, -5);
         return calendar.getTime();
     }
+    //</region>
 }
