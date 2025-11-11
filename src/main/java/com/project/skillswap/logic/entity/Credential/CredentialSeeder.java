@@ -99,7 +99,6 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
             credentialRepository.save(credential);
         }
 
-        System.out.println("✅ Credentials seeded successfully");
     }
 
     /**

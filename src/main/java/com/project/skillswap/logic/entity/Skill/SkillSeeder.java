@@ -75,7 +75,6 @@ public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
             skillRepository.save(skill);
         }
 
-        System.out.println(" Skills seeded successfully");
     }
 
     /**
