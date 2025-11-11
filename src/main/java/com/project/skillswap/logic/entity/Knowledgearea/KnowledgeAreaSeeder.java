@@ -61,7 +61,7 @@ public class KnowledgeAreaSeeder implements ApplicationListener<ContextRefreshed
             knowledgeAreaRepository.save(area);
         }
 
-        System.out.println(" Knowledge areas seeded successfully");
+
     }
 
     /**

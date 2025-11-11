@@ -68,7 +68,6 @@ public class FeedbackSeeder implements ApplicationListener<ContextRefreshedEvent
             feedbackRepository.save(feedback);
         }
 
-        System.out.println("✅ Feedbacks seeded successfully");
     }
 
     private Feedback createFeedback(FeedbackData data, LearningSession session, Learner learner) {

@@ -2,15 +2,11 @@ package com.project.skillswap.rest.KnowledgeArea;
 
 import com.project.skillswap.logic.entity.Knowledgearea.KnowledgeArea;
 import com.project.skillswap.logic.entity.Knowledgearea.KnowledgeAreaService;
-import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.http.GlobalResponseHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -32,25 +28,19 @@ public class KnowledgeAreaRestController {
     //</editor-fold>
 
     //<editor-fold desc="GET Endpoints">
+
     /**
      * GET /knowledge-areas
-     * Obtiene todas las áreas de conocimiento activas
+     * Obtiene todas las áreas de conocimiento activas.
      *
-     * Requires: Valid JWT token in Authorization header
+     * ⚠️ Este endpoint es público (no requiere autenticación)
      *
      * @param request HttpServletRequest for metadata
-     * @return ResponseEntity with list of active knowledge areas
+     * @return ResponseEntity con la lista de áreas de conocimiento activas
      */
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getAllKnowledgeAreas(HttpServletRequest request) {
         try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            Person authenticatedPerson = (Person) authentication.getPrincipal();
-
-            // Verificar que el usuario tenga un rol válido
-            validateUserRole(authenticatedPerson);
-
             List<KnowledgeArea> knowledgeAreas = knowledgeAreaService.getAllActiveKnowledgeAreas();
 
             return new GlobalResponseHandler().handleResponse(
@@ -59,31 +49,22 @@ public class KnowledgeAreaRestController {
                     HttpStatus.OK,
                     request
             );
-        } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Invalid authentication type",
-                            "Authenticated user is not of expected type"));
-        } catch (IllegalStateException e) {
-            System.err.println("Error: Invalid user role: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(createErrorResponse("Invalid user role", e.getMessage()));
         } catch (Exception e) {
             System.err.println("Error getting knowledge areas: " + e.getMessage());
             e.printStackTrace();
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Error retrieving knowledge areas",
-                            "Error retrieving knowledge areas: " + e.getMessage()));
+                    .body(createErrorResponse(
+                            "Error retrieving knowledge areas",
+                            "Error retrieving knowledge areas: " + e.getMessage()
+                    ));
         }
     }
 
     /**
-     * Health check endpoint to verify service status
-     *
+     * Health check endpoint to verify service status.
      * Endpoint: GET /knowledge-areas/health
-     * No authentication required
-     *
-     * @return ResponseEntity with service status
+     * No authentication required.
      */
     @GetMapping("/health")
     public ResponseEntity<?> healthCheck() {
@@ -96,20 +77,9 @@ public class KnowledgeAreaRestController {
     //</editor-fold>
 
     //<editor-fold desc="Private Helper Methods">
-    /**
-     * Validates that user has either instructor or learner role
-     *
-     * @param person Authenticated person
-     * @throws IllegalStateException If user has no valid role
-     */
-    private void validateUserRole(Person person) {
-        if (person.getInstructor() == null && person.getLearner() == null) {
-            throw new IllegalStateException("User must have either instructor or learner role");
-        }
-    }
 
     /**
-     * Creates error response map
+     * Creates an error response map.
      *
      * @param error Error type
      * @param message Error message

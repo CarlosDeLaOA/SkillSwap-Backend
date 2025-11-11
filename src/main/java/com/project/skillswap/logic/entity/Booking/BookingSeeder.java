@@ -83,7 +83,6 @@ public class BookingSeeder implements ApplicationListener<ContextRefreshedEvent>
             bookingRepository.save(booking);
         }
 
-        System.out.println(" Bookings seeded successfully");
     }
 
     /**

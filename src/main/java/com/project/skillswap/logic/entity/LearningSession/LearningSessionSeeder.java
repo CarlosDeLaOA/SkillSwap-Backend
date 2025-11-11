@@ -64,7 +64,6 @@ public class LearningSessionSeeder implements ApplicationListener<ContextRefresh
             learningSessionRepository.save(session);
         }
 
-        System.out.println("✅ Learning sessions seeded successfully");
     }
 
     private LearningSession createLearningSession(LearningSessionData data, Instructor instructor, Skill skill) {
