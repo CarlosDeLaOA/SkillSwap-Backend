@@ -158,6 +158,8 @@ public class Person implements UserDetails {
         this.passwordHash = passwordHash;
     }
 
+    public void setPassword(String encodedPassword) { this.passwordHash = encodedPassword;  }
+
     public String getFullName() {
         return fullName;
     }
