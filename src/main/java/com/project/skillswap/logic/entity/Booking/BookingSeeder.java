@@ -114,12 +114,12 @@ public class BookingSeeder implements ApplicationListener<ContextRefreshedEvent>
         List<BookingData> bookings = new ArrayList<>();
 
         bookings.add(new BookingData(
-                1L, 2L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                1L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
                 "https://meet.google.com/abc-defg-hij", false
         ));
 
         bookings.add(new BookingData(
-                2L, 2L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                2L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
                 "https://meet.google.com/klm-nopq-rst", false
         ));
 
@@ -134,7 +134,7 @@ public class BookingSeeder implements ApplicationListener<ContextRefreshedEvent>
         ));
 
         bookings.add(new BookingData(
-                5L, 2L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                5L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
                 "https://meet.google.com/opq-rstu-vwx", true
         ));
 
@@ -154,7 +154,7 @@ public class BookingSeeder implements ApplicationListener<ContextRefreshedEvent>
         ));
 
         bookings.add(new BookingData(
-                9L, 12L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                9L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
                 "https://meet.google.com/cde-fghi-jkl", false
         ));
 
@@ -162,6 +162,87 @@ public class BookingSeeder implements ApplicationListener<ContextRefreshedEvent>
                 10L, 2L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
                 "https://meet.google.com/mno-pqrs-tuv", false
         ));
+
+      bookings.add(new BookingData(
+            20L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,  // ← CAMBIO AQUÍ: 1L en vez de 2L
+            "https://meet.google.com/john-carlos-101", true
+    ));
+
+    bookings.add(new BookingData(
+            21L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-carlos-102", true
+    ));
+
+    bookings.add(new BookingData(
+            22L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-carlos-103", true
+    ));
+
+    bookings.add(new BookingData(
+            23L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-carlos-104", true
+    ));
+
+    bookings.add(new BookingData(
+            24L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-carlos-105", true
+    ));
+
+    bookings.add(new BookingData(
+            25L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-carlos-106", true
+    ));
+
+    bookings.add(new BookingData(
+            26L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-carlos-107", true
+    ));
+
+    bookings.add(new BookingData(
+            27L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-carlos-108", true
+    ));
+
+    // Sesiones de Yuki Tanaka
+    bookings.add(new BookingData(
+            28L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-yuki-201", true
+    ));
+
+    bookings.add(new BookingData(
+            29L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-yuki-202", true
+    ));
+
+    bookings.add(new BookingData(
+            30L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-yuki-203", true
+    ));
+
+    bookings.add(new BookingData(
+            31L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-yuki-204", true
+    ));
+
+    bookings.add(new BookingData(
+            32L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-yuki-205", true
+    ));
+
+    bookings.add(new BookingData(
+            33L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-yuki-206", true
+    ));
+
+    bookings.add(new BookingData(
+            34L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-yuki-207", true
+    ));
+
+    bookings.add(new BookingData(
+            35L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+            "https://meet.google.com/john-yuki-208", true
+    ));
 
 
         return bookings;

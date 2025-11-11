@@ -108,7 +108,7 @@ public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
                 "Python fundamentals and advanced concepts", true));
         skills.add(new SkillData("Programming", "JavaScript",
                 "Modern JavaScript and ES6+", true));
-        skills.add(new SkillData("Programming", "React",
+        skills.add(new SkillData("Programming", "React Programming",
                 "Building web applications with React", true));
         skills.add(new SkillData("Programming", "Angular",
                 "Full-stack development with Angular", true));

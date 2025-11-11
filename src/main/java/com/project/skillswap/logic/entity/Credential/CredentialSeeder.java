@@ -151,25 +151,25 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
         List<CredentialData> credentials = new ArrayList<>();
 
         credentials.add(new CredentialData(
-                2L, 2L, 5L,
+                1L, 2L, 5L,
                 new BigDecimal("95.5"),
                 "https://example.com/badges/python-advanced.png"
         ));
 
         credentials.add(new CredentialData(
-                2L, 1L, 5L,
+                1L, 1L, 5L,
                 new BigDecimal("88.0"),
                 "https://example.com/badges/java-fundamentals.png"
         ));
 
         credentials.add(new CredentialData(
-                5L, 4L, 6L,
+                1L, 4L, 6L,
                 new BigDecimal("92.3"),
                 "https://example.com/badges/react-expert.png"
         ));
 
         credentials.add(new CredentialData(
-                2L, 21L, 7L,
+                1L, 21L, 7L,
                 new BigDecimal("90.0"),
                 "https://example.com/badges/ml-basics.png"
         ));
