@@ -1,6 +1,6 @@
 package com.project.skillswap.logic.entity.Person;
 
-import com.project.skillswap.logic.entity.UserSkill.UserSkill;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Instructor.Instructor;
@@ -64,10 +64,6 @@ public class Person implements UserDetails {
     @Column(name = "last_connection")
     private Date lastConnection;
 
-    @OneToMany(mappedBy = "person", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"})
-    private List<UserSkill> userSkills;
-    
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"person"}) // ⚠ Evitar referencia circular
     private Instructor instructor;
@@ -264,14 +260,6 @@ public class Person implements UserDetails {
 
     public void setWeeklyReports(List<WeeklyReport> weeklyReports) {
         this.weeklyReports = weeklyReports;
-    }
-
-    public List<UserSkill> getUserSkills() {
-        return userSkills;
-    }
-
-    public void setUserSkills(List<UserSkill> userSkills) {
-        this.userSkills = userSkills;
     }
 
     //#endregion
