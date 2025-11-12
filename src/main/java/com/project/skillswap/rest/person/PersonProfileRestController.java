@@ -16,11 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * REST Controller para gestionar el perfil de Person autenticado
- * Proporciona endpoint para consultar información del usuario
- *
- */
 @RestController
 @RequestMapping("/persons")
 @CrossOrigin(origins = "*")
@@ -29,31 +24,25 @@ public class PersonProfileRestController {
     @Autowired
     private PersonRepository personRepository;
 
-    /**
-     * Obtiene el perfil completo del usuario autenticado
-     * Incluye datos de Person, Instructor (si aplica) y Learner (si aplica)
-     *
-     * Endpoint: GET /persons/me
-     * Requiere: Token JWT válido en el header Authorization
-     *
-     * @param request HttpServletRequest para metadata
-     * @return ResponseEntity con los datos del perfil o error
-     */
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getAuthenticatedPerson(HttpServletRequest request) {
         try {
-            // Obtener el usuario autenticado desde el contexto de seguridad
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            // Recargar desde BD para obtener todas las relaciones (Instructor, Learner)
             Optional<Person> fullPerson = personRepository.findById(authenticatedPerson.getId());
 
             if (fullPerson.isPresent()) {
+                Person person = fullPerson.get();
+
+                if (person.getUserSkills() != null) {
+                    person.getUserSkills().size();
+                }
+
                 return new GlobalResponseHandler().handleResponse(
                         "User profile retrieved successfully",
-                        fullPerson.get(),
+                        person,
                         HttpStatus.OK,
                         request
                 );
@@ -80,14 +69,6 @@ public class PersonProfileRestController {
         }
     }
 
-    /**
-     * Endpoint de salud para verificar que el controlador está funcionando
-     *
-     * Endpoint: GET /persons/health
-     * No requiere autenticación
-     *
-     * @return ResponseEntity indicando que el servicio está activo
-     */
     @GetMapping("/health")
     public ResponseEntity<?> healthCheck() {
         Map<String, Object> response = new HashMap<>();
