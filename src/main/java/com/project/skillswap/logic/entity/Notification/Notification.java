@@ -8,7 +8,7 @@ import java.util.Date;
 
 @Table(name = "notification", indexes = {
         @Index(name = "idx_notification_person", columnList = "person_id"),
-        @Index(name = "idx_notification_person_read", columnList = "person_id, read"),
+        @Index(name = "idx_notification_person_read", columnList = "person_id, is_read"),
         @Index(name = "idx_notification_type", columnList = "type")
 })
 @Entity
@@ -33,7 +33,7 @@ public class Notification {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
 
-    @Column(name = "read")
+    @Column(name = "is_read")
     private Boolean read = false;
 
     @CreationTimestamp

@@ -9,148 +9,85 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Seeder component that creates initial knowledge areas in the database
- */
 @Order(2)
 @Component
 public class KnowledgeAreaSeeder implements ApplicationListener<ContextRefreshedEvent> {
 
-    //#region Dependencies
     private final KnowledgeAreaRepository knowledgeAreaRepository;
-    //#endregion
 
-    //#region Constructor
-    /**
-     * Creates a new KnowledgeAreaSeeder instance
-     *
-     * @param knowledgeAreaRepository the knowledge area repository
-     */
     public KnowledgeAreaSeeder(KnowledgeAreaRepository knowledgeAreaRepository) {
         this.knowledgeAreaRepository = knowledgeAreaRepository;
     }
-    //#endregion
 
-    //#region Event Handling
-    /**
-     * Handles the application context refreshed event to seed initial data
-     *
-     * @param event the context refreshed event
-     */
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
         this.seedKnowledgeAreas();
     }
-    //#endregion
 
-    //#region Seeding Logic
-    /**
-     * Seeds knowledge areas into the database
-     */
     private void seedKnowledgeAreas() {
         List<KnowledgeAreaData> areasToCreate = createKnowledgeAreaDataList();
 
         for (KnowledgeAreaData areaData : areasToCreate) {
             Optional<KnowledgeArea> existingArea = knowledgeAreaRepository.findByName(areaData.name);
+            if (existingArea.isPresent()) continue;
 
-            if (existingArea.isPresent()) {
-                continue;
-            }
-
-            KnowledgeArea area = createKnowledgeArea(areaData);
+            KnowledgeArea area = new KnowledgeArea();
+            area.setName(areaData.name);
+            area.setDescription(areaData.description);
+            area.setIconUrl(areaData.iconUrl);
+            area.setActive(areaData.active);
             knowledgeAreaRepository.save(area);
         }
-
-
     }
 
-    /**
-     * Creates a KnowledgeArea entity from KnowledgeAreaData
-     *
-     * @param data the knowledge area data
-     * @return the created KnowledgeArea entity
-     */
-    private KnowledgeArea createKnowledgeArea(KnowledgeAreaData data) {
-        KnowledgeArea area = new KnowledgeArea();
-        area.setName(data.name);
-        area.setDescription(data.description);
-        area.setIconUrl(data.iconUrl);
-        area.setActive(data.active);
-        return area;
-    }
-
-    /**
-     * Creates the list of knowledge area data to be seeded
-     *
-     * @return list of KnowledgeAreaData objects
-     */
     private List<KnowledgeAreaData> createKnowledgeAreaDataList() {
         List<KnowledgeAreaData> areas = new ArrayList<>();
 
         areas.add(new KnowledgeAreaData(
-                "Programming",
-                "Software development and programming languages",
-                "https://img.icons8.com/color/96/code.png",
+                "Cocina",
+                "Aprende y perfecciona tus habilidades culinarias",
+                "https://img.icons8.com/color/96/chef-hat.png",
                 true
         ));
 
         areas.add(new KnowledgeAreaData(
-                "Design",
-                "Graphic design, UI/UX, and visual arts",
-                "https://img.icons8.com/color/96/design.png",
-                true
-        ));
-
-        areas.add(new KnowledgeAreaData(
-                "Languages",
-                "Foreign language learning and linguistics",
+                "Idiomas",
+                "Desarrolla tus conocimientos en diferentes idiomas y culturas",
                 "https://img.icons8.com/color/96/language.png",
                 true
         ));
 
         areas.add(new KnowledgeAreaData(
-                "Business",
-                "Business management, marketing, and entrepreneurship",
-                "https://img.icons8.com/color/96/business.png",
+                "Programación",
+                "Desarrollo de software y lenguajes de programación",
+                "https://img.icons8.com/color/96/code.png",
                 true
         ));
 
         areas.add(new KnowledgeAreaData(
-                "Arts",
-                "Music, painting, photography, and creative arts",
-                "https://img.icons8.com/color/96/art.png",
+                "Deportes",
+                "Actividad física, entrenamiento y vida saludable",
+                "https://img.icons8.com/?size=100&id=MyDyhaNB2oZy&format=png&color=000000",
                 true
         ));
 
         areas.add(new KnowledgeAreaData(
-                "Science",
-                "Mathematics, physics, chemistry, and natural sciences",
-                "https://img.icons8.com/color/96/science.png",
+                "Arte",
+                "Explora tu creatividad a través del arte y la expresión visual",
+                "https://img.icons8.com/?size=100&id=rufzEhS2OFRa&format=png&color=000000",
                 true
         ));
 
         areas.add(new KnowledgeAreaData(
-                "Health & Fitness",
-                "Physical fitness, nutrition, and wellness",
-                "https://img.icons8.com/color/96/health.png",
-                true
-        ));
-
-        areas.add(new KnowledgeAreaData(
-                "Cooking",
-                "Culinary arts and food preparation",
-                "https://img.icons8.com/color/96/chef-hat.png",
+                "Power Skills",
+                "Desarrolla habilidades blandas y de liderazgo para el éxito personal y profesional",
+                "https://img.icons8.com/?size=100&id=5RO7zCaSnyhS&format=png&color=000000",
                 true
         ));
 
         return areas;
     }
-    //#endregion
 
-    //#region Inner Class
-    /**
-     * Data class holding information for creating knowledge areas
-     */
     private static class KnowledgeAreaData {
         String name;
         String description;
@@ -164,5 +101,4 @@ public class KnowledgeAreaSeeder implements ApplicationListener<ContextRefreshed
             this.active = active;
         }
     }
-    //#endregion
 }
