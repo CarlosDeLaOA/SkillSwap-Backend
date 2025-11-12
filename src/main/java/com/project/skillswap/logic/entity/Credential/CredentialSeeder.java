@@ -150,30 +150,62 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
         List<CredentialData> credentials = new ArrayList<>();
 
         credentials.add(new CredentialData(
-                1L, 2L, 5L,
-                new BigDecimal("95.5"),
-                "https://example.com/badges/python-advanced.png"
+                2L, 2L, 2L,
+                new BigDecimal("92.5"), "https://example.com/badges/python-intermedio.png"
         ));
-
         credentials.add(new CredentialData(
-                1L, 1L, 5L,
-                new BigDecimal("88.0"),
-                "https://example.com/badges/java-fundamentals.png"
+                2L, 5L, 5L,
+                new BigDecimal("88.0"), "https://example.com/badges/react-avanzado.png"
         ));
-
         credentials.add(new CredentialData(
-                1L, 4L, 6L,
-                new BigDecimal("92.3"),
-                "https://example.com/badges/react-expert.png"
+                5L, 18L, 4L,
+                new BigDecimal("95.0"), "https://example.com/badges/caligrafia-japonesa.png"
         ));
-
         credentials.add(new CredentialData(
-                1L, 21L, 7L,
-                new BigDecimal("90.0"),
-                "https://example.com/badges/ml-basics.png"
+                2L, 21L, 20L,
+                new BigDecimal("90.0"), "https://example.com/badges/machine-learning.png"
         ));
+        credentials.add(new CredentialData(2L, 3L, 30L, new BigDecimal("89.0"), "https://example.com/badges/js-moderno.png"));
+        credentials.add(new CredentialData(2L, 12L, 31L, new BigDecimal("91.5"), "https://example.com/badges/espanol-viajes.png"));
+        credentials.add(new CredentialData(5L, 18L, 32L, new BigDecimal("94.0"), "https://example.com/badges/origami-avanzado.png"));
+        credentials.add(new CredentialData(1L, 21L, 33L, new BigDecimal("87.0"), "https://example.com/badges/pandas-basico.png"));
+        credentials.add(new CredentialData(8L, 16L, 34L, new BigDecimal("90.0"), "https://example.com/badges/guitarra-electrica.png"));
+        credentials.add(new CredentialData(1L, 8L, 35L, new BigDecimal("88.5"), "https://example.com/badges/sql-optimizacion.png"));
+        credentials.add(new CredentialData(2L, 7L, 36L, new BigDecimal("92.0"), "https://example.com/badges/algebra-lineal.png"));
+        credentials.add(new CredentialData(1L, 17L, 37L, new BigDecimal("85.0"), "https://example.com/badges/pinyin-basico.png"));
+        credentials.add(new CredentialData(17L, 8L, 38L, new BigDecimal("93.0"), "https://example.com/badges/figma-uiux.png"));
+        credentials.add(new CredentialData(20L, 3L, 39L, new BigDecimal("89.0"), "https://example.com/badges/yoga-iniciacion.png"));
 
-
+        credentials.add(new CredentialData(5L, 12L, 40L, new BigDecimal("90.0"), "https://example.com/badges/espanol-negocios.png"));
+        credentials.add(new CredentialData(8L, 3L, 41L, new BigDecimal("87.5"), "https://example.com/badges/dom-avanzado.png"));
+        credentials.add(new CredentialData(2L, 18L, 42L, new BigDecimal("95.0"), "https://example.com/badges/ikebana-moderna.png"));
+        credentials.add(new CredentialData(13L, 21L, 43L, new BigDecimal("88.0"), "https://example.com/badges/seaborn-visual.png"));
+        credentials.add(new CredentialData(15L, 16L, 44L, new BigDecimal("91.0"), "https://example.com/badges/fingerstyle.png"));
+        credentials.add(new CredentialData(17L, 8L, 45L, new BigDecimal("89.5"), "https://example.com/badges/sql-bi.png"));
+        credentials.add(new CredentialData(1L, 7L, 46L, new BigDecimal("90.0"), "https://example.com/badges/calculo-diferencial.png"));
+        credentials.add(new CredentialData(2L, 17L, 47L, new BigDecimal("86.0"), "https://example.com/badges/mandarin-conversacion.png"));
+        credentials.add(new CredentialData(5L, 8L, 48L, new BigDecimal("92.0"), "https://example.com/badges/branding-visual.png"));
+        credentials.add(new CredentialData(8L, 3L, 49L, new BigDecimal("88.0"), "https://example.com/badges/vinyasa-flow.png"));
+        credentials.add(new CredentialData(1L, 3L, 50L, new BigDecimal("91.0"), "https://example.com/badges/foto-movil.png"));
+        credentials.add(new CredentialData(1L, 7L, 51L, new BigDecimal("89.5"), "https://example.com/badges/microservicios.png"));
+        credentials.add(new CredentialData(8L, 1L, 52L, new BigDecimal("93.0"), "https://example.com/badges/pasta-casera.png"));
+        credentials.add(new CredentialData(13L, 10L, 53L, new BigDecimal("87.0"), "https://example.com/badges/seo-tecnico.png"));
+        credentials.add(new CredentialData(1L, 13L, 54L, new BigDecimal("90.0"), "https://example.com/badges/frances-viajes.png"));
+        credentials.add(new CredentialData(17L, 4L, 55L, new BigDecimal("88.0"), "https://example.com/badges/gtd.png"));
+        credentials.add(new CredentialData(20L, 10L, 56L, new BigDecimal("92.0"), "https://example.com/badges/git-avanzado.png"));
+        credentials.add(new CredentialData(2L, 2L, 57L, new BigDecimal("94.0"), "https://example.com/badges/automatizacion-python.png"));
+        credentials.add(new CredentialData(5L, 8L, 58L, new BigDecimal("90.0"), "https://example.com/badges/tipografia.png"));
+        credentials.add(new CredentialData(8L, 3L, 59L, new BigDecimal("89.0"), "https://example.com/badges/yoga-restaurativo.png"));
+        credentials.add(new CredentialData(13L, 3L, 60L, new BigDecimal("88.5"), "https://example.com/badges/foto-nocturna.png"));
+        credentials.add(new CredentialData(15L, 7L, 61L, new BigDecimal("91.0"), "https://example.com/badges/clean-arch.png"));
+        credentials.add(new CredentialData(17L, 1L, 62L, new BigDecimal("95.0"), "https://example.com/badges/pizza-napoletana.png"));
+        credentials.add(new CredentialData(1L, 10L, 63L, new BigDecimal("87.0"), "https://example.com/badges/google-ads.png"));
+        credentials.add(new CredentialData(2L, 13L, 64L, new BigDecimal("89.0"), "https://example.com/badges/frances-comercial.png"));
+        credentials.add(new CredentialData(5L, 4L, 65L, new BigDecimal("92.0"), "https://example.com/badges/oratoria.png"));
+        credentials.add(new CredentialData(8L, 10L, 66L, new BigDecimal("90.0"), "https://example.com/badges/github-actions.png"));
+        credentials.add(new CredentialData(13L, 2L, 67L, new BigDecimal("93.0"), "https://example.com/badges/python-finanzas.png"));
+        credentials.add(new CredentialData(15L, 8L, 68L, new BigDecimal("91.0"), "https://example.com/badges/motion-graphics.png"));
+        credentials.add(new CredentialData(1L, 3L, 69L, new BigDecimal("88.0"), "https://example.com/badges/yoga-oficina.png"));
         return credentials;
     }
     //#endregion
