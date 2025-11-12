@@ -218,5 +218,33 @@ public class DashboardRepository {
         stats.setPending(rs.getInt("pending"));
         return stats;
     }
+
+    /**
+     * Gets monthly attendance statistics for an instructor
+     *
+     * @param personId Person ID (instructor)
+     * @return List of monthly attendance statistics
+     */
+    public List<MonthlyAttendanceResponse> getMonthlyAttendance(Long personId) {
+        String sql = "CALL sp_get_monthly_attendance(?)";
+        return jdbcTemplate.query(sql, this::mapMonthlyAttendance, personId);
+    }
+
+    /**
+     * Maps ResultSet to MonthlyAttendanceResponse
+     *
+     * @param rs ResultSet
+     * @param rowNum Row number
+     * @return MonthlyAttendanceResponse object
+     * @throws SQLException If mapping fails
+     */
+    private MonthlyAttendanceResponse mapMonthlyAttendance(ResultSet rs, int rowNum) throws SQLException {
+        MonthlyAttendanceResponse attendance = new MonthlyAttendanceResponse();
+        attendance.setMonth(rs.getString("month"));
+        attendance.setPresentes(rs.getInt("presentes"));
+        attendance.setRegistrados(rs.getInt("registrados"));
+        return attendance;
+    }
+
     //#endregion
 }

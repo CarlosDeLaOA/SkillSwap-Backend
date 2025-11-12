@@ -98,5 +98,16 @@ public class DashboardService {
     public List<SkillSessionStatsResponse> getSkillSessionStats(Long personId, String role) {
         return dashboardRepository.getSkillSessionStats(personId, role);
     }
+
+    /**
+     * Gets monthly attendance statistics for an instructor
+     *
+     * @param personId Person ID (instructor)
+     * @return List of monthly attendance statistics
+     */
+    @Transactional(readOnly = true)
+    public List<MonthlyAttendanceResponse> getMonthlyAttendance(Long personId) {
+        return dashboardRepository.getMonthlyAttendance(personId);
+    }
     //#endregion
 }

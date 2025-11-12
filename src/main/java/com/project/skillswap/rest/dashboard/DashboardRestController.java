@@ -305,6 +305,46 @@ public class DashboardRestController {
     }
 
     /**
+     * Gets monthly attendance statistics for authenticated instructor
+     *
+     * Endpoint: GET /dashboard/monthly-attendance
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with monthly attendance data
+     */
+    @GetMapping("/monthly-attendance")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getMonthlyAttendance(HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            List<MonthlyAttendanceResponse> attendance = dashboardService.getMonthlyAttendance(
+                    authenticatedPerson.getId()
+            );
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Monthly attendance retrieved successfully",
+                    attendance,
+                    HttpStatus.OK,
+                    request
+            );
+        } catch (ClassCastException e) {
+            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (Exception e) {
+            System.err.println("Error getting monthly attendance: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving monthly attendance",
+                            "Error retrieving monthly attendance: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Gets session statistics by skill for authenticated learner
      *
      * Endpoint: GET /dashboard/skill-session-stats
