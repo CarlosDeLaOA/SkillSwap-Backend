@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Knowledgearea;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Skill.Skill;
 import jakarta.persistence.*;
 
@@ -9,6 +10,7 @@ import java.util.List;
         @Index(name = "idx_knowledge_area_name", columnList = "name")
 })
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class KnowledgeArea {
 
     //<editor-fold desc="Fields">
@@ -29,6 +31,7 @@ public class KnowledgeArea {
     private Boolean active = true;
 
     @OneToMany(mappedBy = "knowledgeArea", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"knowledgeArea", "learningSessions"})
     private List<Skill> skills;
     //</editor-fold>
 

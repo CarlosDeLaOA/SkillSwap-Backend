@@ -12,14 +12,29 @@ import org.springframework.stereotype.Component;
 @Component
 public class DatabaseInitializer implements CommandLineRunner {
 
+    //#region Dependencies
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    //#endregion
 
+    //#region CommandLineRunner Implementation
+    /**
+     * Executes on application startup to create stored procedures
+     *
+     * @param args Command line arguments
+     * @throws Exception If stored procedure creation fails
+     */
     @Override
     public void run(String... args) throws Exception {
         createStoredProcedures();
     }
+    //#endregion
 
+    //#region Private Methods
+    /**
+     * Creates all stored procedures for dashboard operations
+     * Drops existing procedures before creating new ones
+     */
     private void createStoredProcedures() {
         try {
             dropExistingProcedures();
@@ -37,6 +52,9 @@ public class DatabaseInitializer implements CommandLineRunner {
         }
     }
 
+    /**
+     * Drops existing stored procedures if they exist
+     */
     private void dropExistingProcedures() {
         String[] dropStatements = {
                 "DROP PROCEDURE IF EXISTS sp_get_learning_hours",
@@ -57,6 +75,10 @@ public class DatabaseInitializer implements CommandLineRunner {
         }
     }
 
+    /**
+     * Creates stored procedure to calculate total learning hours
+     * Calculates based on user role (INSTRUCTOR or LEARNER)
+     */
     private void createLearningHoursProcedure() {
         String sql =
                 "CREATE PROCEDURE sp_get_learning_hours(IN p_person_id BIGINT, IN p_role VARCHAR(20)) " +
@@ -66,7 +88,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "        FROM learning_session ls " +
                         "        INNER JOIN instructor i ON ls.instructor_id = i.id " +
                         "        WHERE i.person_id = p_person_id " +
-                        "        AND ls.status = 'COMPLETED'; " +
+                        "        AND ls.status = 'FINISHED'; " +
                         "    ELSE " +
                         "        SELECT COALESCE(SUM(ls.duration_minutes), 0) AS total_minutes " +
                         "        FROM learning_session ls " +
@@ -74,11 +96,11 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "        INNER JOIN learner l ON b.learner_id = l.id " +
                         "        WHERE l.person_id = p_person_id " +
                         "        AND b.attended = TRUE " +
-                        "        AND ls.status = 'COMPLETED'; " +
+                        "        AND ls.status = 'FINISHED'; " +
                         "    END IF; " +
                         "END";
+
         jdbcTemplate.execute(sql);
-        System.out.println("✓ Stored procedure 'sp_get_learning_hours' created");
     }
 
     private void createUpcomingSessionsProcedure() {
@@ -125,10 +147,14 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "        LIMIT 5; " +
                         "    END IF; " +
                         "END";
+
         jdbcTemplate.execute(sql);
-        System.out.println("✓ Stored procedure 'sp_get_upcoming_sessions' created");
     }
 
+    /**
+     * Creates stored procedure to get recent achievements
+     * Returns credentials for LEARNER, feedbacks for INSTRUCTOR
+     */
     private void createRecentAchievementsProcedure() {
         String sql =
                 "CREATE PROCEDURE sp_get_recent_achievements(IN p_person_id BIGINT, IN p_role VARCHAR(20)) " +

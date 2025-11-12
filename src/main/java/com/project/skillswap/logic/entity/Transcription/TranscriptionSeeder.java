@@ -73,8 +73,6 @@ public class TranscriptionSeeder implements ApplicationListener<ContextRefreshed
             Transcription transcription = createTranscription(transcriptionData, session.get());
             transcriptionRepository.save(transcription);
         }
-
-        System.out.println("Transcriptions seeded successfully");
     }
 
     /**

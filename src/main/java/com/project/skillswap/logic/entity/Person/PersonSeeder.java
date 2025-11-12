@@ -150,32 +150,29 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         users.add(new PersonData(
                 "maria.rodriguez@skillswap.com", "Password123!", "María Rodríguez",
                 "https://i.pravatar.cc/150?img=1", "es", null, true, true,
-                true, "maria.paypal@example.com", new BigDecimal("150.00"),
-                true, new BigDecimal("4.8"), 25, new BigDecimal("2500.00"),
-                "Instructora de español con 5 años de experiencia en enseñanza online."
+                true, "maria.paypal@example.com", new BigDecimal("180.00"),
+                true, new BigDecimal("4.9"), 32, new BigDecimal("3200.00"),
+                "Instructora certificada de español con más de 5 años enseñando a extranjeros. Especializada en conversación, gramática y cultura hispanoamericana. Clases dinámicas y personalizadas."
         ));
-
         users.add(new PersonData(
                 "john.smith@skillswap.com", "Password123!!", "John Smith",
                 "https://i.pravatar.cc/150?img=2", "en", null, true, true,
-                false, new BigDecimal("200.00"), 10, 3
+                false, new BigDecimal("250.00"), 15, 5
         ));
-
         users.add(new PersonData(
                 "sophie.chen@skillswap.com", "Password123!", "Sophie Chen",
                 "https://i.pravatar.cc/150?img=3", "en", null, true, true,
-                true, "sophie.paypal@example.com", new BigDecimal("300.00"),
-                true, new BigDecimal("4.9"), 50, new BigDecimal("5000.00"),
-                "Expert in programming languages with focus on Python and JavaScript."
+                true, "sophie.paypal@example.com", new BigDecimal("380.00"),
+                true, new BigDecimal("4.9"), 68, new BigDecimal("7200.00"),
+                "Desarrolladora senior con 8 años de experiencia en Python, JavaScript y React. Mentora en bootcamps y empresas Fortune 500. Enfocada en código limpio y arquitectura escalable."
         ));
-
         users.add(new PersonData(
                 "lucas.santos@skillswap.com", "Password123!", "Lucas Santos",
                 "https://i.pravatar.cc/150?img=4", "pt", null, false, true,
-                true, "lucas.paypal@example.com", new BigDecimal("50.00"),
-                false, new BigDecimal("4.5"), 10, new BigDecimal("800.00"),
-                "Passionate about teaching music and guitar techniques."
-        ));
+                true, "lucas.paypal@example.com", new BigDecimal("90.00"),
+                false, new BigDecimal("4.6"), 14, new BigDecimal("1100.00"),
+                "Músico profesional y profesor de guitarra con 6 años de experiencia. Especializado en estilos latinos, rock y fingerstyle. Clases prácticas y divertidas."
+        ));;
 
         users.add(new PersonData(
                 "emma.wilson@skillswap.com", "Password123!", "Emma Wilson",
@@ -208,9 +205,9 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         users.add(new PersonData(
                 "yuki.tanaka@skillswap.com", "Password123!", "Yuki Tanaka",
                 "https://i.pravatar.cc/150?img=9", "ja", null, true, true,
-                true, "yuki.paypal@example.com", new BigDecimal("500.00"),
-                true, new BigDecimal("5.0"), 60, new BigDecimal("6000.00"),
-                "Expert in traditional Japanese art and calligraphy."
+                true, "yuki.paypal@example.com", new BigDecimal("620.00"),
+                true, new BigDecimal("5.0"), 78, new BigDecimal("8200.00"),
+                "Maestra de arte japonés tradicional: caligrafía, sumi-e, origami e ikebana. Certificada en Kioto. Clases en japonés e inglés con enfoque cultural profundo."
         ));
 
         users.add(new PersonData(
@@ -230,11 +227,11 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
         ));
 
         users.add(new PersonData(
-                "carlos.dela@skillswap.com", "Password123!", "carlos delao",
-                "https://i.pravatar.cc/150?img=11", "ko", "google_oauth_carlos506", true, true,
-                true, "carlosd.paypal@example.com", new BigDecimal("350.00"),
-                true, new BigDecimal("4.8"), 40, new BigDecimal("4000.00"),
-                "Software architecture and system design mentor."
+                "carlos.dela@skillswap.com", "Password123!", "Carlos Delao",
+                "https://i.pravatar.cc/150?img=11", "es", "google_oauth_carlos506", true, true,
+                true, "carlosd.paypal@example.com", new BigDecimal("450.00"),
+                true, new BigDecimal("4.8"), 52, new BigDecimal("5800.00"),
+                "Ingeniero de software senior especializado en arquitectura de microservicios, DevOps y machine learning. Mentor en startups y empresas tecnológicas."
         ));
 
         users.add(new PersonData(
