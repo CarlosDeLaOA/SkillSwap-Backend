@@ -92,4 +92,16 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             @Param("language") String language
     );
     //</editor-fold>
+
+    //<editor-fold desc="Status Queries">
+
+    List<LearningSession> findByStatus(SessionStatus status);
+
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.status = 'FINISHED' " +
+            "ORDER BY ls.scheduledDatetime DESC")
+    List<LearningSession> findFinishedSessionsOrderedByDate();
+
+    Long countByStatus(SessionStatus status);
+    //</editor-fold>
 }
