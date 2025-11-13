@@ -1,5 +1,6 @@
 package com.project.skillswap.rest.person;
 
+import com.project.skillswap.config.CloudinaryService;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
 import com.project.skillswap.logic.entity.http.GlobalResponseHandler;
@@ -11,7 +12,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -30,6 +33,9 @@ public class PersonProfileRestController {
 
     @Autowired
     private PersonRepository personRepository;
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
     /**
      * Obtiene el perfil completo del usuario autenticado
@@ -153,6 +159,193 @@ public class PersonProfileRestController {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error updating language");
             errorResponse.put("message", "Error al actualizar el idioma: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * Actualiza la foto de perfil del usuario autenticado
+     * Endpoint: PUT /persons/me/profile-photo
+     *
+     * @param request HttpServletRequest
+     * @param file Archivo de imagen a subir
+     * @return ResponseEntity con el perfil actualizado
+     */
+    @PutMapping("/me/profile-photo")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateProfilePhoto(
+            HttpServletRequest request,
+            @RequestParam("file") MultipartFile file
+    ) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            System.out.println("📸 [PersonProfileController] Updating profile photo for user: " + authenticatedPerson.getId());
+
+            // Validar que el archivo no esté vacío
+            if (file.isEmpty()) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Invalid file");
+                errorResponse.put("message", "File cannot be empty");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            // Validar que sea una imagen
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Invalid file type");
+                errorResponse.put("message", "Only image files are allowed (jpg, png, gif, webp)");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            // Validar tamaño (máximo 5MB)
+            long maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.getSize() > maxSize) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "File too large");
+                errorResponse.put("message", "File size exceeds 5MB limit");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            // Obtener el usuario completo de la BD
+            Optional<Person> personOptional = personRepository.findById(authenticatedPerson.getId());
+            if (personOptional.isEmpty()) {
+                return new GlobalResponseHandler().handleResponse(
+                        "User not found",
+                        HttpStatus.NOT_FOUND,
+                        request
+                );
+            }
+
+            Person person = personOptional.get();
+
+            // Eliminar foto anterior de Cloudinary (si existe)
+            if (person.getProfilePhotoUrl() != null && !person.getProfilePhotoUrl().isEmpty()) {
+                try {
+                    String oldPublicId = cloudinaryService.extractPublicIdFromUrl(person.getProfilePhotoUrl());
+                    if (oldPublicId != null) {
+                        cloudinaryService.deleteImage(oldPublicId);
+                    }
+                } catch (Exception e) {
+                    System.err.println("⚠️ Warning: Could not delete old profile photo: " + e.getMessage());
+                    // No detenemos el proceso si falla la eliminación
+                }
+            }
+
+            // Subir nueva imagen a Cloudinary
+            String newImageUrl = cloudinaryService.uploadImage(file);
+
+            // Actualizar URL en la base de datos
+            person.setProfilePhotoUrl(newImageUrl);
+            personRepository.save(person);
+
+            System.out.println("✅ Profile photo updated successfully for user " + person.getId());
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Profile photo updated successfully",
+                    person,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (IOException e) {
+            System.err.println("❌ Error uploading image to Cloudinary: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Upload failed");
+            errorResponse.put("message", "Error uploading image: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        } catch (ClassCastException e) {
+            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Invalid authentication type");
+            errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        } catch (Exception e) {
+            System.err.println("❌ Error updating profile photo: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Error updating profile photo");
+            errorResponse.put("message", "Error al actualizar foto de perfil: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+
+    /**
+     * Elimina la foto de perfil del usuario autenticado
+     * Endpoint: DELETE /persons/me/profile-photo
+     *
+     * @param request HttpServletRequest
+     * @return ResponseEntity con el perfil actualizado
+     */
+    @DeleteMapping("/me/profile-photo")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> deleteProfilePhoto(HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            System.out.println("🗑️ [PersonProfileController] Deleting profile photo for user: " + authenticatedPerson.getId());
+
+            // Obtener el usuario completo de la BD
+            Optional<Person> personOptional = personRepository.findById(authenticatedPerson.getId());
+            if (personOptional.isEmpty()) {
+                return new GlobalResponseHandler().handleResponse(
+                        "User not found",
+                        HttpStatus.NOT_FOUND,
+                        request
+                );
+            }
+
+            Person person = personOptional.get();
+
+            // Verificar si tiene foto de perfil
+            if (person.getProfilePhotoUrl() == null || person.getProfilePhotoUrl().isEmpty()) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "No profile photo");
+                errorResponse.put("message", "User does not have a profile photo to delete");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            // Eliminar foto de Cloudinary
+            try {
+                String publicId = cloudinaryService.extractPublicIdFromUrl(person.getProfilePhotoUrl());
+                if (publicId != null) {
+                    cloudinaryService.deleteImage(publicId);
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ Warning: Could not delete photo from Cloudinary: " + e.getMessage());
+                // Continuamos de todas formas para eliminar la referencia en la BD
+            }
+
+            // Eliminar URL de la base de datos
+            person.setProfilePhotoUrl(null);
+            personRepository.save(person);
+
+            System.out.println("✅ Profile photo deleted successfully for user " + person.getId());
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Profile photo deleted successfully",
+                    person,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Invalid authentication type");
+            errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        } catch (Exception e) {
+            System.err.println("❌ Error deleting profile photo: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Error deleting profile photo");
+            errorResponse.put("message", "Error al eliminar foto de perfil: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
