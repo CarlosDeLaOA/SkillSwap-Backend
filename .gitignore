@@ -4,6 +4,21 @@
 # Log file
 *.log
 
+# Gradle
+.gradle/
+build/
+
+# IntelliJ / IDEA
+.idea/
+*.iml
+out/
+
+
+
+# Sistema
+.DS_Store
+Thumbs.db
+
 # BlueJ files
 *.ctxt
 
