@@ -1,4 +1,4 @@
-package com.project.skillswap.logic.entity.Attendancerecord;
+/**package com.project.skillswap.logic.entity.Attendancerecord;
 
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
@@ -116,3 +116,5 @@ public class AttendanceRecordSeeder implements ApplicationListener<ContextRefres
         return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 }
+
+ */
