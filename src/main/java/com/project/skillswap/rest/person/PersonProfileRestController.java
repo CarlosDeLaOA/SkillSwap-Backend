@@ -44,7 +44,6 @@ public class PersonProfileRestController {
             if (fullPerson.isPresent()) {
                 Person person = fullPerson.get();
 
-                // Forzar la carga de userSkills (lazy loading)
                 if (person.getUserSkills() != null) {
                     person.getUserSkills().size();
                 }
@@ -78,7 +77,14 @@ public class PersonProfileRestController {
         }
     }
 
-
+    /**
+     * Actualiza el idioma preferido del usuario autenticado
+     * Endpoint: PUT /persons/me/language
+     *
+     * @param request HttpServletRequest
+     * @param languageRequest Request body con el nuevo idioma
+     * @return ResponseEntity con el perfil actualizado
+     */
     @PutMapping("/me/language")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> updatePreferredLanguage(
@@ -102,14 +108,12 @@ public class PersonProfileRestController {
             Person person = personOptional.get();
             String newLanguage = languageRequest.get("language");
 
-
             if (newLanguage == null || newLanguage.trim().isEmpty()) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Invalid language");
                 errorResponse.put("message", "Language cannot be empty");
                 return ResponseEntity.badRequest().body(errorResponse);
             }
-
 
             if (!isValidLanguageCode(newLanguage)) {
                 Map<String, String> errorResponse = new HashMap<>();
@@ -118,11 +122,10 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-
             person.setPreferredLanguage(newLanguage);
             personRepository.save(person);
 
-            System.out.println("✅ Language updated for user " + person.getId() + ": " + newLanguage);
+            System.out.println(" Language updated for user " + person.getId() + ": " + newLanguage);
 
             return new GlobalResponseHandler().handleResponse(
                     "Language updated successfully",
@@ -147,7 +150,14 @@ public class PersonProfileRestController {
         }
     }
 
-
+    /**
+     * Actualiza la foto de perfil del usuario autenticado
+     * Endpoint: PUT /persons/me/profile-photo
+     *
+     * @param request HttpServletRequest
+     * @param file Archivo de imagen a subir
+     * @return ResponseEntity con el perfil actualizado
+     */
     @PutMapping("/me/profile-photo")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> updateProfilePhoto(
@@ -158,9 +168,8 @@ public class PersonProfileRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println("📸 [PersonProfileController] Updating profile photo for user: " + authenticatedPerson.getId());
+            System.out.println("[PersonProfileController] Updating profile photo for user: " + authenticatedPerson.getId());
 
-            // Validar que el archivo no esté vacío
             if (file.isEmpty()) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Invalid file");
@@ -196,7 +205,7 @@ public class PersonProfileRestController {
             }
 
             Person person = personOptional.get();
-            
+
 
             if (person.getProfilePhotoUrl() != null && !person.getProfilePhotoUrl().isEmpty()) {
                 try {
@@ -205,8 +214,7 @@ public class PersonProfileRestController {
                         cloudinaryService.deleteImage(oldPublicId);
                     }
                 } catch (Exception e) {
-                    System.err.println("⚠️ Warning: Could not delete old profile photo: " + e.getMessage());
-
+                    System.err.println(" Warning: Could not delete old profile photo: " + e.getMessage());
                 }
             }
 
@@ -217,7 +225,7 @@ public class PersonProfileRestController {
             person.setProfilePhotoUrl(newImageUrl);
             personRepository.save(person);
 
-            System.out.println("✅ Profile photo updated successfully for user " + person.getId());
+            System.out.println(" Profile photo updated successfully for user " + person.getId());
 
             return new GlobalResponseHandler().handleResponse(
                     "Profile photo updated successfully",
@@ -250,6 +258,13 @@ public class PersonProfileRestController {
     }
 
 
+    /**
+     * Elimina la foto de perfil del usuario autenticado
+     * Endpoint: DELETE /persons/me/profile-photo
+     *
+     * @param request HttpServletRequest
+     * @return ResponseEntity con el perfil actualizado
+     */
     @DeleteMapping("/me/profile-photo")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> deleteProfilePhoto(HttpServletRequest request) {
@@ -257,9 +272,8 @@ public class PersonProfileRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println("🗑️ [PersonProfileController] Deleting profile photo for user: " + authenticatedPerson.getId());
+            System.out.println("[PersonProfileController] Deleting profile photo for user: " + authenticatedPerson.getId());
 
-            // Obtener el usuario completo de la BD
             Optional<Person> personOptional = personRepository.findById(authenticatedPerson.getId());
             if (personOptional.isEmpty()) {
                 return new GlobalResponseHandler().handleResponse(
@@ -284,11 +298,9 @@ public class PersonProfileRestController {
                     cloudinaryService.deleteImage(publicId);
                 }
             } catch (Exception e) {
-                System.err.println("⚠️ Warning: Could not delete photo from Cloudinary: " + e.getMessage());
-                // Continuamos de todas formas para eliminar la referencia en la BD
+                System.err.println(" Warning: Could not delete photo from Cloudinary: " + e.getMessage());
             }
 
-            // Eliminar URL de la base de datos
             person.setProfilePhotoUrl(null);
             personRepository.save(person);
 
@@ -317,6 +329,10 @@ public class PersonProfileRestController {
         }
     }
 
+    /**
+     * Health check endpoint
+     * Endpoint: GET /persons/health
+     */
     @GetMapping("/health")
     public ResponseEntity<?> healthCheck() {
         Map<String, Object> response = new HashMap<>();
@@ -326,7 +342,11 @@ public class PersonProfileRestController {
         return ResponseEntity.ok(response);
     }
 
-
+    /**
+     * Valida si el código de idioma es válido
+     * @param languageCode Código del idioma (ej: "es", "en")
+     * @return true si es válido, false en caso contrario
+     */
     private boolean isValidLanguageCode(String languageCode) {
         return languageCode.equals("es") || languageCode.equals("en");
     }

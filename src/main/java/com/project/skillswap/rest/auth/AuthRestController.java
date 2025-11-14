@@ -23,7 +23,7 @@ import com.project.skillswap.logic.entity.Instructor.Instructor;
 @RequestMapping("/auth")
 @RestController
 public class AuthRestController {
-
+    //#region Dependencies
     @Autowired
     private PersonRepository personRepository;
 
@@ -35,7 +35,7 @@ public class AuthRestController {
     private final GoogleOAuthService googleOAuthService;
     //#endregion
 
-
+    //#region Constructor
     public AuthRestController(
             JwtService jwtService,
             AuthenticationService authenticationService,
@@ -44,7 +44,17 @@ public class AuthRestController {
         this.authenticationService = authenticationService;
         this.googleOAuthService = googleOAuthService;
     }
+    //#endregion
 
+    //#region Traditional Authentication
+    /**
+     * Acepta JSON con:
+     * { "email": "...", "password": "..." }
+     *  o bien
+     * { "email": "...", "passwordHash": "..." }
+     * Internamente lo mapea a Person.passwordHash para que el AuthenticationService compare
+     * contra el hash de la BD usando passwordEncoder.matches(raw, hash).
+     */
     @PostMapping("/login")
     public ResponseEntity<?> authenticate(@RequestBody Map<String, Object> payload) {
         try {
@@ -204,7 +214,14 @@ public class AuthRestController {
                     ));
         }
     }
+    //#endregion
 
+    //#region Google OAuth Endpoints
+    /**
+     * Endpoint para autenticación con Google OAuth2.
+     * @param requestBody Mapa con code y redirectUri
+     * @return ResponseEntity con JWT y datos del usuario
+     */
     @PostMapping("/google")
     public ResponseEntity<Map<String, Object>> authenticateWithGoogle(@RequestBody Map<String, String> requestBody) {
         try {
@@ -250,7 +267,9 @@ public class AuthRestController {
         }
     }
 
-
+    /**
+     * Obtiene la URL de autorización de Google
+     */
     @GetMapping("/google/url")
     public ResponseEntity<Map<String, String>> getGoogleAuthUrl() {
         String authUrl = "https://accounts.google.com/o/oauth2/v2/auth?" +
@@ -266,7 +285,9 @@ public class AuthRestController {
         return ResponseEntity.ok(response);
     }
 
-
+    /**
+     * Verifica el estado de la sesión de Google
+     */
     @GetMapping("/google/status")
     public ResponseEntity<Map<String, Object>> checkGoogleAuthStatus(@RequestHeader("Authorization") String token) {
         try {
@@ -284,6 +305,9 @@ public class AuthRestController {
         }
     }
 
+    /**
+     * Cierra sesión de Google
+     */
     @PostMapping("/google/logout")
     public ResponseEntity<Map<String, Object>> googleLogout(@RequestHeader("Authorization") String token) {
         try {
@@ -298,7 +322,9 @@ public class AuthRestController {
                     .body(createErrorResponse("Error al cerrar sesión"));
         }
     }
+    //#endregion
 
+    //#region Helper Methods
     private Map<String, Object> createUserResponse(Person person) {
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("id", person.getId());
@@ -316,178 +342,7 @@ public class AuthRestController {
         error.put("success", false);
         return error;
     }
-
-
-    @PostMapping("/google/check-user")
-    public ResponseEntity<Map<String, Object>> checkGoogleUser(@RequestBody Map<String, String> requestBody) {
-        try {
-            String code = requestBody.get("code");
-            String redirectUri = requestBody.get("redirectUri");
-
-            if (code == null || code.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(createErrorResponse("Código de autorización requerido"));
-            }
-
-            if (redirectUri == null || redirectUri.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(createErrorResponse("URI de redirección requerida"));
-            }
-
-            System.out.println("🔵 [CheckUser] Verificando usuario existente...");
-
-
-            Map<String, Object> tokenResponse = googleOAuthService.exchangeCodeForToken(code, redirectUri);
-            String accessToken = (String) tokenResponse.get("accessToken");
-
-
-            Map<String, Object> userInfo = googleOAuthService.getUserInfo(accessToken);
-            String email = (String) userInfo.get("email");
-
-
-            Optional<Person> existingPerson = personRepository.findByEmail(email);
-
-            Map<String, Object> response = new HashMap<>();
-
-            if (existingPerson.isEmpty()) {
-
-                response.put("exists", false);
-                response.put("hasRole", false);
-                response.put("needsRoleSelection", true);
-
-                response.put("userInfo", userInfo);
-                response.put("accessToken", accessToken);
-                System.out.println("🆕 Usuario nuevo: " + email);
-                return ResponseEntity.ok(response);
-            }
-
-            Person person = existingPerson.get();
-            boolean hasLearner = person.getLearner() != null;
-            boolean hasInstructor = person.getInstructor() != null;
-            boolean hasAnyRole = hasLearner || hasInstructor;
-
-            if (!hasAnyRole) {
-
-                response.put("exists", true);
-                response.put("hasRole", false);
-                response.put("needsRoleSelection", true);
-
-                response.put("userInfo", userInfo);
-                response.put("accessToken", accessToken);
-                System.out.println(" Usuario existe sin roles: " + email);
-                return ResponseEntity.ok(response);
-            }
-
-
-            System.out.println(" Usuario existente con roles: " + email);
-
-            // Generar JWT token
-            Map<String, Object> extraClaims = new HashMap<>();
-            extraClaims.put("userId", person.getId());
-            extraClaims.put("rol", person.getRole());
-
-            String jwtToken = jwtService.generateToken(extraClaims, person);
-
-            response.put("exists", true);
-            response.put("hasRole", true);
-            response.put("needsRoleSelection", false);
-            response.put("token", jwtToken);
-            response.put("tokenType", "Bearer");
-            response.put("expiresIn", jwtService.getExpirationTime());
-            response.put("profile", createUserResponse(person));
-            response.put("hasLearner", hasLearner);
-            response.put("hasInstructor", hasInstructor);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            System.err.println(" Error verificando usuario: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Error al verificar usuario: " + e.getMessage()));
-        }
-    }
-
-    @PostMapping("/google/complete-registration-with-userinfo")
-    public ResponseEntity<Map<String, Object>> completeRegistrationWithUserInfo(@RequestBody Map<String, Object> requestBody) {
-        try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> userInfo = (Map<String, Object>) requestBody.get("userInfo");
-            String role = (String) requestBody.get("role");
-
-            if (userInfo == null || userInfo.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(createErrorResponse("Información del usuario requerida"));
-            }
-
-            if (role == null || (!role.equals("LEARNER") && !role.equals("INSTRUCTOR"))) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(createErrorResponse("Rol inválido. Debe ser LEARNER o INSTRUCTOR"));
-            }
-
-            String email = (String) userInfo.get("email");
-            System.out.println("🟢 [CompleteRegistration] Procesando con userInfo para: " + email);
-
-
-            Optional<Person> existingPerson = personRepository.findByEmail(email);
-            Person person;
-
-            if (existingPerson.isPresent()) {
-                person = existingPerson.get();
-                System.out.println("✅ Usuario existente encontrado: " + email);
-            } else {
-
-                person = googleOAuthService.processGoogleUser(userInfo);
-                System.out.println("✅ Nuevo usuario creado: " + email);
-            }
-
-            if (role.equals("LEARNER")) {
-                if (person.getLearner() == null) {
-                    Learner learner = new Learner();
-                    learner.setPerson(person);
-                    person.setLearner(learner);
-                    personRepository.save(person);
-                    System.out.println("✅ Rol LEARNER creado para: " + email);
-                }
-            } else if (role.equals("INSTRUCTOR")) {
-                if (person.getInstructor() == null) {
-                    Instructor instructor = new Instructor();
-                    instructor.setPerson(person);
-                    person.setInstructor(instructor);
-                    personRepository.save(person);
-                    System.out.println("✅ Rol INSTRUCTOR creado para: " + email);
-                }
-            }
-
-
-            Map<String, Object> extraClaims = new HashMap<>();
-            extraClaims.put("userId", person.getId());
-            extraClaims.put("rol", person.getRole());
-
-            String jwtToken = jwtService.generateToken(extraClaims, person);
-
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("token", jwtToken);
-            response.put("tokenType", "Bearer");
-            response.put("expiresIn", jwtService.getExpirationTime());
-            response.put("profile", createUserResponse(person));
-            response.put("requiresOnboarding", true);
-            response.put("selectedRole", role);
-
-            System.out.println(" Registro completado exitosamente para: " + email);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            System.err.println(" Error en registro: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Error al completar el registro: " + e.getMessage()));
-        }
-    }
-
-
+    //#endregion
 
     @PostMapping("/google/complete-registration")
     public ResponseEntity<Map<String, Object>> completeGoogleRegistration(@RequestBody Map<String, String> requestBody) {

@@ -30,7 +30,7 @@ public class CloudinaryService {
      * @throws IOException si hay error en la subida
      */
     public String uploadImage(MultipartFile file) throws IOException {
-        System.out.println("📤 [CloudinaryService] Uploading image: " + file.getOriginalFilename());
+        System.out.println(" [CloudinaryService] Uploading image: " + file.getOriginalFilename());
 
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
                 ObjectUtils.asMap(
@@ -40,7 +40,7 @@ public class CloudinaryService {
                 ));
 
         String imageUrl = uploadResult.get("secure_url").toString();
-        System.out.println("✅ [CloudinaryService] Image uploaded successfully: " + imageUrl);
+        System.out.println(" [CloudinaryService] Image uploaded successfully: " + imageUrl);
 
         return imageUrl;
     }
@@ -52,9 +52,9 @@ public class CloudinaryService {
      * @throws IOException si hay error en la eliminación
      */
     public void deleteImage(String publicId) throws IOException {
-        System.out.println("🗑️ [CloudinaryService] Deleting image with public_id: " + publicId);
+        System.out.println(" [CloudinaryService] Deleting image with public_id: " + publicId);
         Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
-        System.out.println("✅ [CloudinaryService] Image deleted successfully: " + result);
+        System.out.println(" [CloudinaryService] Image deleted successfully: " + result);
     }
 
     /**
@@ -69,22 +69,18 @@ public class CloudinaryService {
         }
 
         try {
-            // Ejemplo: https://res.cloudinary.com/cloud/image/upload/v123/folder/image.jpg
-            // Extraemos: folder/image
             String[] parts = imageUrl.split("/upload/");
             if (parts.length < 2) return null;
 
             String pathAfterUpload = parts[1];
-            // Removemos la versión (v123456/)
             String withoutVersion = pathAfterUpload.replaceFirst("v\\d+/", "");
-            // Removemos la extensión
             String publicId = withoutVersion.replaceFirst("\\.[^.]+$", "");
 
-            System.out.println("🔍 [CloudinaryService] Extracted public_id: " + publicId + " from URL: " + imageUrl);
+            System.out.println("[CloudinaryService] Extracted public_id: " + publicId + " from URL: " + imageUrl);
 
             return publicId;
         } catch (Exception e) {
-            System.err.println("❌ [CloudinaryService] Error extracting public_id: " + e.getMessage());
+            System.err.println(" [CloudinaryService] Error extracting public_id: " + e.getMessage());
             return null;
         }
     }

@@ -18,7 +18,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
-
+/**
+ * REST Controller para gestionar las skills del usuario
+ * Permite agregar, obtener y eliminar skills de las categorías de interés del usuario
+ *
+ * @author SkillSwap Team
+ * @version 2.0.0
+ */
 @RestController
 @RequestMapping("/user-skills")
 @CrossOrigin(origins = "*")
@@ -33,7 +39,13 @@ public class UserSkillRestController {
     @Autowired
     private PersonRepository personRepository;
 
-
+    /**
+     * Obtiene todas las skills activas del usuario autenticado
+     * Endpoint: GET /user-skills
+     *
+     * @param request HttpServletRequest
+     * @return ResponseEntity con la lista de user skills activas
+     */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getUserSkills(HttpServletRequest request) {
@@ -43,7 +55,6 @@ public class UserSkillRestController {
 
             System.out.println(" [UserSkillController] Getting skills for user: " + authenticatedPerson.getId());
 
-            // Obtener todas las skills activas del usuario
             List<UserSkill> userSkills = userSkillRepository
                     .findActiveUserSkillsByPersonId(authenticatedPerson.getId());
 
@@ -72,6 +83,14 @@ public class UserSkillRestController {
         }
     }
 
+    /**
+     * Obtiene una skill específica del usuario autenticado
+     * Endpoint: GET /user-skills/{userSkillId}
+     *
+     * @param request HttpServletRequest
+     * @param userSkillId ID de la UserSkill
+     * @return ResponseEntity con la user skill
+     */
     @GetMapping("/{userSkillId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getUserSkillById(
@@ -93,7 +112,6 @@ public class UserSkillRestController {
             }
 
             UserSkill userSkill = userSkillOptional.get();
-
 
             if (!userSkill.getPerson().getId().equals(authenticatedPerson.getId())) {
                 Map<String, String> errorResponse = new HashMap<>();
@@ -121,7 +139,14 @@ public class UserSkillRestController {
         }
     }
 
-
+    /**
+     * Agrega una o varias skills al usuario autenticado
+     * Endpoint: POST /user-skills
+     *
+     * @param request HttpServletRequest
+     * @param skillRequest Request body con los IDs de las skills a agregar
+     * @return ResponseEntity con las skills agregadas
+     */
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> addUserSkills(
@@ -154,11 +179,9 @@ public class UserSkillRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-
             List<Long> skillIds = skillIdsInt.stream()
                     .map(Integer::longValue)
                     .toList();
-
 
             List<Skill> skills = skillRepository.findAllByIdIn(skillIds);
 
@@ -171,14 +194,11 @@ public class UserSkillRestController {
 
             List<UserSkill> addedUserSkills = new ArrayList<>();
 
-
             for (Skill skill : skills) {
-
                 Optional<UserSkill> existingUserSkill = userSkillRepository
                         .findByPersonAndSkillId(person, skill.getId());
 
                 if (existingUserSkill.isPresent()) {
-
                     UserSkill userSkill = existingUserSkill.get();
                     if (!userSkill.getActive()) {
                         userSkill.setActive(true);
@@ -186,7 +206,7 @@ public class UserSkillRestController {
                         addedUserSkills.add(userSkill);
                     }
                 } else {
-
+                    // Si no existe, crear una nueva
                     UserSkill newUserSkill = new UserSkill();
                     newUserSkill.setPerson(person);
                     newUserSkill.setSkill(skill);
@@ -221,6 +241,14 @@ public class UserSkillRestController {
         }
     }
 
+    /**
+     * Elimina una skill del usuario autenticado
+     * Endpoint: DELETE /user-skills/{userSkillId}
+     *
+     * @param request HttpServletRequest
+     * @param userSkillId ID de la UserSkill a eliminar
+     * @return ResponseEntity con mensaje de éxito
+     */
     @DeleteMapping("/{userSkillId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> deleteUserSkill(
@@ -263,7 +291,7 @@ public class UserSkillRestController {
             userSkill.setActive(false);
             userSkillRepository.save(userSkill);
 
-            System.out.println("✅ Skill removed for user " + authenticatedPerson.getId() + ": UserSkill ID " + userSkillId);
+            System.out.println(" Skill removed for user " + authenticatedPerson.getId() + ": UserSkill ID " + userSkillId);
 
             return new GlobalResponseHandler().handleResponse(
                     "Skill removed successfully",
@@ -287,6 +315,10 @@ public class UserSkillRestController {
         }
     }
 
+    /**
+     * Health check endpoint
+     * Endpoint: GET /user-skills/health
+     */
     @GetMapping("/health")
     public ResponseEntity<?> healthCheck() {
         Map<String, Object> response = new HashMap<>();

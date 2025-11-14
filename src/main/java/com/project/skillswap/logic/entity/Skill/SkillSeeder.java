@@ -51,7 +51,6 @@ public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
     private List<SkillData> createSkillDataList() {
         List<SkillData> skills = new ArrayList<>();
 
-        // 🔪 Cocina
         skills.add(new SkillData("Cocina", "Cocina Italiana", "Preparación de pastas, pizzas y platos tradicionales italianos", true));
         skills.add(new SkillData("Cocina", "Repostería", "Elaboración de postres, pasteles y panadería", true));
         skills.add(new SkillData("Cocina", "Cocina Saludable", "Preparación de comidas nutritivas y balanceadas", true));
@@ -63,7 +62,6 @@ public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
         skills.add(new SkillData("Cocina", "Cocina Mexicana", "Tacos, salsas y sabores picantes auténticos", true));
         skills.add(new SkillData("Cocina", "Barismo", "Preparación profesional de café y bebidas calientes", true));
 
-        // 🗣️ Idiomas
         skills.add(new SkillData("Idiomas", "Inglés", "Comprensión, escritura y conversación en inglés", true));
         skills.add(new SkillData("Idiomas", "Español", "Dominio del idioma español y gramática avanzada", true));
         skills.add(new SkillData("Idiomas", "Francés", "Lengua francesa y cultura francófona", true));
@@ -75,7 +73,6 @@ public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
         skills.add(new SkillData("Idiomas", "Japonés", "Hiragana, katakana y expresiones básicas", true));
         skills.add(new SkillData("Idiomas", "Coreano", "Gramática y escritura del idioma coreano", true));
 
-        // 💻 Programación
         skills.add(new SkillData("Programación", "Java", "Programación orientada a objetos en Java", true));
         skills.add(new SkillData("Programación", "Python", "Desarrollo con Python desde lo básico hasta avanzado", true));
         skills.add(new SkillData("Programación", "JavaScript", "Desarrollo web moderno con JavaScript", true));
@@ -87,7 +84,6 @@ public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
         skills.add(new SkillData("Programación", "Desarrollo Móvil", "Creación de apps con Android e iOS", true));
         skills.add(new SkillData("Programación", "Git y GitHub", "Control de versiones y colaboración en proyectos", true));
 
-        // 🏋️ Deportes
         skills.add(new SkillData("Deportes", "Fútbol", "Técnicas, reglas y entrenamiento en fútbol", true));
         skills.add(new SkillData("Deportes", "Natación", "Técnicas de nado y acondicionamiento físico", true));
         skills.add(new SkillData("Deportes", "Yoga", "Prácticas de respiración, equilibrio y relajación", true));
@@ -99,7 +95,6 @@ public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
         skills.add(new SkillData("Deportes", "Artes Marciales", "Defensa personal y disciplina física", true));
         skills.add(new SkillData("Deportes", "Entrenamiento Funcional", "Ejercicios para mejorar fuerza y movilidad", true));
 
-        // 🎨 Arte
         skills.add(new SkillData("Arte", "Pintura", "Técnicas con acrílico, óleo y acuarela", true));
         skills.add(new SkillData("Arte", "Dibujo", "Sombras, perspectiva y creatividad artística", true));
         skills.add(new SkillData("Arte", "Fotografía", "Composición, luz y retoque digital", true));
@@ -111,7 +106,6 @@ public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
         skills.add(new SkillData("Arte", "Bailes Latinos", "Salsa, bachata y ritmos caribeños", true));
         skills.add(new SkillData("Arte", "Artesanías", "Elaboración de objetos decorativos manuales", true));
 
-        // 🌟 Power Skills
         skills.add(new SkillData("Power Skills", "Comunicación Efectiva", "Expresión verbal y escucha activa", true));
         skills.add(new SkillData("Power Skills", "Liderazgo", "Gestión de equipos y toma de decisiones", true));
         skills.add(new SkillData("Power Skills", "Trabajo en Equipo", "Colaboración y sinergia entre compañeros", true));
