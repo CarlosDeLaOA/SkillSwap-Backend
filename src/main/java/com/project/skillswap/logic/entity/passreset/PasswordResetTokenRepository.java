@@ -1,20 +1,31 @@
 package com.project.skillswap.logic.entity.passreset;
 
-import com.project.skillswap.logic.entity.Person.PasswordResetToken;
+import com.project.skillswap.logic.entity.auth.PasswordResetToken;
 import com.project.skillswap.logic.entity.Person.Person;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
-public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
+public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, java.util.UUID> {
 
-    @Query("""
-     SELECT COUNT(t) FROM PasswordResetToken t
-     WHERE t.person = :person AND t.createdAt >= :since
-  """)
+    // Último token creado (para cooldown)
+    Optional<PasswordResetToken> findTopByPersonOrderByCreatedAtDesc(Person person);
+
+    // Tokens activos (no usados y no expirados)
+    List<PasswordResetToken> findByPersonAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
+            Person person, Instant now);
+
+    // Cuántas solicitudes recientes (para rate limit de request)
+    @Query("select count(t) from PasswordResetToken t " +
+            "where t.person = :person and t.createdAt >= :since")
     long countRequestsSince(@Param("person") Person person, @Param("since") Instant since);
 
-    Optional<PasswordResetToken> findByTokenHash(String tokenHash);
+    // Marcar usados todos los tokens activos (defensa lateral)
+    @Modifying
+    @Query("update PasswordResetToken t set t.used = true, t.usedAt = :now " +
+            "where t.person = :person and t.used = false")
+    int consumeAllActive(@Param("person") Person person, @Param("now") Instant now);
 }
