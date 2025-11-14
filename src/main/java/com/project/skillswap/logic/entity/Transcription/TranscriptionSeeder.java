@@ -115,6 +115,52 @@ public class TranscriptionSeeder implements ApplicationListener<ContextRefreshed
                 "Machine learning fundamentals session. Discussion about supervised learning, unsupervised learning, neural networks, and practical applications of ML in real-world scenarios.",
                 7200
         ));
+        transcriptions.add(new TranscriptionData(
+                75L,
+                "Session on Python Intermediate topics: decorators, generators, and context managers. " +
+                        "We covered how decorators work with @ syntax, creating generator functions with yield, " +
+                        "and implementing context managers using __enter__ and __exit__ methods. " +
+                        "Students practiced creating custom decorators for logging and timing functions. " +
+                        "We also explored the functools module and practical applications of these concepts " +
+                        "in real-world Python development. The session included hands-on coding exercises " +
+                        "and debugging common pitfalls.",
+                9000
+        ));
+
+        transcriptions.add(new TranscriptionData(
+                76L,
+                "Advanced SQL for data analysis session covering window functions, CTEs, and query optimization. " +
+                        "Topics included: ROW_NUMBER(), RANK(), DENSE_RANK(), LAG() and LEAD() functions. " +
+                        "We practiced writing Common Table Expressions (CTEs) for complex queries and learned " +
+                        "about recursive CTEs. Query optimization techniques covered index usage, execution plans, " +
+                        "and avoiding common performance bottlenecks. Students worked on real-world analytics queries " +
+                        "including moving averages, cumulative sums, and year-over-year comparisons.",
+                7200
+        ));
+
+        transcriptions.add(new TranscriptionData(
+                77L,
+                "Git collaborative workflows session focused on team development practices. " +
+                        "We covered Git Flow branching strategy, trunk-based development, and feature branch workflows. " +
+                        "Topics included: creating and managing branches, handling merge conflicts, " +
+                        "rebasing vs merging, code review processes, and pull request best practices. " +
+                        "Students practiced collaborative scenarios including resolving conflicts, " +
+                        "cherry-picking commits, and using git stash effectively. " +
+                        "We also discussed commit message conventions and semantic versioning.",
+                5400
+        ));
+
+        transcriptions.add(new TranscriptionData(
+                78L,
+                "Node.js backend development with Express framework. Complete guide to building RESTful APIs. " +
+                        "Topics covered: Express routing, middleware creation and usage, request/response handling, " +
+                        "error handling patterns, authentication with JWT, password hashing with bcrypt, " +
+                        "database integration with MongoDB and Mongoose, environment variables with dotenv, " +
+                        "input validation with express-validator, and API documentation with Swagger. " +
+                        "Students built a complete CRUD API with authentication and deployed it. " +
+                        "We also covered testing with Jest and Supertest.",
+                10800
+        ));
 
 
         return transcriptions;

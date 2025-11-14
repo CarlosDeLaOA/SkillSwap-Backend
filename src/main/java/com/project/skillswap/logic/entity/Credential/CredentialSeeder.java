@@ -206,6 +206,37 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
         credentials.add(new CredentialData(13L, 2L, 67L, new BigDecimal("93.0"), "https://example.com/badges/python-finanzas.png"));
         credentials.add(new CredentialData(15L, 8L, 68L, new BigDecimal("91.0"), "https://example.com/badges/motion-graphics.png"));
         credentials.add(new CredentialData(1L, 3L, 69L, new BigDecimal("88.0"), "https://example.com/badges/yoga-oficina.png"));
+        credentials.add(new CredentialData(
+                1L,
+                2L,
+                75L,
+                new BigDecimal("91.5"),
+                "https://example.com/badges/john-python-intermediate.png"
+        ));
+
+        credentials.add(new CredentialData(
+                1L,
+                8L,
+                76L,
+                new BigDecimal("88.0"),
+                "https://example.com/badges/john-sql-analysis.png"
+        ));
+
+        credentials.add(new CredentialData(
+                2L,
+                10L,
+                77L,
+                new BigDecimal("93.5"),
+                "https://example.com/badges/john-git-workflows.png"
+        ));
+
+        credentials.add(new CredentialData(
+                1L,
+                3L,
+                78L,
+                new BigDecimal("89.0"),
+                "https://example.com/badges/john-nodejs-backend.png"
+        ));
         return credentials;
     }
     //#endregion
