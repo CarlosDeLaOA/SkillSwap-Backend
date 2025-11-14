@@ -17,10 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * REST Controller for Skill operations
- * Provides endpoints to retrieve skills
- */
+
 @RestController
 @RequestMapping("/skills")
 @CrossOrigin(origins = "*")
@@ -29,19 +26,8 @@ public class SkillRestController {
     //<editor-fold desc="Dependencies">
     @Autowired
     private SkillService skillService;
-    //</editor-fold>
 
-    //<editor-fold desc="GET Endpoints">
-    /**
-     * GET /skills/knowledge-area/{knowledgeAreaId}
-     * Gets all active skills for a specific knowledge area
-     *
-     * Requires: Valid JWT token in Authorization header
-     *
-     * @param knowledgeAreaId ID of the knowledge area
-     * @param request HttpServletRequest for metadata
-     * @return ResponseEntity with list of active skills
-     */
+
     @GetMapping("/knowledge-area/{knowledgeAreaId}")
     public ResponseEntity<?> getSkillsByKnowledgeArea(
             @PathVariable Long knowledgeAreaId,
@@ -77,15 +63,6 @@ public class SkillRestController {
     }
 
 
-    /**
-     * GET /skills
-     * Gets all active skills
-     *
-     * Requires: Valid JWT token in Authorization header
-     *
-     * @param request HttpServletRequest for metadata
-     * @return ResponseEntity with list of all active skills
-     */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getAllSkills(HttpServletRequest request) {
@@ -121,14 +98,7 @@ public class SkillRestController {
         }
     }
 
-    /**
-     * Health check endpoint to verify service status
-     *
-     * Endpoint: GET /skills/health
-     * No authentication required
-     *
-     * @return ResponseEntity with service status
-     */
+
     @GetMapping("/health")
     public ResponseEntity<?> healthCheck() {
         Map<String, Object> response = new HashMap<>();
@@ -137,33 +107,19 @@ public class SkillRestController {
         response.put("message", "Skill Controller is running");
         return ResponseEntity.ok(response);
     }
-    //</editor-fold>
 
-    //<editor-fold desc="Private Helper Methods">
-    /**
-     * Validates that user has either instructor or learner role
-     *
-     * @param person Authenticated person
-     * @throws IllegalStateException If user has no valid role
-     */
     private void validateUserRole(Person person) {
         if (person.getInstructor() == null && person.getLearner() == null) {
             throw new IllegalStateException("User must have either instructor or learner role");
         }
     }
 
-    /**
-     * Creates error response map
-     *
-     * @param error Error type
-     * @param message Error message
-     * @return Map containing error information
-     */
+
     private Map<String, String> createErrorResponse(String error, String message) {
         Map<String, String> errorResponse = new HashMap<>();
         errorResponse.put("error", error);
         errorResponse.put("message", message);
         return errorResponse;
     }
-    //</editor-fold>
+
 }

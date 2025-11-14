@@ -17,6 +17,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import com.project.skillswap.logic.entity.Learner.Learner;
+import com.project.skillswap.logic.entity.Instructor.Instructor;
 
 @RequestMapping("/auth")
 @RestController
@@ -58,6 +60,7 @@ public class AuthRestController {
         try {
             System.out.println("[LOGIN] Iniciando proceso de autenticación...");
 
+
             String email = payload.get("email") != null ? payload.get("email").toString().trim() : null;
 
             if (email == null || email.isEmpty()) {
@@ -69,6 +72,7 @@ public class AuthRestController {
                                 HttpStatus.BAD_REQUEST.value()
                         ));
             }
+
 
             String rawPassword = null;
             if (payload.get("password") != null) {
@@ -86,6 +90,7 @@ public class AuthRestController {
                                 HttpStatus.BAD_REQUEST.value()
                         ));
             }
+
 
             if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
                 System.out.println("[LOGIN] Formato de email inválido: " + email);
@@ -133,9 +138,11 @@ public class AuthRestController {
                         ));
             }
 
+
             Person loginPerson = new Person();
             loginPerson.setEmail(email);
             loginPerson.setPasswordHash(rawPassword);
+
 
             System.out.println("[LOGIN] Llamando al servicio de autenticación...");
             Person authenticatedUser = authenticationService.authenticate(loginPerson);
@@ -152,12 +159,14 @@ public class AuthRestController {
 
             System.out.println("[LOGIN] Usuario autenticado correctamente: " + authenticatedUser.getEmail());
 
+
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("userId", authenticatedUser.getId());
             extraClaims.put("rol", authenticatedUser.getRole());
 
             String jwtToken = jwtService.generateToken(extraClaims, authenticatedUser);
             System.out.println("[LOGIN] Token JWT generado con userId: " + authenticatedUser.getId() + " y rol: " + authenticatedUser.getRole());
+
 
             LoginResponse loginResponse = new LoginResponse();
             loginResponse.setToken(jwtToken);
@@ -335,9 +344,287 @@ public class AuthRestController {
     }
     //#endregion
 
+    @PostMapping("/google/complete-registration")
+    public ResponseEntity<Map<String, Object>> completeGoogleRegistration(@RequestBody Map<String, String> requestBody) {
+        try {
+            String code = requestBody.get("code");
+            String redirectUri = requestBody.get("redirectUri");
+            String role = requestBody.get("role"); // "LEARNER" o "INSTRUCTOR"
+
+            if (code == null || code.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Código de autorización requerido"));
+            }
+
+            if (redirectUri == null || redirectUri.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("URI de redirección requerida"));
+            }
+
+            if (role == null || (!role.equals("LEARNER") && !role.equals("INSTRUCTOR"))) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Rol inválido. Debe ser LEARNER o INSTRUCTOR"));
+            }
+
+            System.out.println("🟢 [CompleteRegistration] Procesando registro con rol: " + role);
+
+
+            Map<String, Object> tokenResponse = googleOAuthService.exchangeCodeForToken(code, redirectUri);
+            String accessToken = (String) tokenResponse.get("accessToken");
+
+
+            Map<String, Object> userInfo = googleOAuthService.getUserInfo(accessToken);
+
+            Boolean verifiedEmail = (Boolean) userInfo.get("verifiedEmail");
+            if (userInfo.get("email") == null || !Boolean.TRUE.equals(verifiedEmail)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Email no verificado"));
+            }
+
+            String email = (String) userInfo.get("email");
+
+
+            Optional<Person> existingPerson = personRepository.findByEmail(email);
+            Person person;
+
+            if (existingPerson.isPresent()) {
+                person = existingPerson.get();
+                System.out.println(" Usuario existente encontrado: " + email);
+            } else {
+
+                person = googleOAuthService.processGoogleUser(userInfo);
+                System.out.println(" Nuevo usuario creado: " + email);
+            }
+
+
+            if (role.equals("LEARNER")) {
+                if (person.getLearner() == null) {
+                    Learner learner = new Learner();
+                    learner.setPerson(person);
+                    person.setLearner(learner);
+                    personRepository.save(person);
+                    System.out.println(" Rol LEARNER creado para: " + email);
+                }
+            } else if (role.equals("INSTRUCTOR")) {
+                if (person.getInstructor() == null) {
+                    Instructor instructor = new Instructor();
+                    instructor.setPerson(person);
+                    person.setInstructor(instructor);
+                    personRepository.save(person);
+                    System.out.println(" Rol INSTRUCTOR creado para: " + email);
+                }
+            }
+
+
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("userId", person.getId());
+            extraClaims.put("rol", person.getRole());
+
+            String jwtToken = jwtService.generateToken(extraClaims, person);
+
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", jwtToken);
+            response.put("tokenType", "Bearer");
+            response.put("expiresIn", jwtService.getExpirationTime());
+            response.put("profile", createUserResponse(person));
+            response.put("requiresOnboarding", true); // SIEMPRE true porque necesita seleccionar skills
+            response.put("selectedRole", role);
+
+            System.out.println(" Registro completado exitosamente para: " + email);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println(" Error en registro completo: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error al completar el registro: " + e.getMessage()));
+        }
+    }
+
     /**
-     * Crea una respuesta de error estructurada
+     * Verifica si un usuario de Google ya existe y tiene roles
+     * POST /auth/google/check-user
+     *
+     * @param requestBody Mapa con code y redirectUri
+     * @return ResponseEntity indicando si el usuario existe y tiene roles
      */
+    @PostMapping("/google/check-user")
+    public ResponseEntity<Map<String, Object>> checkGoogleUser(@RequestBody Map<String, String> requestBody) {
+        try {
+            String code = requestBody.get("code");
+            String redirectUri = requestBody.get("redirectUri");
+
+            if (code == null || code.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Código de autorización requerido"));
+            }
+
+            if (redirectUri == null || redirectUri.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("URI de redirección requerida"));
+            }
+
+            System.out.println("🔵 [CheckUser] Verificando usuario existente...");
+
+            Map<String, Object> tokenResponse = googleOAuthService.exchangeCodeForToken(code, redirectUri);
+            String accessToken = (String) tokenResponse.get("accessToken");
+
+
+            Map<String, Object> userInfo = googleOAuthService.getUserInfo(accessToken);
+            String email = (String) userInfo.get("email");
+
+
+            Optional<Person> existingPerson = personRepository.findByEmail(email);
+
+            Map<String, Object> response = new HashMap<>();
+
+            if (existingPerson.isEmpty()) {
+
+                response.put("exists", false);
+                response.put("hasRole", false);
+                response.put("needsRoleSelection", true);
+
+                response.put("userInfo", userInfo);
+                response.put("accessToken", accessToken);
+                System.out.println("🆕 Usuario nuevo: " + email);
+                return ResponseEntity.ok(response);
+            }
+
+            Person person = existingPerson.get();
+            boolean hasLearner = person.getLearner() != null;
+            boolean hasInstructor = person.getInstructor() != null;
+            boolean hasAnyRole = hasLearner || hasInstructor;
+
+            if (!hasAnyRole) {
+                // Usuario existe pero NO tiene roles - necesita seleccionar rol
+                response.put("exists", true);
+                response.put("hasRole", false);
+                response.put("needsRoleSelection", true);
+
+                response.put("userInfo", userInfo);
+                response.put("accessToken", accessToken);
+                System.out.println("⚠️ Usuario existe sin roles: " + email);
+                return ResponseEntity.ok(response);
+            }
+
+            System.out.println(" Usuario existente con roles: " + email);
+
+
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("userId", person.getId());
+            extraClaims.put("rol", person.getRole());
+
+            String jwtToken = jwtService.generateToken(extraClaims, person);
+
+            response.put("exists", true);
+            response.put("hasRole", true);
+            response.put("needsRoleSelection", false);
+            response.put("token", jwtToken);
+            response.put("tokenType", "Bearer");
+            response.put("expiresIn", jwtService.getExpirationTime());
+            response.put("profile", createUserResponse(person));
+            response.put("hasLearner", hasLearner);
+            response.put("hasInstructor", hasInstructor);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println(" Error verificando usuario: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error al verificar usuario: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Completa el registro usando datos de Google guardados previamente
+     * POST /auth/google/complete-registration-with-userinfo
+     *
+     * @param requestBody Mapa con userInfo y role
+     * @return ResponseEntity con JWT y datos del usuario
+     */
+    @PostMapping("/google/complete-registration-with-userinfo")
+    public ResponseEntity<Map<String, Object>> completeRegistrationWithUserInfo(@RequestBody Map<String, Object> requestBody) {
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> userInfo = (Map<String, Object>) requestBody.get("userInfo");
+            String role = (String) requestBody.get("role");
+
+            if (userInfo == null || userInfo.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Información del usuario requerida"));
+            }
+
+            if (role == null || (!role.equals("LEARNER") && !role.equals("INSTRUCTOR"))) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Rol inválido. Debe ser LEARNER o INSTRUCTOR"));
+            }
+
+            String email = (String) userInfo.get("email");
+            System.out.println("🟢 [CompleteRegistration] Procesando con userInfo para: " + email);
+
+            // 1. Verificar si el usuario ya existe
+            Optional<Person> existingPerson = personRepository.findByEmail(email);
+            Person person;
+
+            if (existingPerson.isPresent()) {
+                person = existingPerson.get();
+                System.out.println(" Usuario existente encontrado: " + email);
+            } else {
+                // 2. Crear nuevo usuario
+                person = googleOAuthService.processGoogleUser(userInfo);
+                System.out.println(" Nuevo usuario creado: " + email);
+            }
+
+            // 3. Crear o actualizar el rol específico
+            if (role.equals("LEARNER")) {
+                if (person.getLearner() == null) {
+                    Learner learner = new Learner();
+                    learner.setPerson(person);
+                    person.setLearner(learner);
+                    personRepository.save(person);
+                    System.out.println(" Rol LEARNER creado para: " + email);
+                }
+            } else if (role.equals("INSTRUCTOR")) {
+                if (person.getInstructor() == null) {
+                    Instructor instructor = new Instructor();
+                    instructor.setPerson(person);
+                    person.setInstructor(instructor);
+                    personRepository.save(person);
+                    System.out.println(" Rol INSTRUCTOR creado para: " + email);
+                }
+            }
+
+            // 4. Generar JWT token
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("userId", person.getId());
+            extraClaims.put("rol", person.getRole());
+
+            String jwtToken = jwtService.generateToken(extraClaims, person);
+
+            // 5. Crear respuesta
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", jwtToken);
+            response.put("tokenType", "Bearer");
+            response.put("expiresIn", jwtService.getExpirationTime());
+            response.put("profile", createUserResponse(person));
+            response.put("requiresOnboarding", true);
+            response.put("selectedRole", role);
+
+            System.out.println(" Registro completado exitosamente para: " + email);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println(" Error en registro: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error al completar el registro: " + e.getMessage()));
+        }
+    }
+
     private Map<String, Object> createErrorResponse(String code, String message, int status) {
         Map<String, Object> error = new HashMap<>();
         error.put("error", true);
@@ -347,4 +634,6 @@ public class AuthRestController {
         error.put("timestamp", System.currentTimeMillis());
         return error;
     }
+
+
 }

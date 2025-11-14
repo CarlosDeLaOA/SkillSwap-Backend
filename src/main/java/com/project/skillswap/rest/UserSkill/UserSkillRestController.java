@@ -54,7 +54,7 @@ public class UserSkillRestController {
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
             System.out.println(" [UserSkillController] Getting skills for user: " + authenticatedPerson.getId());
-            
+
             List<UserSkill> userSkills = userSkillRepository
                     .findActiveUserSkillsByPersonId(authenticatedPerson.getId());
 
@@ -206,6 +206,7 @@ public class UserSkillRestController {
                         addedUserSkills.add(userSkill);
                     }
                 } else {
+                    // Si no existe, crear una nueva
                     UserSkill newUserSkill = new UserSkill();
                     newUserSkill.setPerson(person);
                     newUserSkill.setSkill(skill);

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Controlador REST para gestionar el registro de usuarios.
@@ -344,7 +345,7 @@ public class PersonRestController {
      * @return lista de skill IDs
      */
     private List<Long> findSkillIdsByCategories(List<String> categories) {
-        return categories.stream()
+        List<Long> collect = categories.stream()
                 .flatMap(categoryName ->
                         knowledgeAreaRepository.findByName(categoryName)
                                 .map(knowledgeArea ->
@@ -352,9 +353,10 @@ public class PersonRestController {
                                                 .stream()
                                                 .map(Skill::getId)
                                 )
-                                .orElse(java.util.stream.Stream.empty())
+                                .orElse(Stream.empty())
                 )
                 .collect(Collectors.toList());
+        return collect;
     }
     //#endregion
 }

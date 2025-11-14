@@ -19,13 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * REST Controller para gestionar el perfil de Person autenticado
- * Proporciona endpoints para consultar y actualizar información del usuario
- *
- * @author SkillSwap Team
- * @version 2.0.0
- */
+
 @RestController
 @RequestMapping("/persons")
 @CrossOrigin(origins = "*")
@@ -37,10 +31,7 @@ public class PersonProfileRestController {
     @Autowired
     private CloudinaryService cloudinaryService;
 
-    /**
-     * Obtiene el perfil completo del usuario autenticado
-     * Endpoint: GET /persons/me
-     */
+
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getAuthenticatedPerson(HttpServletRequest request) {
@@ -52,7 +43,7 @@ public class PersonProfileRestController {
 
             if (fullPerson.isPresent()) {
                 Person person = fullPerson.get();
-                
+
                 if (person.getUserSkills() != null) {
                     person.getUserSkills().size();
                 }
@@ -194,6 +185,7 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
+
             long maxSize = 5 * 1024 * 1024; // 5MB
             if (file.getSize() > maxSize) {
                 Map<String, String> errorResponse = new HashMap<>();
@@ -201,6 +193,7 @@ public class PersonProfileRestController {
                 errorResponse.put("message", "File size exceeds 5MB limit");
                 return ResponseEntity.badRequest().body(errorResponse);
             }
+
 
             Optional<Person> personOptional = personRepository.findById(authenticatedPerson.getId());
             if (personOptional.isEmpty()) {
@@ -213,6 +206,7 @@ public class PersonProfileRestController {
 
             Person person = personOptional.get();
 
+
             if (person.getProfilePhotoUrl() != null && !person.getProfilePhotoUrl().isEmpty()) {
                 try {
                     String oldPublicId = cloudinaryService.extractPublicIdFromUrl(person.getProfilePhotoUrl());
@@ -224,7 +218,9 @@ public class PersonProfileRestController {
                 }
             }
 
+
             String newImageUrl = cloudinaryService.uploadImage(file);
+
 
             person.setProfilePhotoUrl(newImageUrl);
             personRepository.save(person);
