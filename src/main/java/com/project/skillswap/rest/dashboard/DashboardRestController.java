@@ -176,6 +176,135 @@ public class DashboardRestController {
     }
 
     /**
+     * Gets skill session statistics for authenticated user
+     * Returns completed and pending sessions grouped by skill
+     *
+     * Endpoint: GET /dashboard/skill-session-stats
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with skill session statistics
+     */
+    @GetMapping("/skill-session-stats")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getSkillSessionStats(HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            String role = determineUserRole(authenticatedPerson);
+
+            List<SkillSessionStatsResponse> stats = dashboardService.getSkillSessionStats(
+                    authenticatedPerson.getId(),
+                    role
+            );
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Skill session stats retrieved successfully",
+                    stats,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (Exception e) {
+            System.err.println("Error getting skill session stats: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving skill session stats",
+                            "Error retrieving skill session stats: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Gets monthly achievements for authenticated learner
+     * Returns credentials and certificates obtained per month
+     *
+     * Endpoint: GET /dashboard/monthly-achievements
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with monthly achievements data
+     */
+    @GetMapping("/monthly-achievements")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getMonthlyAchievements(HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            List<MonthlyAchievementResponse> achievements = dashboardService.getMonthlyAchievements(
+                    authenticatedPerson.getId()
+            );
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Monthly achievements retrieved successfully",
+                    achievements,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (Exception e) {
+            System.err.println("Error getting monthly achievements: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving monthly achievements",
+                            "Error retrieving monthly achievements: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Gets monthly attendance for authenticated instructor
+     * Returns present vs registered attendees per month
+     *
+     * Endpoint: GET /dashboard/monthly-attendance
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with monthly attendance data
+     */
+    @GetMapping("/monthly-attendance")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getMonthlyAttendance(HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            List<MonthlyAttendanceResponse> attendance = dashboardService.getMonthlyAttendance(
+                    authenticatedPerson.getId()
+            );
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Monthly attendance retrieved successfully",
+                    attendance,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (Exception e) {
+            System.err.println("Error getting monthly attendance: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving monthly attendance",
+                            "Error retrieving monthly attendance: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Health check endpoint to verify service status
      *
      * Endpoint: GET /dashboard/health
