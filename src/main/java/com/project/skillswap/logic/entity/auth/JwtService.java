@@ -62,19 +62,15 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> extraClaims = new HashMap<>();
 
-        // Agregar email
         extraClaims.put("email", userDetails.getUsername());
 
-        // Agregar roles/authorities
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
         extraClaims.put("roles", roles);
 
-        // Agregar userId (email como identificador único)
         extraClaims.put("userId", userDetails.getUsername());
 
-        System.out.println("🔵 [JWT] Generando token con claims:");
         System.out.println("   - Email: " + userDetails.getUsername());
         System.out.println("   - Roles: " + roles);
 
