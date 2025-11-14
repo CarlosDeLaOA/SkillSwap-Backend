@@ -66,7 +66,7 @@ public class Person implements UserDetails {
     private Date lastConnection;
 
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"})
+    @JsonIgnoreProperties({"person", "hibernateLazyInitializer", "handler"})
     private List<UserSkill> userSkills;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

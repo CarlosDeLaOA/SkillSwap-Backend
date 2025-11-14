@@ -1,4 +1,4 @@
-package com.project.skillswap.logic.entity.dashboard;
+/**package com.project.skillswap.logic.entity.dashboard;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 /**
  * Seeder que crea los stored procedures automáticamente
  * Order 1 para ejecutarse ANTES que todos los demás seeders
- */
+ /**
 @Order(1)
 @Component
 public class StoredProcedureSeeder implements ApplicationListener<ContextRefreshedEvent> {
@@ -179,3 +179,4 @@ public class StoredProcedureSeeder implements ApplicationListener<ContextRefresh
         }
     }
 }
+ */

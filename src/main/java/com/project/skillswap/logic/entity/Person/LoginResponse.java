@@ -8,7 +8,8 @@ public class LoginResponse {
     private Person authPerson;
     private long expiresIn;
     //#endregion
-
+    private boolean requiresOnboarding;
+    private boolean requiresRoleSelection;
     //#region Getters and Setters
     /**
      * Gets the JWT authentication token.
@@ -64,4 +65,20 @@ public class LoginResponse {
         this.authPerson = authPerson;
     }
     //#endregion
+
+    public boolean isRequiresOnboarding() {
+        return requiresOnboarding;
+    }
+
+    public void setRequiresOnboarding(boolean requiresOnboarding) {
+        this.requiresOnboarding = requiresOnboarding;
+    }
+
+    public boolean isRequiresRoleSelection() {
+        return requiresRoleSelection;
+    }
+
+    public void setRequiresRoleSelection(boolean requiresRoleSelection) {
+        this.requiresRoleSelection = requiresRoleSelection;
+    }
 }

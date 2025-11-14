@@ -45,20 +45,11 @@ public class AuthRestController {
     //#endregion
 
     //#region Traditional Authentication
-    /**
-     * Acepta JSON con:
-     * { "email": "...", "password": "..." }
-     *  o bien
-     * { "email": "...", "passwordHash": "..." }
-     * Internamente lo mapea a Person.passwordHash para que el AuthenticationService compare
-     * contra el hash de la BD usando passwordEncoder.matches(raw, hash).
-     */
     @PostMapping("/login")
     public ResponseEntity<?> authenticate(@RequestBody Map<String, Object> payload) {
         try {
             System.out.println("[LOGIN] Iniciando proceso de autenticación...");
 
-            // Extraer y validar email
             String email = payload.get("email") != null ? payload.get("email").toString().trim() : null;
 
             if (email == null || email.isEmpty()) {
@@ -71,7 +62,6 @@ public class AuthRestController {
                         ));
             }
 
-            // Extraer y validar password
             String rawPassword = null;
             if (payload.get("password") != null) {
                 rawPassword = payload.get("password").toString();
@@ -89,7 +79,6 @@ public class AuthRestController {
                         ));
             }
 
-            // Validar formato de email
             if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
                 System.out.println("[LOGIN] Formato de email inválido: " + email);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -136,12 +125,10 @@ public class AuthRestController {
                         ));
             }
 
-            // Crear objeto Person para autenticación
             Person loginPerson = new Person();
             loginPerson.setEmail(email);
             loginPerson.setPasswordHash(rawPassword);
 
-            // Intentar autenticar
             System.out.println("[LOGIN] Llamando al servicio de autenticación...");
             Person authenticatedUser = authenticationService.authenticate(loginPerson);
 
@@ -157,11 +144,9 @@ public class AuthRestController {
 
             System.out.println("[LOGIN] Usuario autenticado correctamente: " + authenticatedUser.getEmail());
 
-            // Generar JWT token
             String jwtToken = jwtService.generateToken(authenticatedUser);
             System.out.println("[LOGIN] Token JWT generado");
 
-            // Crear respuesta de login
             LoginResponse loginResponse = new LoginResponse();
             loginResponse.setToken(jwtToken);
             loginResponse.setExpiresIn(jwtService.getExpirationTime());
@@ -212,38 +197,133 @@ public class AuthRestController {
 
     //#region Google OAuth Endpoints
     /**
-     * Endpoint para autenticación con Google OAuth2.
+     * NUEVO: Verifica si un usuario ya existe en el sistema
      * @param requestBody Mapa con code y redirectUri
-     * @return ResponseEntity con JWT y datos del usuario
+     * @return ResponseEntity con datos del usuario si existe, 404 si no existe
      */
-    @PostMapping("/google")
-    public ResponseEntity<Map<String, Object>> authenticateWithGoogle(@RequestBody Map<String, String> requestBody) {
+    @PostMapping("/google/check")
+    public ResponseEntity<Map<String, Object>> checkExistingGoogleUser(@RequestBody Map<String, String> requestBody) {
         try {
+            System.out.println("[GOOGLE-CHECK] Verificando usuario existente...");
+
             String code = requestBody.get("code");
             String redirectUri = requestBody.get("redirectUri");
 
             if (code == null || code.trim().isEmpty()) {
+                System.out.println("[GOOGLE-CHECK] Código de autorización faltante");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(createErrorResponse("Código de autorización requerido"));
             }
 
             if (redirectUri == null || redirectUri.trim().isEmpty()) {
+                System.out.println("[GOOGLE-CHECK] URI de redirección faltante");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(createErrorResponse("URI de redirección requerida"));
             }
 
+            // Obtener token e información del usuario
+            Map<String, Object> tokenResponse = googleOAuthService.exchangeCodeForToken(code, redirectUri);
+            String accessToken = (String) tokenResponse.get("accessToken");
+            Map<String, Object> userInfo = googleOAuthService.getUserInfo(accessToken);
+
+            String email = (String) userInfo.get("email");
+
+            // Verificar si el usuario existe
+            Optional<Person> existingPerson = personRepository.findByEmail(email);
+
+            if (existingPerson.isPresent()) {
+                System.out.println("[GOOGLE-CHECK] Usuario existente encontrado: " + email);
+
+                // Usuario existe, autenticar y devolver datos
+                Person person = existingPerson.get();
+
+                // Actualizar última conexión
+                person.setLastConnection(
+                        new java.util.Date()
+                );
+                personRepository.save(person);
+
+                String jwtToken = jwtService.generateToken(person);
+
+                Map<String, Object> response = new HashMap<>();
+                response.put("token", jwtToken);
+                response.put("tokenType", "Bearer");
+                response.put("expiresIn", jwtService.getExpirationTime());
+                response.put("profile", createUserResponse(person));
+                response.put("requiresOnboarding", googleOAuthService.requiresOnboarding(person));
+                response.put("userExists", true);
+
+                return ResponseEntity.ok(response);
+            } else {
+                System.out.println("[GOOGLE-CHECK] Usuario NO existe: " + email);
+
+                // Usuario no existe, devolver 404 para que el frontend muestre el popup
+                Map<String, Object> response = new HashMap<>();
+                response.put("userExists", false);
+                response.put("message", "Usuario no registrado");
+
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+        } catch (Exception e) {
+            System.err.println("[GOOGLE-CHECK] Error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error al verificar usuario: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Endpoint para autenticación con Google OAuth2 con selección de rol.
+     * @param requestBody Mapa con code, redirectUri y role (opcional para usuarios existentes)
+     * @return ResponseEntity con JWT y datos del usuario
+     */
+    @PostMapping("/google")
+    public ResponseEntity<Map<String, Object>> authenticateWithGoogle(@RequestBody Map<String, String> requestBody) {
+        try {
+            System.out.println("[GOOGLE-AUTH] Iniciando autenticación con Google");
+
+            String code = requestBody.get("code");
+            String redirectUri = requestBody.get("redirectUri");
+            String role = requestBody.get("role"); // ← Rol (puede ser null para usuarios existentes)
+
+            if (code == null || code.trim().isEmpty()) {
+                System.out.println("[GOOGLE-AUTH] Código de autorización faltante");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Código de autorización requerido"));
+            }
+
+            if (redirectUri == null || redirectUri.trim().isEmpty()) {
+                System.out.println("[GOOGLE-AUTH] URI de redirección faltante");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("URI de redirección requerida"));
+            }
+
+            System.out.println("[GOOGLE-AUTH] Intercambiando código por token...");
             Map<String, Object> tokenResponse = googleOAuthService.exchangeCodeForToken(code, redirectUri);
             String accessToken = (String) tokenResponse.get("accessToken");
 
+            System.out.println("[GOOGLE-AUTH] Obteniendo información del usuario...");
             Map<String, Object> userInfo = googleOAuthService.getUserInfo(accessToken);
 
             Boolean verifiedEmail = (Boolean) userInfo.get("verifiedEmail");
             if (userInfo.get("email") == null || !Boolean.TRUE.equals(verifiedEmail)) {
+                System.out.println("[GOOGLE-AUTH] Email no verificado");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(createErrorResponse("Email no verificado"));
             }
 
-            Person person = googleOAuthService.processGoogleUser(userInfo);
+            // Procesar usuario con o sin rol
+            Person person;
+            if (role != null && !role.trim().isEmpty()) {
+                System.out.println("[GOOGLE-AUTH] Procesando nuevo usuario con rol: " + role);
+                person = googleOAuthService.processGoogleUser(userInfo, role);
+            } else {
+                System.out.println("[GOOGLE-AUTH] Procesando usuario existente sin rol");
+                person = googleOAuthService.processGoogleUser(userInfo, null);
+            }
+
+            System.out.println("[GOOGLE-AUTH] Generando token JWT...");
             String jwtToken = jwtService.generateToken(person);
 
             Map<String, Object> response = new HashMap<>();
@@ -253,17 +333,17 @@ public class AuthRestController {
             response.put("profile", createUserResponse(person));
             response.put("requiresOnboarding", googleOAuthService.requiresOnboarding(person));
 
+            System.out.println("[GOOGLE-AUTH] Autenticación exitosa para: " + person.getEmail());
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
+            System.err.println("[GOOGLE-AUTH] Error: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error al autenticar con Google: " + e.getMessage()));
         }
     }
 
-    /**
-     * Obtiene la URL de autorización de Google
-     */
     @GetMapping("/google/url")
     public ResponseEntity<Map<String, String>> getGoogleAuthUrl() {
         String authUrl = "https://accounts.google.com/o/oauth2/v2/auth?" +
@@ -279,9 +359,6 @@ public class AuthRestController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Verifica el estado de la sesión de Google
-     */
     @GetMapping("/google/status")
     public ResponseEntity<Map<String, Object>> checkGoogleAuthStatus(@RequestHeader("Authorization") String token) {
         try {
@@ -299,9 +376,6 @@ public class AuthRestController {
         }
     }
 
-    /**
-     * Cierra sesión de Google
-     */
     @PostMapping("/google/logout")
     public ResponseEntity<Map<String, Object>> googleLogout(@RequestHeader("Authorization") String token) {
         try {
@@ -327,8 +401,14 @@ public class AuthRestController {
         userMap.put("profileImage", person.getProfilePhotoUrl());
         userMap.put("preferredLanguage", person.getPreferredLanguage());
         userMap.put("oauthProvider", person.getGoogleOauthId() != null ? "google" : null);
+
+        // ✅ flags de rol
+        userMap.put("hasLearner", person.getLearner() != null);
+        userMap.put("hasInstructor", person.getInstructor() != null);
+
         return userMap;
     }
+
 
     private Map<String, Object> createErrorResponse(String message) {
         Map<String, Object> error = new HashMap<>();
@@ -336,11 +416,7 @@ public class AuthRestController {
         error.put("success", false);
         return error;
     }
-    //#endregion
 
-    /**
-     * Crea una respuesta de error estructurada
-     */
     private Map<String, Object> createErrorResponse(String code, String message, int status) {
         Map<String, Object> error = new HashMap<>();
         error.put("error", true);
@@ -350,4 +426,5 @@ public class AuthRestController {
         error.put("timestamp", System.currentTimeMillis());
         return error;
     }
+    //#endregion
 }

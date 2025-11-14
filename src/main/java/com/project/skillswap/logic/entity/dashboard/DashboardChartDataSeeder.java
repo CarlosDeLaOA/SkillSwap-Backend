@@ -1,4 +1,4 @@
-package com.project.skillswap.logic.entity.dashboard;
+/**package com.project.skillswap.logic.entity.dashboard;
 
 import com.project.skillswap.logic.entity.Booking.Booking;
 import com.project.skillswap.logic.entity.Booking.BookingRepository;
@@ -22,7 +22,7 @@ import java.util.Random;
 /**
  * Seeder para distribuir TODOS los datos en los últimos 4 meses
  * Order 11 para ejecutarse DESPUÉS de todos los seeders existentes
- */
+ /**
 @Order(11)
 @Component
 public class DashboardChartDataSeeder implements ApplicationListener<ContextRefreshedEvent> {
@@ -59,7 +59,7 @@ public class DashboardChartDataSeeder implements ApplicationListener<ContextRefr
     /**
      * Distribuye TODAS las credenciales en los últimos 4 meses
      * SIN IMPORTAR si ya tienen fecha
-     */
+    /**
     private void distribuirTodasLasCredenciales() {
         System.out.println("\n📅 DISTRIBUYENDO TODAS LAS CREDENCIALES...");
 
@@ -98,7 +98,7 @@ public class DashboardChartDataSeeder implements ApplicationListener<ContextRefr
 
     /**
      * Actualiza TODOS los bookings con attended
-     */
+     /**
     private void actualizarTodosLosBookings() {
         System.out.println("\n👥 ACTUALIZANDO TODOS LOS BOOKINGS...");
 
@@ -136,7 +136,7 @@ public class DashboardChartDataSeeder implements ApplicationListener<ContextRefr
 
     /**
      * Muestra la distribución de credenciales por mes
-     */
+     /**
     private void mostrarDistribucionCredenciales() {
         System.out.println("\n📊 Distribución de Credenciales por Mes:");
 
@@ -165,7 +165,7 @@ public class DashboardChartDataSeeder implements ApplicationListener<ContextRefr
 
     /**
      * Muestra la distribución de asistencia
-     */
+     /**
     private void mostrarDistribucionAsistencia() {
         System.out.println("\n📊 Distribución de Asistencia:");
 
@@ -186,8 +186,10 @@ public class DashboardChartDataSeeder implements ApplicationListener<ContextRefr
 
     /**
      * Convierte LocalDateTime a Date
-     */
+     /**
     private Date toDate(LocalDateTime localDateTime) {
         return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 }
+
+   */

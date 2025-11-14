@@ -1,4 +1,4 @@
-package com.project.skillswap.logic.entity.LearningSession;
+/**package com.project.skillswap.logic.entity.LearningSession;
 
 import com.project.skillswap.logic.entity.Booking.Booking;
 import com.project.skillswap.logic.entity.Booking.BookingRepository;
@@ -23,7 +23,7 @@ import java.util.*;
 
 /**
  * Seeder específico para agregar datos de prueba para el componente Skills Progress
- */
+ /**
 @Order(8)
 @Component
 public class SkillsProgressDataSeeder implements ApplicationListener<ContextRefreshedEvent> {
@@ -218,3 +218,4 @@ public class SkillsProgressDataSeeder implements ApplicationListener<ContextRefr
         return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 }
+  */

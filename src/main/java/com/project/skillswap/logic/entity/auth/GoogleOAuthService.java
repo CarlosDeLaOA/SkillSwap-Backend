@@ -2,9 +2,14 @@ package com.project.skillswap.logic.entity.auth;
 
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
+import com.project.skillswap.logic.entity.Instructor.Instructor;
+import com.project.skillswap.logic.entity.Instructor.InstructorRepository;
+import com.project.skillswap.logic.entity.Learner.Learner;
+import com.project.skillswap.logic.entity.Learner.LearnerRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -27,6 +32,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.time.ZoneId;
 import java.util.Date;
+import java.math.BigDecimal;
 
 @Service
 public class GoogleOAuthService {
@@ -45,15 +51,15 @@ public class GoogleOAuthService {
     private final RestTemplate restTemplate;
     private final PersonRepository personRepository;
     private final ObjectMapper objectMapper;
+
+    @Autowired
+    private InstructorRepository instructorRepository;
+
+    @Autowired
+    private LearnerRepository learnerRepository;
     //#endregion
 
     //#region Constructor
-    /**
-     * Constructor del servicio de Google OAuth.
-     *
-     * @param restTemplate Cliente REST para llamadas HTTP
-     * @param personRepository Repositorio de personas
-     */
     public GoogleOAuthService(RestTemplate restTemplate, PersonRepository personRepository) {
         this.restTemplate = restTemplate;
         this.personRepository = personRepository;
@@ -62,14 +68,6 @@ public class GoogleOAuthService {
     //#endregion
 
     //#region OAuth Flow Methods
-    /**
-     * Intercambia el código de autorización por un access token de Google.
-     *
-     * @param code Código de autorización de Google
-     * @param redirectUri URI de redirección
-     * @return Mapa con el access token y datos relacionados
-     * @throws RuntimeException si falla la obtención del token
-     */
     public Map<String, Object> exchangeCodeForToken(String code, String redirectUri) {
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -105,13 +103,6 @@ public class GoogleOAuthService {
         }
     }
 
-    /**
-     * Obtiene la información del usuario desde Google.
-     *
-     * @param accessToken Token de acceso de Google
-     * @return Mapa con información del usuario de Google
-     * @throws RuntimeException si falla la obtención de información
-     */
     public Map<String, Object> getUserInfo(String accessToken) {
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -146,32 +137,31 @@ public class GoogleOAuthService {
 
     //#region User Management Methods
     /**
-     * Procesa el login o registro del usuario con datos de Google.
-     * Si el usuario existe, actualiza su información. Si no existe, lo crea.
+     * Procesa el login o registro del usuario con datos de Google y rol opcional.
+     * Si el usuario existe, actualiza su información. Si no existe, lo crea con el rol especificado.
      *
      * @param userInfo Mapa con información del usuario de Google
+     * @param role Rol seleccionado por el usuario ("LEARNER" o "INSTRUCTOR"), puede ser null para usuarios existentes
      * @return Usuario creado o actualizado
      * @throws IOException si falla el procesamiento de la imagen
      */
-    public Person processGoogleUser(Map<String, Object> userInfo) throws IOException {
+    public Person processGoogleUser(Map<String, Object> userInfo, String role) throws IOException {
         String email = (String) userInfo.get("email");
         Optional<Person> existingPerson = personRepository.findByEmail(email);
 
         if (existingPerson.isPresent()) {
+            System.out.println("[GOOGLE-OAUTH] Usuario existente encontrado: " + email);
             return updateExistingUser(existingPerson.get(), userInfo);
         } else {
-            return createNewUser(userInfo);
+            // Si es un nuevo usuario, el rol es obligatorio
+            if (role == null || role.trim().isEmpty()) {
+                throw new IllegalArgumentException("El rol es requerido para nuevos usuarios");
+            }
+            System.out.println("[GOOGLE-OAUTH] Creando nuevo usuario con rol: " + role);
+            return createNewUser(userInfo, role);
         }
     }
 
-    /**
-     * Actualiza un usuario existente con datos de Google.
-     *
-     * @param person Usuario existente
-     * @param userInfo Mapa con información actualizada de Google
-     * @return Usuario actualizado
-     * @throws IOException si falla el procesamiento de la imagen
-     */
     private Person updateExistingUser(Person person, Map<String, Object> userInfo) throws IOException {
         String name = (String) userInfo.get("name");
         if (name != null && !name.equals(person.getFullName())) {
@@ -195,13 +185,16 @@ public class GoogleOAuthService {
     }
 
     /**
-     * Crea un nuevo usuario con datos de Google.
+     * Crea un nuevo usuario con datos de Google y el rol especificado.
      *
      * @param userInfo Mapa con información del usuario de Google
-     * @return Nuevo usuario creado
+     * @param role Rol del usuario ("LEARNER" o "INSTRUCTOR")
+     * @return Nuevo usuario creado con su rol asignado
      * @throws IOException si falla el procesamiento de la imagen
      */
-    private Person createNewUser(Map<String, Object> userInfo) throws IOException {
+    private Person createNewUser(Map<String, Object> userInfo, String role) throws IOException {
+        System.out.println("[GOOGLE-OAUTH] Iniciando creación de usuario con rol: " + role);
+
         Person newPerson = new Person();
         newPerson.setEmail((String) userInfo.get("email"));
         newPerson.setFullName((String) userInfo.get("name"));
@@ -214,9 +207,6 @@ public class GoogleOAuthService {
                 Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant())
         );
         newPerson.setActive(true);
-
-        // CRÍTICO: Establecer passwordHash para usuarios OAuth
-        // Los usuarios OAuth no pueden hacer login con contraseña tradicional
         newPerson.setPasswordHash("OAUTH_USER_NO_PASSWORD");
 
         String picture = (String) userInfo.get("picture");
@@ -225,16 +215,54 @@ public class GoogleOAuthService {
             newPerson.setProfilePhotoUrl(profileImagePath);
         }
 
-        return personRepository.save(newPerson);
+        // Guardar Person primero
+        Person savedPerson = personRepository.save(newPerson);
+        System.out.println("[GOOGLE-OAUTH] Person guardado con ID: " + savedPerson.getId());
+
+        // Crear el rol correspondiente
+        if ("INSTRUCTOR".equalsIgnoreCase(role)) {
+            createInstructor(savedPerson);
+        } else {
+            createLearner(savedPerson);
+        }
+
+        return savedPerson;
     }
 
     /**
-     * Descarga y redimensiona la imagen de perfil de Google.
-     *
-     * @param imageUrl URL de la imagen de perfil de Google
-     * @return Ruta local de la imagen procesada
-     * @throws IOException si falla la descarga o procesamiento
+     * Crea un Instructor para el usuario especificado
      */
+    private void createInstructor(Person person) {
+        System.out.println("[GOOGLE-OAUTH] Creando Instructor para person ID: " + person.getId());
+
+        Instructor instructor = new Instructor();
+        instructor.setPerson(person);
+        instructor.setSkillcoinsBalance(BigDecimal.ZERO);
+        instructor.setVerifiedAccount(false);
+        instructor.setAverageRating(BigDecimal.ZERO);
+        instructor.setSessionsTaught(0);
+        instructor.setTotalEarnings(BigDecimal.ZERO);
+
+        instructorRepository.save(instructor);
+        System.out.println("[GOOGLE-OAUTH] Instructor creado exitosamente");
+    }
+
+    /**
+     * Crea un Learner para el usuario especificado
+     */
+    private void createLearner(Person person) {
+        System.out.println("[GOOGLE-OAUTH] Creando Learner para person ID: " + person.getId());
+
+        Learner learner = new Learner();
+        learner.setPerson(person);
+        learner.setSkillcoinsBalance(BigDecimal.ZERO);
+        learner.setCompletedSessions(0);
+        learner.setCredentialsObtained(0);
+
+        learnerRepository.save(learner);
+        System.out.println("[GOOGLE-OAUTH] Learner creado exitosamente");
+    }
+
     private String downloadAndResizeProfileImage(String imageUrl) throws IOException {
         URL url = new URL(imageUrl);
         BufferedImage originalImage = ImageIO.read(url);
@@ -258,14 +286,6 @@ public class GoogleOAuthService {
         return UPLOAD_DIR + fileName;
     }
 
-    /**
-     * Redimensiona una imagen a las dimensiones especificadas.
-     *
-     * @param originalImage Imagen original
-     * @param targetWidth Ancho objetivo
-     * @param targetHeight Alto objetivo
-     * @return Imagen redimensionada
-     */
     private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
         Image scaledImage = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
         BufferedImage resizedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
@@ -275,14 +295,12 @@ public class GoogleOAuthService {
         return resizedImage;
     }
 
-    /**
-     * Valida si un usuario necesita completar el proceso de onboarding.
-     *
-     * @param person Usuario a validar
-     * @return true si necesita onboarding, false en caso contrario
-     */
     public boolean requiresOnboarding(Person person) {
-        return person.getPreferredLanguage() == null || person.getPreferredLanguage().isEmpty();
+        boolean noLanguage = person.getPreferredLanguage() == null || person.getPreferredLanguage().isEmpty();
+
+        boolean noSkills = (person.getUserSkills() == null || person.getUserSkills().isEmpty());
+
+        return noLanguage || noSkills;
     }
 
 }
