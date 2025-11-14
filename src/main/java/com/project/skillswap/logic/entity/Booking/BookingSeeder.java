@@ -218,6 +218,50 @@ public class BookingSeeder implements ApplicationListener<ContextRefreshedEvent>
                 "https://meet.google.com/clara-motion-067", true));
         bookings.add(new BookingData(69L, 17L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
                 "https://meet.google.com/marco-oficina-069", true));
+        bookings.add(new BookingData(70L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/carlos-datascience-201", false));
+
+        bookings.add(new BookingData(71L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/carlos-devops-202", false));
+
+        bookings.add(new BookingData(72L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/carlos-mlops-203", false));
+
+        bookings.add(new BookingData(73L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/carlos-jsasync-204", false));
+
+        bookings.add(new BookingData(74L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/carlos-reactts-205", false));
+
+        bookings.add(new BookingData(75L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/carlos-pyinter-101", true));
+
+        bookings.add(new BookingData(76L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/carlos-sqlanalysis-102", true));
+
+        bookings.add(new BookingData(77L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/carlos-gitflow-103", true));
+
+        bookings.add(new BookingData(78L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/carlos-nodejs-104", true));
+
+        bookings.add(new BookingData(1L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/maria-esp-001", true));
+
+        bookings.add(new BookingData(4L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/yuki-cal-201", true));
+
+        bookings.add(new BookingData(50L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/ana-foto-movil-050", true));
+
+        bookings.add(new BookingData(52L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/isa-pasta-054", true));
+
+        bookings.add(new BookingData(55L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/sara-gtd-060", true));
+
+        bookings.add(new BookingData(39L, 1L, BookingType.INDIVIDUAL, BookingStatus.CONFIRMED,
+                "https://meet.google.com/marco-yoga-001", true));
         return bookings;
     }
     //#endregion

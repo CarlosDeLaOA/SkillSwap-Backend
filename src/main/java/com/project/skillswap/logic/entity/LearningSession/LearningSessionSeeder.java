@@ -304,6 +304,52 @@ public class LearningSessionSeeder implements ApplicationListener<ContextRefresh
                 "Estiramientos en silla para aliviar tensiones diarias.",
                 toDate(now.plusDays(3)), 45, SessionType.SCHEDULED, 25, false, BigDecimal.ZERO, "pt", SessionStatus.SCHEDULED,
                 "https://meet.google.com/marco-oficina-069"));
+
+        sessions.add(new LearningSessionData(9L, 2L, "Python para Data Science",
+                "Pandas, NumPy, visualización de datos y análisis exploratorio.",
+                toDate(now.plusDays(5)), 180, SessionType.SCHEDULED, 15, true, new BigDecimal("28.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-datascience-201"));
+
+        sessions.add(new LearningSessionData(9L, 10L, "DevOps con Docker y Kubernetes",
+                "Contenedores, orquestación y despliegue en la nube.",
+                toDate(now.plusDays(10)), 150, SessionType.SCHEDULED, 12, true, new BigDecimal("32.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-devops-202"));
+
+        sessions.add(new LearningSessionData(9L, 21L, "MLOps: ML en Producción",
+                "Pipelines de ML, monitoreo de modelos y CI/CD para Data Science.",
+                toDate(now.plusDays(15)), 200, SessionType.SCHEDULED, 10, true, new BigDecimal("40.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-mlops-203"));
+
+        sessions.add(new LearningSessionData(9L, 3L, "JavaScript Avanzado: Async/Await",
+                "Promesas, async/await, event loop y manejo de errores asíncronos.",
+                toDate(now.plusDays(12)), 120, SessionType.SCHEDULED, 20, true, new BigDecimal("22.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-jsasync-204"));
+
+        sessions.add(new LearningSessionData(9L, 5L, "React + TypeScript",
+                "Desarrollo con React usando TypeScript para mayor robustez.",
+                toDate(now.plusDays(18)), 180, SessionType.SCHEDULED, 15, true, new BigDecimal("35.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-reactts-205"));
+
+        sessions.add(new LearningSessionData(9L, 2L, "Python Intermedio: Decoradores",
+                "Decoradores, generadores, context managers y programación funcional.",
+                toDate(now.minusDays(45)), 150, SessionType.SCHEDULED, 15, true, new BigDecimal("25.00"), "es", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-pyinter-101"));
+
+        sessions.add(new LearningSessionData(9L, 8L, "SQL para Análisis de Datos",
+                "Window functions, CTEs, optimización de queries complejas.",
+                toDate(now.minusDays(38)), 120, SessionType.SCHEDULED, 12, true, new BigDecimal("20.00"), "es", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-sqlanalysis-102"));
+
+        sessions.add(new LearningSessionData(9L, 10L, "Git Colaborativo: Workflows",
+                "Git flow, trunk-based development y resolución de conflictos.",
+                toDate(now.minusDays(32)), 90, SessionType.SCHEDULED, 18, false, BigDecimal.ZERO, "es", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-gitflow-103"));
+
+        sessions.add(new LearningSessionData(9L, 3L, "Node.js Backend con Express",
+                "APIs RESTful, middleware, autenticación y conexión a bases de datos.",
+                toDate(now.minusDays(28)), 180, SessionType.SCHEDULED, 12, true, new BigDecimal("30.00"), "es", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-nodejs-104"));
+
         return sessions;
     }
 
