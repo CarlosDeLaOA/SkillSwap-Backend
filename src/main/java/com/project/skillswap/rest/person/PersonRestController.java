@@ -6,8 +6,13 @@ import com.project.skillswap.logic.entity.Learner.LearnerRepository;
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Instructor.InstructorRepository;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
+import com.project.skillswap.logic.entity.UserSkill.UserSkillService;
+import com.project.skillswap.logic.entity.Skill.Skill;
+import com.project.skillswap.logic.entity.Skill.SkillRepository;
+import com.project.skillswap.logic.entity.Knowledgearea.KnowledgeAreaRepository;
 import com.project.skillswap.logic.entity.verification.VerificationService;
 import jakarta.mail.MessagingException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,9 +22,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Controlador REST para gestionar el registro de usuarios.
+ * Versión mejorada con mejor manejo de errores de correo electrónico.
  */
 @RestController
 @RequestMapping("/register")
@@ -32,17 +39,29 @@ public class PersonRestController {
     private final InstructorRepository instructorRepository;
     private final PasswordEncoder passwordEncoder;
     private final VerificationService verificationService;
+    private final UserSkillService userSkillService;
+    private final SkillRepository skillRepository;
+    private final KnowledgeAreaRepository knowledgeAreaRepository;
+
+    @Value("${app.development.mode:false}")
+    private boolean developmentMode;
 
     public PersonRestController(PersonRepository personRepository,
                                 LearnerRepository learnerRepository,
                                 InstructorRepository instructorRepository,
                                 PasswordEncoder passwordEncoder,
-                                VerificationService verificationService) {
+                                VerificationService verificationService,
+                                UserSkillService userSkillService,
+                                SkillRepository skillRepository,
+                                KnowledgeAreaRepository knowledgeAreaRepository) {
         this.personRepository = personRepository;
         this.learnerRepository = learnerRepository;
         this.instructorRepository = instructorRepository;
         this.passwordEncoder = passwordEncoder;
         this.verificationService = verificationService;
+        this.userSkillService = userSkillService;
+        this.skillRepository = skillRepository;
+        this.knowledgeAreaRepository = knowledgeAreaRepository;
     }
     //#endregion
 
@@ -68,14 +87,21 @@ public class PersonRestController {
                 return validationError;
             }
 
-            List<String> categories = (List<String>) request.get("categories");
-            if (categories == null || categories.isEmpty()) {
+            // ✅ Ahora esperamos skillIds en lugar de categories
+            List<Integer> skillIdsRaw = (List<Integer>) request.get("skillIds");
+            if (skillIdsRaw == null || skillIdsRaw.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Debe seleccionar al menos una categoría de habilidad");
+                        .body("Debe seleccionar al menos una habilidad");
             }
 
+            // Convertir a Long (el repositorio espera Long IDs)
+            List<Long> skillIds = skillIdsRaw.stream()
+                    .map(Integer::longValue)
+                    .toList();
+
             person.setPasswordHash(passwordEncoder.encode(person.getPasswordHash()));
-            person.setEmailVerified(false);
+
+            person.setEmailVerified(developmentMode);
             personRepository.save(person);
 
             Learner learner = new Learner();
@@ -83,22 +109,41 @@ public class PersonRestController {
             learnerRepository.save(learner);
 
             try {
-                verificationService.createAndSendVerificationToken(person);
-            } catch (MessagingException e) {
-                System.err.println("Error enviando correo de verificación: " + e.getMessage());
+                userSkillService.saveUserSkills(person, skillIds);
+            } catch (Exception e) {
+                System.err.println("⚠️ Error guardando skills del usuario: " + e.getMessage());
+            }
+
+            boolean emailSent = false;
+            if (!developmentMode) {
+                try {
+                    verificationService.createAndSendVerificationToken(person);
+                    emailSent = true;
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error enviando correo: " + e.getMessage());
+                }
             }
 
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Estudiante registrado exitosamente. Por favor verifica tu correo electrónico");
+            if (developmentMode) {
+                response.put("message", "Estudiante registrado exitosamente (modo desarrollo - email auto-verificado)");
+            } else if (emailSent) {
+                response.put("message", "Estudiante registrado exitosamente. Por favor verifica tu correo electrónico");
+            } else {
+                response.put("message", "Estudiante registrado exitosamente. Nota: no se pudo enviar el correo de verificación.");
+                response.put("emailWarning", true);
+            }
+
             response.put("userId", person.getId());
             response.put("email", person.getEmail());
             response.put("userType", "LEARNER");
-            response.put("emailVerified", false);
+            response.put("emailVerified", person.getEmailVerified());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("Error en registro de learner: " + e.getMessage());
+            System.err.println("❌ Error en registro de learner: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al procesar el registro. Por favor intente nuevamente.");
         }
@@ -125,14 +170,19 @@ public class PersonRestController {
                 return validationError;
             }
 
-            List<String> categories = (List<String>) request.get("categories");
-            if (categories == null || categories.isEmpty()) {
+            List<Integer> skillIdsRaw = (List<Integer>) request.get("skillIds");
+            if (skillIdsRaw == null || skillIdsRaw.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Debe seleccionar al menos una categoría de habilidad");
+                        .body("Debe seleccionar al menos una habilidad");
             }
 
+            List<Long> skillIds = skillIdsRaw.stream()
+                    .map(Integer::longValue)
+                    .toList();
+
             person.setPasswordHash(passwordEncoder.encode(person.getPasswordHash()));
-            person.setEmailVerified(false);
+
+            person.setEmailVerified(developmentMode);
             personRepository.save(person);
 
             Instructor instructor = new Instructor();
@@ -140,22 +190,41 @@ public class PersonRestController {
             instructorRepository.save(instructor);
 
             try {
-                verificationService.createAndSendVerificationToken(person);
-            } catch (MessagingException e) {
-                System.err.println("Error enviando correo de verificación: " + e.getMessage());
+                userSkillService.saveUserSkills(person, skillIds);
+            } catch (Exception e) {
+                System.err.println("⚠️ Error guardando skills del usuario: " + e.getMessage());
+            }
+
+            boolean emailSent = false;
+            if (!developmentMode) {
+                try {
+                    verificationService.createAndSendVerificationToken(person);
+                    emailSent = true;
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error enviando correo: " + e.getMessage());
+                }
             }
 
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Instructor registrado exitosamente. Por favor verifica tu correo electrónico");
+            if (developmentMode) {
+                response.put("message", "Instructor registrado exitosamente (modo desarrollo - email auto-verificado)");
+            } else if (emailSent) {
+                response.put("message", "Instructor registrado exitosamente. Por favor verifica tu correo electrónico");
+            } else {
+                response.put("message", "Instructor registrado exitosamente. Nota: no se pudo enviar el correo de verificación.");
+                response.put("emailWarning", true);
+            }
+
             response.put("userId", person.getId());
             response.put("email", person.getEmail());
             response.put("userType", "INSTRUCTOR");
-            response.put("emailVerified", false);
+            response.put("emailVerified", person.getEmailVerified());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("Error en registro de instructor: " + e.getMessage());
+            System.err.println("❌ Error en registro de instructor: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al procesar el registro. Por favor intente nuevamente.");
         }
@@ -268,6 +337,26 @@ public class PersonRestController {
         }
 
         return message.length() == 0 ? "valid" : message.toString().trim();
+    }
+
+    /**
+     * Encuentra los IDs de skills basándose en las categorías seleccionadas
+     *
+     * @param categories lista de nombres de knowledge areas
+     * @return lista de skill IDs
+     */
+    private List<Long> findSkillIdsByCategories(List<String> categories) {
+        return categories.stream()
+                .flatMap(categoryName ->
+                        knowledgeAreaRepository.findByName(categoryName)
+                                .map(knowledgeArea ->
+                                        skillRepository.findActiveSkillsByKnowledgeAreaId(knowledgeArea.getId())
+                                                .stream()
+                                                .map(Skill::getId)
+                                )
+                                .orElse(java.util.stream.Stream.empty())
+                )
+                .collect(Collectors.toList());
     }
     //#endregion
 }

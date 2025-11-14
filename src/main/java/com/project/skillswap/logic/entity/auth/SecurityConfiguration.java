@@ -53,9 +53,14 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/register/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
+                        .requestMatchers("/skills/**").permitAll()
+                        .requestMatchers("/knowledge-areas/**").permitAll()
                         .requestMatchers("/dashboard/**").authenticated()
+                        .requestMatchers("/user-skills/**").permitAll()
+                        .requestMatchers("/verification/**").permitAll()
                         .anyRequest().authenticated()
                 )
+
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )

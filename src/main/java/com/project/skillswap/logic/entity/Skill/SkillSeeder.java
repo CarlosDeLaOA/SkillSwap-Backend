@@ -11,163 +11,121 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Seeder component that creates initial skills in the database
- */
 @Order(3)
 @Component
 public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
 
-    //#region Dependencies
     private final SkillRepository skillRepository;
     private final KnowledgeAreaRepository knowledgeAreaRepository;
-    //#endregion
 
-    //#region Constructor
-    /**
-     * Creates a new SkillSeeder instance
-     *
-     * @param skillRepository the skill repository
-     * @param knowledgeAreaRepository the knowledge area repository
-     */
     public SkillSeeder(SkillRepository skillRepository, KnowledgeAreaRepository knowledgeAreaRepository) {
         this.skillRepository = skillRepository;
         this.knowledgeAreaRepository = knowledgeAreaRepository;
     }
-    //#endregion
 
-    //#region Event Handling
-    /**
-     * Handles the application context refreshed event to seed initial data
-     *
-     * @param event the context refreshed event
-     */
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
         this.seedSkills();
     }
-    //#endregion
 
-    //#region Seeding Logic
-    /**
-     * Seeds skills into the database
-     */
     private void seedSkills() {
         List<SkillData> skillsToCreate = createSkillDataList();
 
         for (SkillData skillData : skillsToCreate) {
             Optional<KnowledgeArea> knowledgeArea = knowledgeAreaRepository.findByName(skillData.knowledgeAreaName);
-
-            if (knowledgeArea.isEmpty()) {
-                continue;
-            }
+            if (knowledgeArea.isEmpty()) continue;
 
             Optional<Skill> existingSkill = skillRepository.findByNameAndKnowledgeArea(
-                    skillData.name,
-                    knowledgeArea.get()
-            );
+                    skillData.name, knowledgeArea.get());
+            if (existingSkill.isPresent()) continue;
 
-            if (existingSkill.isPresent()) {
-                continue;
-            }
-
-            Skill skill = createSkill(skillData, knowledgeArea.get());
+            Skill skill = new Skill();
+            skill.setKnowledgeArea(knowledgeArea.get());
+            skill.setName(skillData.name);
+            skill.setDescription(skillData.description);
+            skill.setActive(skillData.active);
             skillRepository.save(skill);
         }
-
-        System.out.println(" Skills seeded successfully");
     }
 
-    /**
-     * Creates a Skill entity from SkillData
-     *
-     * @param data the skill data
-     * @param knowledgeArea the associated knowledge area
-     * @return the created Skill entity
-     */
-    private Skill createSkill(SkillData data, KnowledgeArea knowledgeArea) {
-        Skill skill = new Skill();
-        skill.setKnowledgeArea(knowledgeArea);
-        skill.setName(data.name);
-        skill.setDescription(data.description);
-        skill.setActive(data.active);
-        return skill;
-    }
-
-    /**
-     * Creates the list of skill data to be seeded
-     *
-     * @return list of SkillData objects
-     */
     private List<SkillData> createSkillDataList() {
         List<SkillData> skills = new ArrayList<>();
 
-        skills.add(new SkillData("Programming", "Java Programming",
-                "Object-oriented programming with Java", true));
-        skills.add(new SkillData("Programming", "Python Programming",
-                "Python fundamentals and advanced concepts", true));
-        skills.add(new SkillData("Programming", "JavaScript",
-                "Modern JavaScript and ES6+", true));
-        skills.add(new SkillData("Programming", "React Programming",
-                "Building web applications with React", true));
-        skills.add(new SkillData("Programming", "Angular",
-                "Full-stack development with Angular", true));
+        // 🔪 Cocina
+        skills.add(new SkillData("Cocina", "Cocina Italiana", "Preparación de pastas, pizzas y platos tradicionales italianos", true));
+        skills.add(new SkillData("Cocina", "Repostería", "Elaboración de postres, pasteles y panadería", true));
+        skills.add(new SkillData("Cocina", "Cocina Saludable", "Preparación de comidas nutritivas y balanceadas", true));
+        skills.add(new SkillData("Cocina", "Cocina Internacional", "Recetas y técnicas de diferentes culturas", true));
+        skills.add(new SkillData("Cocina", "Cocina Vegana", "Preparación de comidas sin productos animales", true));
+        skills.add(new SkillData("Cocina", "Decoración de Platos", "Presentación estética y visual de comidas", true));
+        skills.add(new SkillData("Cocina", "Cocina Japonesa", "Sushi, ramen y gastronomía japonesa tradicional", true));
+        skills.add(new SkillData("Cocina", "Cocina Costarricense", "Platos típicos y sabores nacionales", true));
+        skills.add(new SkillData("Cocina", "Cocina Mexicana", "Tacos, salsas y sabores picantes auténticos", true));
+        skills.add(new SkillData("Cocina", "Barismo", "Preparación profesional de café y bebidas calientes", true));
 
-        skills.add(new SkillData("Design", "UI/UX Design",
-                "User interface and experience design principles", true));
-        skills.add(new SkillData("Design", "Graphic Design",
-                "Visual design and branding", true));
-        skills.add(new SkillData("Design", "Adobe Photoshop",
-                "Photo editing and digital art", true));
+        // 🗣️ Idiomas
+        skills.add(new SkillData("Idiomas", "Inglés", "Comprensión, escritura y conversación en inglés", true));
+        skills.add(new SkillData("Idiomas", "Español", "Dominio del idioma español y gramática avanzada", true));
+        skills.add(new SkillData("Idiomas", "Francés", "Lengua francesa y cultura francófona", true));
+        skills.add(new SkillData("Idiomas", "Alemán", "Aprendizaje del idioma alemán", true));
+        skills.add(new SkillData("Idiomas", "Italiano", "Lengua italiana y comunicación básica", true));
+        skills.add(new SkillData("Idiomas", "Portugués", "Portugués conversacional y gramatical", true));
+        skills.add(new SkillData("Idiomas", "Mandarín", "Lectura y pronunciación del idioma chino mandarín", true));
+        skills.add(new SkillData("Idiomas", "Lengua de Señas", "Comunicación inclusiva con lenguaje de señas", true));
+        skills.add(new SkillData("Idiomas", "Japonés", "Hiragana, katakana y expresiones básicas", true));
+        skills.add(new SkillData("Idiomas", "Coreano", "Gramática y escritura del idioma coreano", true));
 
-        skills.add(new SkillData("Languages", "English",
-                "English language learning", true));
-        skills.add(new SkillData("Languages", "Spanish",
-                "Spanish language and culture", true));
-        skills.add(new SkillData("Languages", "French",
-                "French language fundamentals", true));
-        skills.add(new SkillData("Languages", "Mandarin Chinese",
-                "Mandarin speaking and writing", true));
+        // 💻 Programación
+        skills.add(new SkillData("Programación", "Java", "Programación orientada a objetos en Java", true));
+        skills.add(new SkillData("Programación", "Python", "Desarrollo con Python desde lo básico hasta avanzado", true));
+        skills.add(new SkillData("Programación", "JavaScript", "Desarrollo web moderno con JavaScript", true));
+        skills.add(new SkillData("Programación", "HTML y CSS", "Diseño y estructura de sitios web", true));
+        skills.add(new SkillData("Programación", "React", "Desarrollo de interfaces dinámicas con React.js", true));
+        skills.add(new SkillData("Programación", "Angular", "Framework de desarrollo web con Angular", true));
+        skills.add(new SkillData("Programación", "C#", "Desarrollo en C# y entorno .NET", true));
+        skills.add(new SkillData("Programación", "SQL", "Gestión y consulta de bases de datos relacionales", true));
+        skills.add(new SkillData("Programación", "Desarrollo Móvil", "Creación de apps con Android e iOS", true));
+        skills.add(new SkillData("Programación", "Git y GitHub", "Control de versiones y colaboración en proyectos", true));
 
-        skills.add(new SkillData("Business", "Digital Marketing",
-                "Online marketing strategies and SEO", true));
-        skills.add(new SkillData("Business", "Project Management",
-                "Agile and traditional project management", true));
-        skills.add(new SkillData("Business", "Entrepreneurship",
-                "Starting and growing a business", true));
+        // 🏋️ Deportes
+        skills.add(new SkillData("Deportes", "Fútbol", "Técnicas, reglas y entrenamiento en fútbol", true));
+        skills.add(new SkillData("Deportes", "Natación", "Técnicas de nado y acondicionamiento físico", true));
+        skills.add(new SkillData("Deportes", "Yoga", "Prácticas de respiración, equilibrio y relajación", true));
+        skills.add(new SkillData("Deportes", "Ciclismo", "Entrenamiento y mantenimiento de bicicletas", true));
+        skills.add(new SkillData("Deportes", "Atletismo", "Carreras, resistencia y velocidad", true));
+        skills.add(new SkillData("Deportes", "Básquetbol", "Tácticas y fundamentos del baloncesto", true));
+        skills.add(new SkillData("Deportes", "Voleibol", "Trabajo en equipo y técnicas de saque y bloqueo", true));
+        skills.add(new SkillData("Deportes", "Gimnasia", "Equilibrio, fuerza y flexibilidad corporal", true));
+        skills.add(new SkillData("Deportes", "Artes Marciales", "Defensa personal y disciplina física", true));
+        skills.add(new SkillData("Deportes", "Entrenamiento Funcional", "Ejercicios para mejorar fuerza y movilidad", true));
 
-        skills.add(new SkillData("Arts", "Guitar",
-                "Playing guitar and music theory", true));
-        skills.add(new SkillData("Arts", "Photography",
-                "Digital photography techniques", true));
-        skills.add(new SkillData("Arts", "Drawing",
-                "Sketching and illustration", true));
+        // 🎨 Arte
+        skills.add(new SkillData("Arte", "Pintura", "Técnicas con acrílico, óleo y acuarela", true));
+        skills.add(new SkillData("Arte", "Dibujo", "Sombras, perspectiva y creatividad artística", true));
+        skills.add(new SkillData("Arte", "Fotografía", "Composición, luz y retoque digital", true));
+        skills.add(new SkillData("Arte", "Escultura", "Modelado con arcilla, madera y piedra", true));
+        skills.add(new SkillData("Arte", "Cine", "Guion, producción y dirección audiovisual", true));
+        skills.add(new SkillData("Arte", "Música", "Teoría musical e interpretación instrumental", true));
+        skills.add(new SkillData("Arte", "Teatro", "Actuación, improvisación y expresión corporal", true));
+        skills.add(new SkillData("Arte", "Diseño Gráfico", "Creación visual y comunicación digital", true));
+        skills.add(new SkillData("Arte", "Bailes Latinos", "Salsa, bachata y ritmos caribeños", true));
+        skills.add(new SkillData("Arte", "Artesanías", "Elaboración de objetos decorativos manuales", true));
 
-        skills.add(new SkillData("Science", "Mathematics",
-                "Algebra, calculus, and statistics", true));
-        skills.add(new SkillData("Science", "Physics",
-                "Classical and modern physics", true));
-        skills.add(new SkillData("Science", "Data Science",
-                "Data analysis and machine learning", true));
-
-        skills.add(new SkillData("Health & Fitness", "Yoga",
-                "Yoga practice and meditation", true));
-        skills.add(new SkillData("Health & Fitness", "Personal Training",
-                "Fitness training and exercise", true));
-
-        skills.add(new SkillData("Cooking", "Italian Cuisine",
-                "Traditional Italian cooking", true));
-        skills.add(new SkillData("Cooking", "Baking",
-                "Bread and pastry making", true));
+        // 🌟 Power Skills
+        skills.add(new SkillData("Power Skills", "Comunicación Efectiva", "Expresión verbal y escucha activa", true));
+        skills.add(new SkillData("Power Skills", "Liderazgo", "Gestión de equipos y toma de decisiones", true));
+        skills.add(new SkillData("Power Skills", "Trabajo en Equipo", "Colaboración y sinergia entre compañeros", true));
+        skills.add(new SkillData("Power Skills", "Gestión del Tiempo", "Organización y productividad personal", true));
+        skills.add(new SkillData("Power Skills", "Pensamiento Crítico", "Análisis y resolución de problemas", true));
+        skills.add(new SkillData("Power Skills", "Empatía", "Comprensión emocional y relaciones humanas", true));
+        skills.add(new SkillData("Power Skills", "Negociación", "Técnicas de persuasión y acuerdos efectivos", true));
+        skills.add(new SkillData("Power Skills", "Adaptabilidad", "Capacidad de afrontar cambios con flexibilidad", true));
+        skills.add(new SkillData("Power Skills", "Gestión del Estrés", "Manejo emocional y equilibrio mental", true));
+        skills.add(new SkillData("Power Skills", "Creatividad", "Innovación y pensamiento fuera de lo común", true));
 
         return skills;
     }
-    //#endregion
 
-    //#region Inner Class
-    /**
-     * Data class holding information for creating skills
-     */
     private static class SkillData {
         String knowledgeAreaName;
         String name;
@@ -181,5 +139,4 @@ public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
             this.active = active;
         }
     }
-    //#endregion
 }
