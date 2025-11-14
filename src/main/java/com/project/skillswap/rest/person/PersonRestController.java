@@ -87,14 +87,12 @@ public class PersonRestController {
                 return validationError;
             }
 
-            // ✅ Ahora esperamos skillIds en lugar de categories
             List<Integer> skillIdsRaw = (List<Integer>) request.get("skillIds");
             if (skillIdsRaw == null || skillIdsRaw.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("Debe seleccionar al menos una habilidad");
             }
 
-            // Convertir a Long (el repositorio espera Long IDs)
             List<Long> skillIds = skillIdsRaw.stream()
                     .map(Integer::longValue)
                     .toList();
@@ -111,7 +109,7 @@ public class PersonRestController {
             try {
                 userSkillService.saveUserSkills(person, skillIds);
             } catch (Exception e) {
-                System.err.println("⚠️ Error guardando skills del usuario: " + e.getMessage());
+                System.err.println(" Error guardando skills del usuario: " + e.getMessage());
             }
 
             boolean emailSent = false;
@@ -120,7 +118,7 @@ public class PersonRestController {
                     verificationService.createAndSendVerificationToken(person);
                     emailSent = true;
                 } catch (Exception e) {
-                    System.err.println("⚠️ Error enviando correo: " + e.getMessage());
+                    System.err.println(" Error enviando correo: " + e.getMessage());
                 }
             }
 
@@ -142,7 +140,7 @@ public class PersonRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("❌ Error en registro de learner: " + e.getMessage());
+            System.err.println(" Error en registro de learner: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al procesar el registro. Por favor intente nuevamente.");
@@ -192,7 +190,7 @@ public class PersonRestController {
             try {
                 userSkillService.saveUserSkills(person, skillIds);
             } catch (Exception e) {
-                System.err.println("⚠️ Error guardando skills del usuario: " + e.getMessage());
+                System.err.println(" Error guardando skills del usuario: " + e.getMessage());
             }
 
             boolean emailSent = false;
@@ -201,7 +199,7 @@ public class PersonRestController {
                     verificationService.createAndSendVerificationToken(person);
                     emailSent = true;
                 } catch (Exception e) {
-                    System.err.println("⚠️ Error enviando correo: " + e.getMessage());
+                    System.err.println("Error enviando correo: " + e.getMessage());
                 }
             }
 
@@ -223,7 +221,7 @@ public class PersonRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("❌ Error en registro de instructor: " + e.getMessage());
+            System.err.println(" Error en registro de instructor: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al procesar el registro. Por favor intente nuevamente.");

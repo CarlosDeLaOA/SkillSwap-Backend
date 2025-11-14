@@ -58,7 +58,6 @@ public class AuthRestController {
         try {
             System.out.println("[LOGIN] Iniciando proceso de autenticación...");
 
-            // Extraer y validar email
             String email = payload.get("email") != null ? payload.get("email").toString().trim() : null;
 
             if (email == null || email.isEmpty()) {
@@ -71,7 +70,6 @@ public class AuthRestController {
                         ));
             }
 
-            // Extraer y validar password
             String rawPassword = null;
             if (payload.get("password") != null) {
                 rawPassword = payload.get("password").toString();
@@ -89,7 +87,6 @@ public class AuthRestController {
                         ));
             }
 
-            // Validar formato de email
             if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
                 System.out.println("[LOGIN] Formato de email inválido: " + email);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -136,12 +133,10 @@ public class AuthRestController {
                         ));
             }
 
-            // Crear objeto Person para autenticación
             Person loginPerson = new Person();
             loginPerson.setEmail(email);
             loginPerson.setPasswordHash(rawPassword);
 
-            // Intentar autenticar
             System.out.println("[LOGIN] Llamando al servicio de autenticación...");
             Person authenticatedUser = authenticationService.authenticate(loginPerson);
 
@@ -157,7 +152,6 @@ public class AuthRestController {
 
             System.out.println("[LOGIN] Usuario autenticado correctamente: " + authenticatedUser.getEmail());
 
-            // Generar JWT token
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("userId", authenticatedUser.getId());
             extraClaims.put("rol", authenticatedUser.getRole());
@@ -165,7 +159,6 @@ public class AuthRestController {
             String jwtToken = jwtService.generateToken(extraClaims, authenticatedUser);
             System.out.println("[LOGIN] Token JWT generado con userId: " + authenticatedUser.getId() + " y rol: " + authenticatedUser.getRole());
 
-            // Crear respuesta de login
             LoginResponse loginResponse = new LoginResponse();
             loginResponse.setToken(jwtToken);
             loginResponse.setExpiresIn(jwtService.getExpirationTime());

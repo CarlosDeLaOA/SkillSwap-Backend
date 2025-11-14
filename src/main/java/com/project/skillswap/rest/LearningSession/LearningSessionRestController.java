@@ -48,7 +48,6 @@ public class LearningSessionRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            // Verificar que el usuario tenga un rol válido
             validateUserRole(authenticatedPerson);
 
             List<LearningSession> sessions = learningSessionService.getAvailableSessions();
@@ -98,7 +97,6 @@ public class LearningSessionRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            // Verificar que el usuario tenga un rol válido
             validateUserRole(authenticatedPerson);
 
             List<LearningSession> sessions = learningSessionService.getFilteredSessions(categoryId, language);

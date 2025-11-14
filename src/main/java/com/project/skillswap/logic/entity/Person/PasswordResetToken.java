@@ -1,4 +1,3 @@
-// src/main/java/com/project/skillswap/logic/entity/PasswordResetToken/PasswordResetToken.java
 package com.project.skillswap.logic.entity.Person;
 
 import jakarta.persistence.*;
@@ -21,14 +20,12 @@ public class PasswordResetToken {
     @JoinColumn(name = "person_id", nullable = false)
     private Person person;
 
-    /** SHA-256 del token en claro (no guardes el token plano) */
     @Column(nullable = false, length = 64)
     private String tokenHash;
 
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
 
-    /** Válido por 1 hora (lo seteamos al crear) */
     @Column(nullable = false)
     private Instant expiresAt;
 
@@ -37,11 +34,9 @@ public class PasswordResetToken {
 
     private Instant usedAt;
 
-    /** Metadatos opcionales */
     private String requestIp;
     private String userAgent;
 
-    // Getters & setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

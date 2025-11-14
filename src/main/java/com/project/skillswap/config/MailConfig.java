@@ -53,13 +53,11 @@ public class MailConfig {
     public JavaMailSender javaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
 
-        // Verificar si hay configuración SMTP válida
         boolean hasValidConfig = mailHost != null && !mailHost.trim().isEmpty()
                 && mailUsername != null && !mailUsername.trim().isEmpty()
                 && mailPassword != null && !mailPassword.trim().isEmpty();
 
         if (hasValidConfig) {
-            // Configuración completa con SMTP
             mailSender.setHost(mailHost);
             mailSender.setPort(mailPort);
             mailSender.setUsername(mailUsername);

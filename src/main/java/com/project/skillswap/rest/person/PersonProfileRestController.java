@@ -52,8 +52,7 @@ public class PersonProfileRestController {
 
             if (fullPerson.isPresent()) {
                 Person person = fullPerson.get();
-
-                // Forzar la carga de userSkills (lazy loading)
+                
                 if (person.getUserSkills() != null) {
                     person.getUserSkills().size();
                 }
@@ -118,7 +117,6 @@ public class PersonProfileRestController {
             Person person = personOptional.get();
             String newLanguage = languageRequest.get("language");
 
-            // Validar que el idioma no esté vacío
             if (newLanguage == null || newLanguage.trim().isEmpty()) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Invalid language");
@@ -126,7 +124,6 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Validar que sea un código de idioma válido (opcional pero recomendado)
             if (!isValidLanguageCode(newLanguage)) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Invalid language code");
@@ -134,11 +131,10 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Actualizar el idioma
             person.setPreferredLanguage(newLanguage);
             personRepository.save(person);
 
-            System.out.println("✅ Language updated for user " + person.getId() + ": " + newLanguage);
+            System.out.println(" Language updated for user " + person.getId() + ": " + newLanguage);
 
             return new GlobalResponseHandler().handleResponse(
                     "Language updated successfully",
@@ -181,9 +177,8 @@ public class PersonProfileRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println("📸 [PersonProfileController] Updating profile photo for user: " + authenticatedPerson.getId());
+            System.out.println("[PersonProfileController] Updating profile photo for user: " + authenticatedPerson.getId());
 
-            // Validar que el archivo no esté vacío
             if (file.isEmpty()) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Invalid file");
@@ -191,7 +186,6 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Validar que sea una imagen
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 Map<String, String> errorResponse = new HashMap<>();
@@ -200,7 +194,6 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Validar tamaño (máximo 5MB)
             long maxSize = 5 * 1024 * 1024; // 5MB
             if (file.getSize() > maxSize) {
                 Map<String, String> errorResponse = new HashMap<>();
@@ -209,7 +202,6 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Obtener el usuario completo de la BD
             Optional<Person> personOptional = personRepository.findById(authenticatedPerson.getId());
             if (personOptional.isEmpty()) {
                 return new GlobalResponseHandler().handleResponse(
@@ -221,7 +213,6 @@ public class PersonProfileRestController {
 
             Person person = personOptional.get();
 
-            // Eliminar foto anterior de Cloudinary (si existe)
             if (person.getProfilePhotoUrl() != null && !person.getProfilePhotoUrl().isEmpty()) {
                 try {
                     String oldPublicId = cloudinaryService.extractPublicIdFromUrl(person.getProfilePhotoUrl());
@@ -229,19 +220,16 @@ public class PersonProfileRestController {
                         cloudinaryService.deleteImage(oldPublicId);
                     }
                 } catch (Exception e) {
-                    System.err.println("⚠️ Warning: Could not delete old profile photo: " + e.getMessage());
-                    // No detenemos el proceso si falla la eliminación
+                    System.err.println(" Warning: Could not delete old profile photo: " + e.getMessage());
                 }
             }
 
-            // Subir nueva imagen a Cloudinary
             String newImageUrl = cloudinaryService.uploadImage(file);
 
-            // Actualizar URL en la base de datos
             person.setProfilePhotoUrl(newImageUrl);
             personRepository.save(person);
 
-            System.out.println("✅ Profile photo updated successfully for user " + person.getId());
+            System.out.println(" Profile photo updated successfully for user " + person.getId());
 
             return new GlobalResponseHandler().handleResponse(
                     "Profile photo updated successfully",
@@ -251,20 +239,20 @@ public class PersonProfileRestController {
             );
 
         } catch (IOException e) {
-            System.err.println("❌ Error uploading image to Cloudinary: " + e.getMessage());
+            System.err.println(" Error uploading image to Cloudinary: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Upload failed");
             errorResponse.put("message", "Error uploading image: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (ClassCastException e) {
-            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println("❌ Error updating profile photo: " + e.getMessage());
+            System.err.println(" Error updating profile photo: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error updating profile photo");
@@ -288,9 +276,8 @@ public class PersonProfileRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println("🗑️ [PersonProfileController] Deleting profile photo for user: " + authenticatedPerson.getId());
+            System.out.println("[PersonProfileController] Deleting profile photo for user: " + authenticatedPerson.getId());
 
-            // Obtener el usuario completo de la BD
             Optional<Person> personOptional = personRepository.findById(authenticatedPerson.getId());
             if (personOptional.isEmpty()) {
                 return new GlobalResponseHandler().handleResponse(
@@ -302,7 +289,6 @@ public class PersonProfileRestController {
 
             Person person = personOptional.get();
 
-            // Verificar si tiene foto de perfil
             if (person.getProfilePhotoUrl() == null || person.getProfilePhotoUrl().isEmpty()) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "No profile photo");
@@ -310,22 +296,19 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Eliminar foto de Cloudinary
             try {
                 String publicId = cloudinaryService.extractPublicIdFromUrl(person.getProfilePhotoUrl());
                 if (publicId != null) {
                     cloudinaryService.deleteImage(publicId);
                 }
             } catch (Exception e) {
-                System.err.println("⚠️ Warning: Could not delete photo from Cloudinary: " + e.getMessage());
-                // Continuamos de todas formas para eliminar la referencia en la BD
+                System.err.println(" Warning: Could not delete photo from Cloudinary: " + e.getMessage());
             }
 
-            // Eliminar URL de la base de datos
             person.setProfilePhotoUrl(null);
             personRepository.save(person);
 
-            System.out.println("✅ Profile photo deleted successfully for user " + person.getId());
+            System.out.println(" Profile photo deleted successfully for user " + person.getId());
 
             return new GlobalResponseHandler().handleResponse(
                     "Profile photo deleted successfully",
@@ -335,13 +318,13 @@ public class PersonProfileRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println("❌ Error deleting profile photo: " + e.getMessage());
+            System.err.println(" Error deleting profile photo: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error deleting profile photo");

@@ -33,7 +33,7 @@ public class KnowledgeAreaRestController {
      * GET /knowledge-areas
      * Obtiene todas las áreas de conocimiento activas.
      *
-     * ⚠️ Este endpoint es público (no requiere autenticación)
+     * Este endpoint es público (no requiere autenticación)
      *
      * @param request HttpServletRequest for metadata
      * @return ResponseEntity con la lista de áreas de conocimiento activas

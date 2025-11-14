@@ -70,11 +70,11 @@ public class Person implements UserDetails {
     private List<UserSkill> userSkills;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"}) // ⚠ Evitar referencia circular
+    @JsonIgnoreProperties({"person"})
     private Instructor instructor;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"}) // ⚠ Evitar referencia circular
+    @JsonIgnoreProperties({"person"})
     private Learner learner;
 
     @JsonIgnore
