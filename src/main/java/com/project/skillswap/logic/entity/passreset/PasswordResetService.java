@@ -59,7 +59,7 @@ public class PasswordResetService {
         Instant since = Instant.now().minus(REQUEST_WINDOW);
         long recent = tokenRepo.countRequestsSince(person, since);
 
-        // #NEW: límite de solicitudes por hora
+        // Límite de solicitudes por hora
         if (recent >= MAX_REQUESTS_PER_HOUR) {
             throw new TooManyResetRequestsException(
                     "Has superado el límite de solicitudes de restablecimiento de contraseña. Intenta más tarde."
@@ -131,11 +131,31 @@ public class PasswordResetService {
             throw new WeakPasswordException("La contraseña no cumple con los requisitos mínimos.");
         }
 
-        // Actualiza contraseña del usuario
-        person.setPassword(passwordEncoder.encode(newPassword));
-        personRepo.save(person);
+        // 🔍 LOG ANTES (temporal para debugging)
+        System.out.println("🔍 Password hash ANTES: " + person.getPasswordHash());
 
-        // Invalida tokens activos
+        // ✅ Actualiza contraseña del usuario
+        String newHash = passwordEncoder.encode(newPassword);
+        person.setPasswordHash(newHash);
+
+        // 🔍 LOG DESPUÉS (temporal para debugging)
+        System.out.println("🔍 Password hash DESPUÉS: " + person.getPasswordHash());
+        System.out.println("🔍 New hash generado: " + newHash);
+
+        // ✅ Guarda el cambio y fuerza escritura inmediata
+        Person saved = personRepo.save(person);
+        personRepo.flush();
+
+        // 🔍 LOG GUARDADO (temporal para debugging)
+        System.out.println("🔍 Password hash GUARDADO: " + saved.getPasswordHash());
+        System.out.println("🔍 Person ID guardado: " + saved.getId());
+
+        // ✅ Invalida el token usado
+        match.markUsed();
+        tokenRepo.save(match);
+        tokenRepo.flush();
+
+        // ✅ Invalida todos los demás tokens activos
         tokenRepo.consumeAllActive(person, Instant.now());
     }
     //#endregion
@@ -191,7 +211,6 @@ public class PasswordResetService {
         public CooldownException(String m) { super(m); }
     }
 
-    // #NEW: Excepción para límite de solicitudes por hora
     public static class TooManyResetRequestsException extends RuntimeException {
         public TooManyResetRequestsException(String m) { super(m); }
     }
