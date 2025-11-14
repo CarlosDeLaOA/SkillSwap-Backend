@@ -50,7 +50,6 @@ public class PasswordResetService {
     public void requestReset(String email, String requestIp, String userAgent) {
         var personOpt = personRepo.findByEmailIgnoreCase(email);
         if (personOpt.isEmpty()) {
-            // Evita filtrar si el email existe o no
             return;
         }
 
@@ -59,14 +58,12 @@ public class PasswordResetService {
         Instant since = Instant.now().minus(REQUEST_WINDOW);
         long recent = tokenRepo.countRequestsSince(person, since);
 
-        // Límite de solicitudes por hora
         if (recent >= MAX_REQUESTS_PER_HOUR) {
             throw new TooManyResetRequestsException(
                     "Has superado el límite de solicitudes de restablecimiento de contraseña. Intenta más tarde."
             );
         }
 
-        // Cooldown de 90 segundos entre solicitudes
         tokenRepo.findTopByPersonOrderByCreatedAtDesc(person).ifPresent(last -> {
             if (last.getCreatedAt() != null &&
                     last.getCreatedAt().isAfter(Instant.now().minus(REQUEST_COOLDOWN))) {
@@ -74,7 +71,6 @@ public class PasswordResetService {
             }
         });
 
-        // Genera código y lo hashea
         String code = generate6DigitsCode();
         String hash = passwordEncoder.encode(code);
 
@@ -185,7 +181,8 @@ public class PasswordResetService {
         boolean hasDigit = pwd.chars().anyMatch(Character::isDigit);
         boolean hasUpper = pwd.chars().anyMatch(Character::isUpperCase);
         boolean hasLower = pwd.chars().anyMatch(Character::isLowerCase);
-        return lengthOk && hasDigit && hasUpper && hasLower;
+        boolean hasSpecial = pwd.chars().anyMatch(ch -> "@$!%*?&".indexOf(ch) >= 0);
+        return lengthOk && hasDigit && hasUpper && hasLower && hasSpecial;
     }
 
     private String truncate(String s, int max) {
