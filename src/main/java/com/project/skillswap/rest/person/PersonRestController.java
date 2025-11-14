@@ -24,10 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Controlador REST para gestionar el registro de usuarios.
- * Versión mejorada con mejor manejo de errores de correo electrónico.
- */
+
 @RestController
 @RequestMapping("/register")
 @CrossOrigin(origins = "*")
@@ -63,15 +60,7 @@ public class PersonRestController {
         this.skillRepository = skillRepository;
         this.knowledgeAreaRepository = knowledgeAreaRepository;
     }
-    //#endregion
 
-    //#region Endpoints
-    /**
-     * Registra un nuevo usuario como Learner (estudiante).
-     *
-     * @param request datos del registro
-     * @return respuesta con el usuario creado o mensaje de error
-     */
     @PostMapping("/learner")
     public ResponseEntity<?> registerLearner(@RequestBody Map<String, Object> request) {
         try {
@@ -87,14 +76,14 @@ public class PersonRestController {
                 return validationError;
             }
 
-            // ✅ Ahora esperamos skillIds en lugar de categories
+
             List<Integer> skillIdsRaw = (List<Integer>) request.get("skillIds");
             if (skillIdsRaw == null || skillIdsRaw.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("Debe seleccionar al menos una habilidad");
             }
 
-            // Convertir a Long (el repositorio espera Long IDs)
+
             List<Long> skillIds = skillIdsRaw.stream()
                     .map(Integer::longValue)
                     .toList();
@@ -111,7 +100,7 @@ public class PersonRestController {
             try {
                 userSkillService.saveUserSkills(person, skillIds);
             } catch (Exception e) {
-                System.err.println("⚠️ Error guardando skills del usuario: " + e.getMessage());
+                System.err.println(" Error guardando skills del usuario: " + e.getMessage());
             }
 
             boolean emailSent = false;
@@ -120,7 +109,7 @@ public class PersonRestController {
                     verificationService.createAndSendVerificationToken(person);
                     emailSent = true;
                 } catch (Exception e) {
-                    System.err.println("⚠️ Error enviando correo: " + e.getMessage());
+                    System.err.println(" Error enviando correo: " + e.getMessage());
                 }
             }
 
@@ -142,19 +131,13 @@ public class PersonRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("❌ Error en registro de learner: " + e.getMessage());
+            System.err.println(" Error en registro de learner: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al procesar el registro. Por favor intente nuevamente.");
         }
     }
 
-    /**
-     * Registra un nuevo usuario como Instructor.
-     *
-     * @param request datos del registro
-     * @return respuesta con el usuario creado o mensaje de error
-     */
     @PostMapping("/instructor")
     public ResponseEntity<?> registerInstructor(@RequestBody Map<String, Object> request) {
         try {
@@ -192,7 +175,7 @@ public class PersonRestController {
             try {
                 userSkillService.saveUserSkills(person, skillIds);
             } catch (Exception e) {
-                System.err.println("⚠️ Error guardando skills del usuario: " + e.getMessage());
+                System.err.println(" Error guardando skills del usuario: " + e.getMessage());
             }
 
             boolean emailSent = false;
@@ -201,7 +184,7 @@ public class PersonRestController {
                     verificationService.createAndSendVerificationToken(person);
                     emailSent = true;
                 } catch (Exception e) {
-                    System.err.println("⚠️ Error enviando correo: " + e.getMessage());
+                    System.err.println(" Error enviando correo: " + e.getMessage());
                 }
             }
 
@@ -223,19 +206,14 @@ public class PersonRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("❌ Error en registro de instructor: " + e.getMessage());
+            System.err.println(" Error en registro de instructor: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al procesar el registro. Por favor intente nuevamente.");
         }
     }
 
-    /**
-     * Verifica si un correo electrónico está disponible para el registro.
-     *
-     * @param email el correo a verificar
-     * @return respuesta indicando si el correo está disponible
-     */
+
     @GetMapping("/check-email")
     public ResponseEntity<?> checkEmail(@RequestParam String email) {
         boolean emailExists = personRepository.findByEmail(email).isPresent();
@@ -249,15 +227,7 @@ public class PersonRestController {
 
         return ResponseEntity.ok(response);
     }
-    //#endregion
 
-    //#region Private Methods
-    /**
-     * Extrae y crea un objeto Person desde el request Map.
-     *
-     * @param request mapa con los datos del request
-     * @return objeto Person creado
-     */
     private Person extractPersonFromRequest(Map<String, Object> request) {
         Person person = new Person();
         person.setEmail((String) request.get("email"));
@@ -268,12 +238,6 @@ public class PersonRestController {
         return person;
     }
 
-    /**
-     * Valida todos los datos de Person antes de guardar.
-     *
-     * @param person objeto Person a validar
-     * @return ResponseEntity con error o null si todo está bien
-     */
     private ResponseEntity<?> validatePersonData(Person person) {
 
         if (person.getEmail() == null || person.getEmail().trim().isEmpty()) {
@@ -311,12 +275,7 @@ public class PersonRestController {
         return null;
     }
 
-    /**
-     * Valida que la contraseña cumpla con los requisitos mínimos de seguridad.
-     *
-     * @param password la contraseña en texto claro
-     * @return mensaje detallado de errores o "valid" si cumple todos los requisitos
-     */
+
     private String validatePassword(String password) {
         StringBuilder message = new StringBuilder();
 
@@ -339,12 +298,7 @@ public class PersonRestController {
         return message.length() == 0 ? "valid" : message.toString().trim();
     }
 
-    /**
-     * Encuentra los IDs de skills basándose en las categorías seleccionadas
-     *
-     * @param categories lista de nombres de knowledge areas
-     * @return lista de skill IDs
-     */
+
     private List<Long> findSkillIdsByCategories(List<String> categories) {
         return categories.stream()
                 .flatMap(categoryName ->

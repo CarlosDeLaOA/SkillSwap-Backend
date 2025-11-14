@@ -19,13 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * REST Controller para gestionar el perfil de Person autenticado
- * Proporciona endpoints para consultar y actualizar información del usuario
- *
- * @author SkillSwap Team
- * @version 2.0.0
- */
+
 @RestController
 @RequestMapping("/persons")
 @CrossOrigin(origins = "*")
@@ -37,10 +31,7 @@ public class PersonProfileRestController {
     @Autowired
     private CloudinaryService cloudinaryService;
 
-    /**
-     * Obtiene el perfil completo del usuario autenticado
-     * Endpoint: GET /persons/me
-     */
+
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getAuthenticatedPerson(HttpServletRequest request) {
@@ -87,14 +78,7 @@ public class PersonProfileRestController {
         }
     }
 
-    /**
-     * Actualiza el idioma preferido del usuario autenticado
-     * Endpoint: PUT /persons/me/language
-     *
-     * @param request HttpServletRequest
-     * @param languageRequest Request body con el nuevo idioma
-     * @return ResponseEntity con el perfil actualizado
-     */
+
     @PutMapping("/me/language")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> updatePreferredLanguage(
@@ -118,7 +102,7 @@ public class PersonProfileRestController {
             Person person = personOptional.get();
             String newLanguage = languageRequest.get("language");
 
-            // Validar que el idioma no esté vacío
+
             if (newLanguage == null || newLanguage.trim().isEmpty()) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Invalid language");
@@ -126,7 +110,7 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Validar que sea un código de idioma válido (opcional pero recomendado)
+
             if (!isValidLanguageCode(newLanguage)) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Invalid language code");
@@ -134,7 +118,7 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Actualizar el idioma
+
             person.setPreferredLanguage(newLanguage);
             personRepository.save(person);
 
@@ -163,14 +147,7 @@ public class PersonProfileRestController {
         }
     }
 
-    /**
-     * Actualiza la foto de perfil del usuario autenticado
-     * Endpoint: PUT /persons/me/profile-photo
-     *
-     * @param request HttpServletRequest
-     * @param file Archivo de imagen a subir
-     * @return ResponseEntity con el perfil actualizado
-     */
+
     @PutMapping("/me/profile-photo")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> updateProfilePhoto(
@@ -191,7 +168,6 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Validar que sea una imagen
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 Map<String, String> errorResponse = new HashMap<>();
@@ -200,7 +176,7 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Validar tamaño (máximo 5MB)
+
             long maxSize = 5 * 1024 * 1024; // 5MB
             if (file.getSize() > maxSize) {
                 Map<String, String> errorResponse = new HashMap<>();
@@ -209,7 +185,7 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Obtener el usuario completo de la BD
+
             Optional<Person> personOptional = personRepository.findById(authenticatedPerson.getId());
             if (personOptional.isEmpty()) {
                 return new GlobalResponseHandler().handleResponse(
@@ -220,8 +196,8 @@ public class PersonProfileRestController {
             }
 
             Person person = personOptional.get();
+            
 
-            // Eliminar foto anterior de Cloudinary (si existe)
             if (person.getProfilePhotoUrl() != null && !person.getProfilePhotoUrl().isEmpty()) {
                 try {
                     String oldPublicId = cloudinaryService.extractPublicIdFromUrl(person.getProfilePhotoUrl());
@@ -230,14 +206,14 @@ public class PersonProfileRestController {
                     }
                 } catch (Exception e) {
                     System.err.println("⚠️ Warning: Could not delete old profile photo: " + e.getMessage());
-                    // No detenemos el proceso si falla la eliminación
+
                 }
             }
 
-            // Subir nueva imagen a Cloudinary
+
             String newImageUrl = cloudinaryService.uploadImage(file);
 
-            // Actualizar URL en la base de datos
+
             person.setProfilePhotoUrl(newImageUrl);
             personRepository.save(person);
 
@@ -251,20 +227,20 @@ public class PersonProfileRestController {
             );
 
         } catch (IOException e) {
-            System.err.println("❌ Error uploading image to Cloudinary: " + e.getMessage());
+            System.err.println(" Error uploading image to Cloudinary: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Upload failed");
             errorResponse.put("message", "Error uploading image: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (ClassCastException e) {
-            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println("❌ Error updating profile photo: " + e.getMessage());
+            System.err.println(" Error updating profile photo: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error updating profile photo");
@@ -274,13 +250,6 @@ public class PersonProfileRestController {
     }
 
 
-    /**
-     * Elimina la foto de perfil del usuario autenticado
-     * Endpoint: DELETE /persons/me/profile-photo
-     *
-     * @param request HttpServletRequest
-     * @return ResponseEntity con el perfil actualizado
-     */
     @DeleteMapping("/me/profile-photo")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> deleteProfilePhoto(HttpServletRequest request) {
@@ -302,7 +271,6 @@ public class PersonProfileRestController {
 
             Person person = personOptional.get();
 
-            // Verificar si tiene foto de perfil
             if (person.getProfilePhotoUrl() == null || person.getProfilePhotoUrl().isEmpty()) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "No profile photo");
@@ -310,7 +278,6 @@ public class PersonProfileRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Eliminar foto de Cloudinary
             try {
                 String publicId = cloudinaryService.extractPublicIdFromUrl(person.getProfilePhotoUrl());
                 if (publicId != null) {
@@ -325,7 +292,7 @@ public class PersonProfileRestController {
             person.setProfilePhotoUrl(null);
             personRepository.save(person);
 
-            System.out.println("✅ Profile photo deleted successfully for user " + person.getId());
+            System.out.println(" Profile photo deleted successfully for user " + person.getId());
 
             return new GlobalResponseHandler().handleResponse(
                     "Profile photo deleted successfully",
@@ -335,13 +302,13 @@ public class PersonProfileRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println("❌ Error deleting profile photo: " + e.getMessage());
+            System.err.println(" Error deleting profile photo: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error deleting profile photo");
@@ -350,10 +317,6 @@ public class PersonProfileRestController {
         }
     }
 
-    /**
-     * Health check endpoint
-     * Endpoint: GET /persons/health
-     */
     @GetMapping("/health")
     public ResponseEntity<?> healthCheck() {
         Map<String, Object> response = new HashMap<>();
@@ -363,11 +326,7 @@ public class PersonProfileRestController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Valida si el código de idioma es válido
-     * @param languageCode Código del idioma (ej: "es", "en")
-     * @return true si es válido, false en caso contrario
-     */
+
     private boolean isValidLanguageCode(String languageCode) {
         return languageCode.equals("es") || languageCode.equals("en");
     }
