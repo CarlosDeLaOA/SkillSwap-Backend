@@ -1,8 +1,11 @@
 package com.project.skillswap.rest.UserSkill;
 
-import com.project.skillswap.logic.entity.UserSkill.UserSkill;
-import com.project.skillswap.logic.entity.UserSkill.UserSkillService;
 import com.project.skillswap.logic.entity.Person.Person;
+import com.project.skillswap.logic.entity.Person.PersonRepository;
+import com.project.skillswap.logic.entity.Skill.Skill;
+import com.project.skillswap.logic.entity.Skill.SkillRepository;
+import com.project.skillswap.logic.entity.UserSkill.UserSkill;
+import com.project.skillswap.logic.entity.UserSkill.UserSkillRepository;
 import com.project.skillswap.logic.entity.http.GlobalResponseHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,93 +16,35 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * REST Controller for UserSkill operations
- * Provides endpoints to manage user skills
+ * REST Controller para gestionar las skills del usuario
+ * Permite agregar, obtener y eliminar skills de las categorías de interés del usuario
+ *
+ * @author SkillSwap Team
+ * @version 2.0.0
  */
 @RestController
 @RequestMapping("/user-skills")
 @CrossOrigin(origins = "*")
 public class UserSkillRestController {
 
-    //<editor-fold desc="Dependencies">
     @Autowired
-    private UserSkillService userSkillService;
-    //</editor-fold>
+    private UserSkillRepository userSkillRepository;
 
-    //<editor-fold desc="POST Endpoints">
+    @Autowired
+    private SkillRepository skillRepository;
+
+    @Autowired
+    private PersonRepository personRepository;
+
     /**
-     * POST /user-skills
-     * Saves user skills during onboarding
+     * Obtiene todas las skills activas del usuario autenticado
+     * Endpoint: GET /user-skills
      *
-     * Requires: Valid JWT token in Authorization header
-     *
-     * @param request HttpServletRequest for metadata
-     * @param requestBody Map containing skillIds
-     * @return ResponseEntity with saved user skills
-     */
-    @PostMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> saveUserSkills(
-            HttpServletRequest request,
-            @RequestBody Map<String, List<Long>> requestBody) {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            Person authenticatedPerson = (Person) authentication.getPrincipal();
-
-            validateUserRole(authenticatedPerson);
-
-            List<Long> skillIds = requestBody.get("skillIds");
-
-            if (skillIds == null || skillIds.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(createErrorResponse("Invalid request", "skillIds cannot be empty"));
-            }
-
-            List<UserSkill> savedSkills = userSkillService.saveUserSkills(authenticatedPerson, skillIds);
-
-            return new GlobalResponseHandler().handleResponse(
-                    "User skills saved successfully",
-                    savedSkills,
-                    HttpStatus.CREATED,
-                    request
-            );
-        } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Invalid authentication type",
-                            "Authenticated user is not of expected type"));
-        } catch (IllegalStateException e) {
-            System.err.println("Error: Invalid user role: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(createErrorResponse("Invalid user role", e.getMessage()));
-        } catch (IllegalArgumentException e) {
-            System.err.println("Error: Invalid request: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(createErrorResponse("Invalid request", e.getMessage()));
-        } catch (Exception e) {
-            System.err.println("Error saving user skills: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Error saving user skills",
-                            "Error saving user skills: " + e.getMessage()));
-        }
-    }
-    //</editor-fold>
-
-    //<editor-fold desc="GET Endpoints">
-    /**
-     * GET /user-skills
-     * Gets all active user skills for the authenticated user
-     *
-     * Requires: Valid JWT token in Authorization header
-     *
-     * @param request HttpServletRequest for metadata
-     * @return ResponseEntity with list of active user skills
+     * @param request HttpServletRequest
+     * @return ResponseEntity con la lista de user skills activas
      */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
@@ -108,9 +53,13 @@ public class UserSkillRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            validateUserRole(authenticatedPerson);
+            System.out.println("📥 [UserSkillController] Getting skills for user: " + authenticatedPerson.getId());
 
-            List<UserSkill> userSkills = userSkillService.getActiveUserSkillsByPersonId(authenticatedPerson.getId());
+            // Obtener todas las skills activas del usuario
+            List<UserSkill> userSkills = userSkillRepository
+                    .findActiveUserSkillsByPersonId(authenticatedPerson.getId());
+
+            System.out.println("✅ [UserSkillController] Found " + userSkills.size() + " active skills");
 
             return new GlobalResponseHandler().handleResponse(
                     "User skills retrieved successfully",
@@ -118,120 +67,275 @@ public class UserSkillRestController {
                     HttpStatus.OK,
                     request
             );
+
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Invalid authentication type",
-                            "Authenticated user is not of expected type"));
-        } catch (IllegalStateException e) {
-            System.err.println("Error: Invalid user role: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(createErrorResponse("Invalid user role", e.getMessage()));
+            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Invalid authentication type");
+            errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println("Error getting user skills: " + e.getMessage());
+            System.err.println("❌ Error getting user skills: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Error retrieving user skills",
-                            "Error retrieving user skills: " + e.getMessage()));
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Error retrieving skills");
+            errorResponse.put("message", "Error al obtener habilidades: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
     /**
-     * Health check endpoint to verify service status
+     * Obtiene una skill específica del usuario autenticado
+     * Endpoint: GET /user-skills/{userSkillId}
      *
+     * @param request HttpServletRequest
+     * @param userSkillId ID de la UserSkill
+     * @return ResponseEntity con la user skill
+     */
+    @GetMapping("/{userSkillId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getUserSkillById(
+            HttpServletRequest request,
+            @PathVariable Long userSkillId
+    ) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            Optional<UserSkill> userSkillOptional = userSkillRepository.findById(userSkillId);
+
+            if (userSkillOptional.isEmpty()) {
+                return new GlobalResponseHandler().handleResponse(
+                        "UserSkill not found",
+                        HttpStatus.NOT_FOUND,
+                        request
+                );
+            }
+
+            UserSkill userSkill = userSkillOptional.get();
+
+            // Verificar que la skill pertenece al usuario autenticado
+            if (!userSkill.getPerson().getId().equals(authenticatedPerson.getId())) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Forbidden");
+                errorResponse.put("message", "No tienes permiso para acceder a esta habilidad");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+            }
+
+            System.out.println("✅ [UserSkillController] Retrieved skill " + userSkillId);
+
+            return new GlobalResponseHandler().handleResponse(
+                    "User skill retrieved successfully",
+                    userSkill,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (Exception e) {
+            System.err.println("❌ Error getting user skill by ID: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Error retrieving skill");
+            errorResponse.put("message", "Error al obtener habilidad: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * Agrega una o varias skills al usuario autenticado
+     * Endpoint: POST /user-skills
+     *
+     * @param request HttpServletRequest
+     * @param skillRequest Request body con los IDs de las skills a agregar
+     * @return ResponseEntity con las skills agregadas
+     */
+    @PostMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> addUserSkills(
+            HttpServletRequest request,
+            @RequestBody Map<String, Object> skillRequest
+    ) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            Optional<Person> personOptional = personRepository.findById(authenticatedPerson.getId());
+
+            if (personOptional.isEmpty()) {
+                return new GlobalResponseHandler().handleResponse(
+                        "User not found",
+                        HttpStatus.NOT_FOUND,
+                        request
+                );
+            }
+
+            Person person = personOptional.get();
+
+            // Obtener los IDs de las skills desde el request
+            @SuppressWarnings("unchecked")
+            List<Integer> skillIdsInt = (List<Integer>) skillRequest.get("skillIds");
+
+            if (skillIdsInt == null || skillIdsInt.isEmpty()) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Invalid request");
+                errorResponse.put("message", "skillIds cannot be empty");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            // Convertir Integer a Long
+            List<Long> skillIds = skillIdsInt.stream()
+                    .map(Integer::longValue)
+                    .toList();
+
+            // Buscar las skills en la base de datos
+            List<Skill> skills = skillRepository.findAllByIdIn(skillIds);
+
+            if (skills.isEmpty()) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Skills not found");
+                errorResponse.put("message", "No valid skills found with the provided IDs");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            List<UserSkill> addedUserSkills = new ArrayList<>();
+
+            // Agregar cada skill al usuario (si no existe ya)
+            for (Skill skill : skills) {
+                // Verificar si el usuario ya tiene esta skill
+                Optional<UserSkill> existingUserSkill = userSkillRepository
+                        .findByPersonAndSkillId(person, skill.getId());
+
+                if (existingUserSkill.isPresent()) {
+                    // Si ya existe, solo activarla si está inactiva
+                    UserSkill userSkill = existingUserSkill.get();
+                    if (!userSkill.getActive()) {
+                        userSkill.setActive(true);
+                        userSkillRepository.save(userSkill);
+                        addedUserSkills.add(userSkill);
+                    }
+                } else {
+                    // Si no existe, crear una nueva
+                    UserSkill newUserSkill = new UserSkill();
+                    newUserSkill.setPerson(person);
+                    newUserSkill.setSkill(skill);
+                    newUserSkill.setActive(true);
+                    userSkillRepository.save(newUserSkill);
+                    addedUserSkills.add(newUserSkill);
+                }
+            }
+
+            System.out.println("✅ Skills added for user " + person.getId() + ": " + addedUserSkills.size());
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Skills added successfully",
+                    addedUserSkills,
+                    HttpStatus.CREATED,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Invalid authentication type");
+            errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        } catch (Exception e) {
+            System.err.println("❌ Error adding skills: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Error adding skills");
+            errorResponse.put("message", "Error al agregar habilidades: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * Elimina una skill del usuario autenticado
+     * Endpoint: DELETE /user-skills/{userSkillId}
+     *
+     * @param request HttpServletRequest
+     * @param userSkillId ID de la UserSkill a eliminar
+     * @return ResponseEntity con mensaje de éxito
+     */
+    @DeleteMapping("/{userSkillId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> deleteUserSkill(
+            HttpServletRequest request,
+            @PathVariable Long userSkillId
+    ) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            Optional<UserSkill> userSkillOptional = userSkillRepository.findById(userSkillId);
+
+            if (userSkillOptional.isEmpty()) {
+                return new GlobalResponseHandler().handleResponse(
+                        "UserSkill not found",
+                        HttpStatus.NOT_FOUND,
+                        request
+                );
+            }
+
+            UserSkill userSkill = userSkillOptional.get();
+
+            // Verificar que la skill pertenece al usuario autenticado
+            if (!userSkill.getPerson().getId().equals(authenticatedPerson.getId())) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Forbidden");
+                errorResponse.put("message", "No tienes permiso para eliminar esta habilidad");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+            }
+
+            // Verificar que el usuario tenga al menos 2 skills activas
+            List<UserSkill> activeSkills = userSkillRepository
+                    .findActiveUserSkillsByPersonId(authenticatedPerson.getId());
+
+            if (activeSkills.size() <= 1) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Validation error");
+                errorResponse.put("message", "Debes tener al menos una habilidad activa");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            // Marcar como inactiva en lugar de eliminar (soft delete)
+            userSkill.setActive(false);
+            userSkillRepository.save(userSkill);
+
+            System.out.println("✅ Skill removed for user " + authenticatedPerson.getId() + ": UserSkill ID " + userSkillId);
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Skill removed successfully",
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Invalid authentication type");
+            errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        } catch (Exception e) {
+            System.err.println("❌ Error removing skill: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Error removing skill");
+            errorResponse.put("message", "Error al eliminar habilidad: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * Health check endpoint
      * Endpoint: GET /user-skills/health
-     * No authentication required
-     *
-     * @return ResponseEntity with service status
      */
     @GetMapping("/health")
     public ResponseEntity<?> healthCheck() {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "UP");
-        response.put("service", "User Skills");
-        response.put("message", "User Skill Controller is running");
+        response.put("service", "UserSkills");
+        response.put("message", "UserSkill Controller is running");
         return ResponseEntity.ok(response);
     }
-    //</editor-fold>
-
-    //<editor-fold desc="DELETE Endpoints">
-    /**
-     * DELETE /user-skills/{id}
-     * Deactivates a user skill
-     *
-     * Requires: Valid JWT token in Authorization header
-     *
-     * @param id the user skill ID
-     * @param request HttpServletRequest for metadata
-     * @return ResponseEntity with result
-     */
-    @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> deactivateUserSkill(
-            @PathVariable Long id,
-            HttpServletRequest request) {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            Person authenticatedPerson = (Person) authentication.getPrincipal();
-
-            validateUserRole(authenticatedPerson);
-
-            userSkillService.deactivateUserSkill(id);
-
-            return new GlobalResponseHandler().handleResponse(
-                    "User skill deactivated successfully",
-                    null,
-                    HttpStatus.OK,
-                    request
-            );
-        } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Invalid authentication type",
-                            "Authenticated user is not of expected type"));
-        } catch (IllegalStateException e) {
-            System.err.println("Error: Invalid user role: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(createErrorResponse("Invalid user role", e.getMessage()));
-        } catch (IllegalArgumentException e) {
-            System.err.println("Error: Invalid request: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(createErrorResponse("Invalid request", e.getMessage()));
-        } catch (Exception e) {
-            System.err.println("Error deactivating user skill: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Error deactivating user skill",
-                            "Error deactivating user skill: " + e.getMessage()));
-        }
-    }
-    //</editor-fold>
-
-    //<editor-fold desc="Private Helper Methods">
-    /**
-     * Validates that user has either instructor or learner role
-     *
-     * @param person Authenticated person
-     * @throws IllegalStateException If user has no valid role
-     */
-    private void validateUserRole(Person person) {
-        if (person.getInstructor() == null && person.getLearner() == null) {
-            throw new IllegalStateException("User must have either instructor or learner role");
-        }
-    }
-
-    /**
-     * Creates error response map
-     *
-     * @param error Error type
-     * @param message Error message
-     * @return Map containing error information
-     */
-    private Map<String, String> createErrorResponse(String error, String message) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", error);
-        errorResponse.put("message", message);
-        return errorResponse;
-    }
-    //</editor-fold>
 }
