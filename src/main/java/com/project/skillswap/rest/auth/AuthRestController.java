@@ -158,8 +158,12 @@ public class AuthRestController {
             System.out.println("[LOGIN] Usuario autenticado correctamente: " + authenticatedUser.getEmail());
 
             // Generar JWT token
-            String jwtToken = jwtService.generateToken(authenticatedUser);
-            System.out.println("[LOGIN] Token JWT generado");
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("userId", authenticatedUser.getId());
+            extraClaims.put("rol", authenticatedUser.getRole());
+
+            String jwtToken = jwtService.generateToken(extraClaims, authenticatedUser);
+            System.out.println("[LOGIN] Token JWT generado con userId: " + authenticatedUser.getId() + " y rol: " + authenticatedUser.getRole());
 
             // Crear respuesta de login
             LoginResponse loginResponse = new LoginResponse();

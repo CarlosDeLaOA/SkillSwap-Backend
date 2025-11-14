@@ -275,5 +275,24 @@ public class Person implements UserDetails {
         this.userSkills = userSkills;
     }
 
+    /**
+     * Determina el rol del usuario basado en sus relaciones
+     * @return "INSTRUCTOR", "LEARNER", "BOTH" o "USER"
+     */
+    @JsonIgnore
+    public String getRole() {
+        boolean isInstructor = (instructor != null);
+        boolean isLearner = (learner != null);
+
+        if (isInstructor && isLearner) {
+            return "BOTH";
+        } else if (isInstructor) {
+            return "INSTRUCTOR";
+        } else if (isLearner) {
+            return "LEARNER";
+        } else {
+            return "USER";
+        }
+    }
     //#endregion
 }
