@@ -214,9 +214,6 @@ public class GoogleOAuthService {
                 Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant())
         );
         newPerson.setActive(true);
-
-        // CRÍTICO: Establecer passwordHash para usuarios OAuth
-        // Los usuarios OAuth no pueden hacer login con contraseña tradicional
         newPerson.setPasswordHash("OAUTH_USER_NO_PASSWORD");
 
         String picture = (String) userInfo.get("picture");

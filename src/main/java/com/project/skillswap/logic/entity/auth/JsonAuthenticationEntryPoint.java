@@ -31,10 +31,8 @@ public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
             AuthenticationException authException
     ) throws IOException, ServletException {
 
-        // Default
         String message = "error de autenticación";
 
-        // Intenta detectar excepciones anidadas lanzadas por el stack JWT
         Throwable cause = authException.getCause();
         if (cause instanceof ExpiredJwtException) {
             message = "sesión expirada";

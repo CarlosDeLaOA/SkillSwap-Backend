@@ -6,14 +6,17 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
@@ -51,13 +54,27 @@ public class JwtService {
     }
 
     /**
-     * Generates a JWT token for the given user details.
+     * Generates a JWT token for the given user details with roles and userId.
      *
      * @param userDetails the user details
      * @return the generated JWT token
      */
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        Map<String, Object> extraClaims = new HashMap<>();
+
+        extraClaims.put("email", userDetails.getUsername());
+
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+        extraClaims.put("roles", roles);
+
+        extraClaims.put("userId", userDetails.getUsername());
+
+        System.out.println("   - Email: " + userDetails.getUsername());
+        System.out.println("   - Roles: " + roles);
+
+        return generateToken(extraClaims, userDetails);
     }
 
     /**
@@ -90,6 +107,40 @@ public class JwtService {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    }
+
+    /**
+     * Extracts roles from a JWT token.
+     *
+     * @param token the JWT token
+     * @return list of roles
+     */
+    @SuppressWarnings("unchecked")
+    public List<String> extractRoles(String token) {
+        Claims claims = extractAllClaims(token);
+        return (List<String>) claims.get("roles");
+    }
+
+    /**
+     * Extracts userId from a JWT token.
+     *
+     * @param token the JWT token
+     * @return the userId
+     */
+    public String extractUserId(String token) {
+        Claims claims = extractAllClaims(token);
+        return (String) claims.get("userId");
+    }
+
+    /**
+     * Extracts email from a JWT token.
+     *
+     * @param token the JWT token
+     * @return the email
+     */
+    public String extractEmail(String token) {
+        Claims claims = extractAllClaims(token);
+        return (String) claims.get("email");
     }
     //#endregion
 
