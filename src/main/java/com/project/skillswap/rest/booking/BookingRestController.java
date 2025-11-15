@@ -112,4 +112,51 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }
+    /**
+     * POST /api/bookings/group
+     * Crea un booking grupal para una comunidad
+     */
+    @PostMapping("/group")
+    public ResponseEntity<Map<String, Object>> createGroupBooking(
+            @RequestBody Map<String, Long> request,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            System.out.println("📥 [BOOKING] POST /api/bookings/group");
+
+            String token = authHeader.replace("Bearer ", "");
+            String userEmail = jwtService.extractUsername(token);
+
+            System.out.println("👤 [BOOKING] Usuario autenticado: " + userEmail);
+
+            Long sessionId = request.get("learningSessionId");
+            Long communityId = request.get("communityId");
+
+            if (sessionId == null) {
+                throw new RuntimeException("El ID de la sesión es requerido");
+            }
+
+            if (communityId == null) {
+                throw new RuntimeException("El ID de la comunidad es requerido");
+            }
+
+            List<Booking> bookings = bookingService.createGroupBooking(sessionId, communityId, userEmail);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Se ha registrado exitosamente al grupo en la sesión (" + bookings.size() + " miembros)");
+            response.put("data", bookings);
+            response.put("count", bookings.size());
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ [BOOKING] Error: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+    }
 }
