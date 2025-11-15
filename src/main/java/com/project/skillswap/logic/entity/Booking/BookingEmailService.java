@@ -1,0 +1,301 @@
+package com.project.skillswap.logic.entity.Booking;
+
+import com.project.skillswap.logic.entity.LearningSession.LearningSession;
+import com.project.skillswap.logic.entity.Person.Person;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+/**
+ * Servicio para el envío de correos electrónicos relacionados con bookings.
+ */
+@Service
+public class BookingEmailService {
+
+    //#region Dependencies
+    private final JavaMailSender mailSender;
+
+    @Value("${app.frontend.url:http://localhost:4200}")
+    private String frontendUrl;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+
+    public BookingEmailService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
+    //#endregion
+
+    //#region Public Methods
+    /**
+     * Envía un correo de confirmación de booking.
+     *
+     * @param booking el booking creado
+     * @param person la persona que hizo el booking
+     * @throws MessagingException si hay un error al enviar el correo
+     */
+    public void sendBookingConfirmationEmail(Booking booking, Person person) throws MessagingException {
+        String subject = "Confirmación de registro - " + booking.getLearningSession().getTitle();
+        String htmlContent = buildBookingConfirmationTemplate(booking, person);
+
+        sendHtmlEmail(person.getEmail(), subject, htmlContent);
+    }
+
+    /**
+     * Envía un correo de cancelación de booking.
+     *
+     * @param booking el booking cancelado
+     * @param person la persona que canceló
+     * @throws MessagingException si hay un error al enviar el correo
+     */
+    public void sendBookingCancellationEmail(Booking booking, Person person) throws MessagingException {
+        String subject = "Cancelación de registro - " + booking.getLearningSession().getTitle();
+        String htmlContent = buildBookingCancellationTemplate(booking, person);
+
+        sendHtmlEmail(person.getEmail(), subject, htmlContent);
+    }
+    //#endregion
+
+    //#region Private Methods
+    /**
+     * Envía un correo en formato HTML.
+     *
+     * @param to correo del destinatario
+     * @param subject asunto del correo
+     * @param htmlContent contenido HTML del correo
+     * @throws MessagingException si hay un error al enviar el correo
+     */
+    private void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setFrom(fromEmail);
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(htmlContent, true);
+
+        mailSender.send(message);
+    }
+
+    /**
+     * Construye el template HTML para el correo de confirmación de booking.
+     */
+    private String buildBookingConfirmationTemplate(Booking booking, Person person) {
+        LearningSession session = booking.getLearningSession();
+
+        String sessionTitle = session.getTitle();
+        String sessionDescription = session.getDescription();
+        String instructorName = session.getInstructor().getPerson().getFullName();
+        String skillName = session.getSkill().getName();
+        String categoryName = session.getSkill().getKnowledgeArea().getName();
+
+        // Formatear fecha y hora
+        String formattedDate = formatDate(session.getScheduledDatetime());
+        String formattedTime = formatTime(session.getScheduledDatetime());
+        String duration = session.getDurationMinutes() + " minutos";
+
+        String accessLink = booking.getAccessLink();
+        String mySessionsLink = frontendUrl + "/app/my-sessions";
+
+        return "<!DOCTYPE html>" +
+                "<html lang='es'>" +
+                "<head>" +
+                "    <meta charset='UTF-8'>" +
+                "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                "    <title>Confirmación de Registro</title>" +
+                "</head>" +
+                "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #39434b;'>" +
+                "    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #39434b; padding: 40px 20px;'>" +
+                "        <tr>" +
+                "            <td align='center'>" +
+                "                <table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>" +
+                "                    <tr>" +
+                "                        <td style='background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); padding: 40px 20px; text-align: center;'>" +
+                "                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                    <tr>" +
+                "                        <td style='padding: 40px 30px; color: #ffffff;'>" +
+                "                            <h2 style='color: #aae16b; margin-top: 0; font-size: 24px;'>Registro Confirmado</h2>" +
+                "                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>" +
+                "                                Hola <strong style='color: #aae16b;'>" + person.getFullName() + "</strong>," +
+                "                            </p>" +
+                "                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>" +
+                "                                Te has registrado exitosamente en la siguiente sesión de aprendizaje:" +
+                "                            </p>" +
+
+                "                            <!-- Detalles de la sesión -->" +
+                "                            <div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #aae16b;'>" +
+                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 20px;'>" + sessionTitle + "</h3>" +
+                "                                <p style='font-size: 14px; color: #b0b0b0; margin: 10px 0;'>" + sessionDescription + "</p>" +
+                "                                <hr style='border: none; border-top: 1px solid #504ab7; margin: 20px 0;'>" +
+
+                "                                <table width='100%' cellpadding='5' cellspacing='0' style='font-size: 14px;'>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; width: 40%;'><strong>Fecha:</strong></td>" +
+                "                                        <td style='color: #ffffff;'>" + formattedDate + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b;'><strong>Hora:</strong></td>" +
+                "                                        <td style='color: #ffffff;'>" + formattedTime + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b;'><strong>Duración:</strong></td>" +
+                "                                        <td style='color: #ffffff;'>" + duration + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b;'><strong>Instructor:</strong></td>" +
+                "                                        <td style='color: #ffffff;'>" + instructorName + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b;'><strong>Habilidad:</strong></td>" +
+                "                                        <td style='color: #ffffff;'>" + skillName + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b;'><strong>Categoría:</strong></td>" +
+                "                                        <td style='color: #ffffff;'>" + categoryName + "</td>" +
+                "                                    </tr>" +
+                "                                </table>" +
+                "                            </div>" +
+
+                "                            <!-- Enlace de acceso -->" +
+                "                            <div style='background-color: #39434b; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #504ab7;'>" +
+                "                                <h4 style='color: #aae16b; margin-top: 0; font-size: 16px;'>Enlace de acceso a la sesión:</h4>" +
+                "                                <p style='font-size: 14px; word-break: break-all; color: #aae16b; background-color: #141414; padding: 15px; border-radius: 5px; margin: 10px 0;'>" +
+                "                                    <a href='" + accessLink + "' style='color: #aae16b; text-decoration: none;'>" + accessLink + "</a>" +
+                "                                </p>" +
+                "                                <p style='font-size: 12px; color: #b0b0b0; margin: 5px 0 0 0;'>" +
+                "                                    Guarda este enlace en un lugar seguro. Lo necesitarás para acceder a la sesión." +
+                "                                </p>" +
+                "                            </div>" +
+
+                "                            <!-- Botón para ver mis sesiones -->" +
+                "                            <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>" +
+                "                                <tr>" +
+                "                                    <td align='center'>" +
+                "                                        <a href='" + mySessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'>Ver Mis Sesiones</a>" +
+                "                                    </td>" +
+                "                                </tr>" +
+                "                            </table>" +
+
+                "                            <!-- Recordatorios -->" +
+                "                            <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #504ab7;'>" +
+                "                                <h4 style='color: #aae16b; margin-top: 0; font-size: 16px;'>Recordatorios importantes:</h4>" +
+                "                                <ul style='color: #ffffff; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 10px 0;'>" +
+                "                                    <li>Asegúrate de tener una conexión a internet estable</li>" +
+                "                                    <li>Prueba tu cámara y micrófono antes de la sesión</li>" +
+                "                                    <li>Llega 5 minutos antes para prepararte</li>" +
+                "                                    <li>Guarda el enlace de acceso en un lugar seguro</li>" +
+                "                                </ul>" +
+                "                            </div>" +
+
+                "                            <p style='font-size: 14px; line-height: 1.6; color: #b0b0b0; margin: 30px 0 0 0;'>" +
+                "                                Si necesitas cancelar tu registro, puedes hacerlo desde tu panel de sesiones." +
+                "                            </p>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                    <tr>" +
+                "                        <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>" +
+                "                            <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>" +
+                "                                © 2025 SkillSwap. Todos los derechos reservados." +
+                "                            </p>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                </table>" +
+                "            </td>" +
+                "        </tr>" +
+                "    </table>" +
+                "</body>" +
+                "</html>";
+    }
+
+    /**
+     * Construye el template HTML para el correo de cancelación de booking.
+     */
+    private String buildBookingCancellationTemplate(Booking booking, Person person) {
+        LearningSession session = booking.getLearningSession();
+        String sessionTitle = session.getTitle();
+        String formattedDate = formatDate(session.getScheduledDatetime());
+        String sessionsLink = frontendUrl + "/app/sessions";
+
+        return "<!DOCTYPE html>" +
+                "<html lang='es'>" +
+                "<head>" +
+                "    <meta charset='UTF-8'>" +
+                "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                "    <title>Cancelación de Registro</title>" +
+                "</head>" +
+                "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #39434b;'>" +
+                "    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #39434b; padding: 40px 20px;'>" +
+                "        <tr>" +
+                "            <td align='center'>" +
+                "                <table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>" +
+                "                    <tr>" +
+                "                        <td style='background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); padding: 40px 20px; text-align: center;'>" +
+                "                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                    <tr>" +
+                "                        <td style='padding: 40px 30px; color: #ffffff;'>" +
+                "                            <h2 style='color: #ff6b6b; margin-top: 0; font-size: 24px;'>Registro Cancelado</h2>" +
+                "                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>" +
+                "                                Hola <strong style='color: #aae16b;'>" + person.getFullName() + "</strong>," +
+                "                            </p>" +
+                "                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>" +
+                "                                Tu registro para la siguiente sesión ha sido cancelado:" +
+                "                            </p>" +
+                "                            <div style='background-color: #39434b; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #ff6b6b;'>" +
+                "                                <h3 style='color: #ffffff; margin-top: 0; font-size: 18px;'>" + sessionTitle + "</h3>" +
+                "                                <p style='font-size: 14px; color: #b0b0b0; margin: 5px 0;'>Fecha: " + formattedDate + "</p>" +
+                "                            </div>" +
+                "                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>" +
+                "                                Puedes explorar otras sesiones disponibles que podrían interesarte." +
+                "                            </p>" +
+                "                            <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>" +
+                "                                <tr>" +
+                "                                    <td align='center'>" +
+                "                                        <a href='" + sessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'>Explorar Sesiones</a>" +
+                "                                    </td>" +
+                "                                </tr>" +
+                "                            </table>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                    <tr>" +
+                "                        <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>" +
+                "                            <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>" +
+                "                                © 2025 SkillSwap. Todos los derechos reservados." +
+                "                            </p>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                </table>" +
+                "            </td>" +
+                "        </tr>" +
+                "    </table>" +
+                "</body>" +
+                "</html>";
+    }
+
+    /**
+     * Formatea una fecha en español.
+     */
+    private String formatDate(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
+        return sdf.format(date);
+    }
+
+    /**
+     * Formatea la hora.
+     */
+    private String formatTime(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", new Locale("es", "ES"));
+        return sdf.format(date);
+    }
+    //#endregion
+}

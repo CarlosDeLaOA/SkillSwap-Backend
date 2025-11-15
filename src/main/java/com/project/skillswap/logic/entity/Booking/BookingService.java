@@ -25,13 +25,16 @@ public class BookingService {
     @Autowired
     private PersonRepository personRepository;
 
+    @Autowired
+    private BookingEmailService bookingEmailService;
+
     /**
      * Crea un booking individual
      */
     @Transactional
     public Booking createIndividualBooking(Long sessionId, String userEmail) {
 
-        System.out.println("📝 [BOOKING] Creando booking para email: " + userEmail);
+        System.out.println("[BOOKING] Creando booking para email: " + userEmail);
 
         // 1. Obtener Person por email
         Person person = personRepository.findByEmail(userEmail)
@@ -43,13 +46,13 @@ public class BookingService {
             throw new RuntimeException("El usuario no tiene un perfil de estudiante. Por favor completa tu perfil primero.");
         }
 
-        System.out.println("✅ [BOOKING] Learner encontrado con ID: " + learner.getId());
+        System.out.println("[BOOKING] Learner encontrado con ID: " + learner.getId());
 
         // 3. Validar que la sesión existe
         LearningSession session = learningSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Sesión no encontrada con ID: " + sessionId));
 
-        System.out.println("✅ [BOOKING] Sesión encontrada: " + session.getTitle());
+        System.out.println("[BOOKING] Sesión encontrada: " + session.getTitle());
 
         // 4. Validar que la sesión está en estado SCHEDULED
         if (!SessionStatus.SCHEDULED.equals(session.getStatus())) {
@@ -63,7 +66,7 @@ public class BookingService {
 
         // 6. Validar que haya cupo disponible
         long confirmedBookings = bookingRepository.countConfirmedBookingsBySessionId(sessionId);
-        System.out.println("📊 [BOOKING] Cupos confirmados: " + confirmedBookings + "/" + session.getMaxCapacity());
+        System.out.println("[BOOKING] Cupos confirmados: " + confirmedBookings + "/" + session.getMaxCapacity());
 
         if (confirmedBookings >= session.getMaxCapacity()) {
             throw new RuntimeException("No hay cupos disponibles para esta sesión");
@@ -79,7 +82,16 @@ public class BookingService {
         booking.setAccessLink(generateAccessLink());
 
         Booking savedBooking = bookingRepository.save(booking);
-        System.out.println("✅ [BOOKING] Booking creado exitosamente con ID: " + savedBooking.getId());
+        System.out.println("[BOOKING] Booking creado exitosamente con ID: " + savedBooking.getId());
+
+        // 8. Enviar email de confirmación 📧
+        try {
+            bookingEmailService.sendBookingConfirmationEmail(savedBooking, person);
+            System.out.println("[BOOKING] Email de confirmación enviado a: " + person.getEmail());
+        } catch (Exception e) {
+            System.err.println("[BOOKING] Error al enviar email: " + e.getMessage());
+            // No lanzamos excepción para que el booking se complete aunque falle el email
+        }
 
         return savedBooking;
     }
@@ -126,7 +138,17 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
-        return bookingRepository.save(booking);
+        Booking updatedBooking = bookingRepository.save(booking);
+
+        // Enviar email de cancelación 📧
+        try {
+            bookingEmailService.sendBookingCancellationEmail(updatedBooking, person);
+            System.out.println("📧 [BOOKING] Email de cancelación enviado a: " + person.getEmail());
+        } catch (Exception e) {
+            System.err.println("❌ [BOOKING] Error al enviar email: " + e.getMessage());
+        }
+
+        return updatedBooking;
     }
 
     /**
