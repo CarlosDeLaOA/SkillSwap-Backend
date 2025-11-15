@@ -21,7 +21,7 @@ public class Instructor {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false, unique = true)
-    @JsonIgnore   // 👈 evita Person -> Instructor -> Person -> ...
+    @JsonIgnore
     private Person person;
 
     @Column(name = "paypal_account", length = 255)
@@ -46,7 +46,7 @@ public class Instructor {
     private String biography;
 
     @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore   // 👈 evita Instructor -> Sessions -> Instructor -> ...
+    @JsonIgnore
     private List<LearningSession> learningSessions;
 
     //</editor-fold>

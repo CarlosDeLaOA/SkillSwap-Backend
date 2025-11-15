@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -65,6 +66,73 @@ public class DashboardRepository {
     public List<FeedbackResponse> getRecentFeedbacks(Long personId) {
         String sql = "CALL sp_get_recent_achievements(?, ?)";
         return jdbcTemplate.query(sql, this::mapFeedback, personId, "INSTRUCTOR");
+    }
+
+    /**
+     * Gets skill session statistics for a user
+     * Returns mock data based on user's REAL skills from user_skill table
+     *
+     * @param personId Person ID
+     * @param role User role (INSTRUCTOR or LEARNER)
+     * @return List of skill session statistics
+     */
+    public List<SkillSessionStatsResponse> getSkillSessionStats(Long personId, String role) {
+        // Query para obtener las skills REALES del usuario
+        String sql = """
+        SELECT s.name AS skill_name
+        FROM user_skill us
+        INNER JOIN skill s ON us.skill_id = s.id
+        WHERE us.person_id = ? AND us.active = true
+        ORDER BY s.name
+    """;
+
+        try {
+            List<SkillSessionStatsResponse> stats = jdbcTemplate.query(sql, (rs, rowNum) -> {
+                String skillName = rs.getString("skill_name");
+
+                // Generar datos mock aleatorios para cada skill real
+                int completed = (int) (Math.random() * 8) + 2;  // Entre 2 y 10
+                int pending = (int) (Math.random() * 6) + 1;     // Entre 1 y 7
+
+                return new SkillSessionStatsResponse(skillName, completed, pending);
+            }, personId);
+
+            // Si el usuario no tiene skills, retornar lista vacía
+            if (stats.isEmpty()) {
+                System.out.println("⚠️ Usuario " + personId + " no tiene skills registradas");
+            } else {
+                System.out.println("✅ Encontradas " + stats.size() + " skills para usuario " + personId);
+            }
+
+            return stats;
+
+        } catch (Exception e) {
+            System.err.println("❌ Error obteniendo skills del usuario: " + e.getMessage());
+            e.printStackTrace();
+
+            // Fallback: retornar lista vacía en caso de error
+            return new ArrayList<>();
+        }
+    }
+
+    // ✅ NUEVO - Monthly Achievements con Mock Data
+    public List<MonthlyAchievementResponse> getMonthlyAchievements(Long personId) {
+        List<MonthlyAchievementResponse> mockData = new ArrayList<>();
+        mockData.add(new MonthlyAchievementResponse("Ago", 3, 1));
+        mockData.add(new MonthlyAchievementResponse("Sep", 5, 2));
+        mockData.add(new MonthlyAchievementResponse("Oct", 4, 3));
+        mockData.add(new MonthlyAchievementResponse("Nov", 6, 2));
+        return mockData;
+    }
+
+    // ✅ NUEVO - Monthly Attendance con Mock Data
+    public List<MonthlyAttendanceResponse> getMonthlyAttendance(Long personId) {
+        List<MonthlyAttendanceResponse> mockData = new ArrayList<>();
+        mockData.add(new MonthlyAttendanceResponse("Ago", 15, 20));
+        mockData.add(new MonthlyAttendanceResponse("Sep", 18, 22));
+        mockData.add(new MonthlyAttendanceResponse("Oct", 20, 25));
+        mockData.add(new MonthlyAttendanceResponse("Nov", 22, 28));
+        return mockData;
     }
     //#endregion
 

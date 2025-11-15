@@ -1,6 +1,7 @@
 package com.project.skillswap.logic.entity.UserSkill;
 
 import com.project.skillswap.logic.entity.Person.Person;
+import com.project.skillswap.logic.entity.Skill.Skill;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -46,4 +47,6 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
      * @param person the person
      */
     void deleteByPerson(Person person);
+
+    Optional<UserSkill> findByPersonAndSkill(Person person, Skill skill);
 }

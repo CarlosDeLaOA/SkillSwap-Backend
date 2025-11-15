@@ -70,11 +70,11 @@ public class Person implements UserDetails {
     private List<UserSkill> userSkills;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"}) // ⚠ Evitar referencia circular
+    @JsonIgnoreProperties({"person"})
     private Instructor instructor;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"}) // ⚠ Evitar referencia circular
+    @JsonIgnoreProperties({"person"})
     private Learner learner;
 
     @JsonIgnore
@@ -162,6 +162,8 @@ public class Person implements UserDetails {
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
     }
+
+    public void setPassword(String encodedPassword) { this.passwordHash = encodedPassword;  }
 
     public String getFullName() {
         return fullName;

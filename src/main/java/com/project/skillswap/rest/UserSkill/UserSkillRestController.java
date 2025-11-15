@@ -53,13 +53,12 @@ public class UserSkillRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println("📥 [UserSkillController] Getting skills for user: " + authenticatedPerson.getId());
+            System.out.println(" [UserSkillController] Getting skills for user: " + authenticatedPerson.getId());
 
-            // Obtener todas las skills activas del usuario
             List<UserSkill> userSkills = userSkillRepository
                     .findActiveUserSkillsByPersonId(authenticatedPerson.getId());
 
-            System.out.println("✅ [UserSkillController] Found " + userSkills.size() + " active skills");
+            System.out.println(" [UserSkillController] Found " + userSkills.size() + " active skills");
 
             return new GlobalResponseHandler().handleResponse(
                     "User skills retrieved successfully",
@@ -69,13 +68,13 @@ public class UserSkillRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println("❌ Error getting user skills: " + e.getMessage());
+            System.err.println(" Error getting user skills: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error retrieving skills");
@@ -114,7 +113,6 @@ public class UserSkillRestController {
 
             UserSkill userSkill = userSkillOptional.get();
 
-            // Verificar que la skill pertenece al usuario autenticado
             if (!userSkill.getPerson().getId().equals(authenticatedPerson.getId())) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Forbidden");
@@ -122,7 +120,7 @@ public class UserSkillRestController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
             }
 
-            System.out.println("✅ [UserSkillController] Retrieved skill " + userSkillId);
+            System.out.println(" [UserSkillController] Retrieved skill " + userSkillId);
 
             return new GlobalResponseHandler().handleResponse(
                     "User skill retrieved successfully",
@@ -132,7 +130,7 @@ public class UserSkillRestController {
             );
 
         } catch (Exception e) {
-            System.err.println("❌ Error getting user skill by ID: " + e.getMessage());
+            System.err.println(" Error getting user skill by ID: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error retrieving skill");
@@ -171,7 +169,6 @@ public class UserSkillRestController {
 
             Person person = personOptional.get();
 
-            // Obtener los IDs de las skills desde el request
             @SuppressWarnings("unchecked")
             List<Integer> skillIdsInt = (List<Integer>) skillRequest.get("skillIds");
 
@@ -182,12 +179,10 @@ public class UserSkillRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Convertir Integer a Long
             List<Long> skillIds = skillIdsInt.stream()
                     .map(Integer::longValue)
                     .toList();
 
-            // Buscar las skills en la base de datos
             List<Skill> skills = skillRepository.findAllByIdIn(skillIds);
 
             if (skills.isEmpty()) {
@@ -199,14 +194,11 @@ public class UserSkillRestController {
 
             List<UserSkill> addedUserSkills = new ArrayList<>();
 
-            // Agregar cada skill al usuario (si no existe ya)
             for (Skill skill : skills) {
-                // Verificar si el usuario ya tiene esta skill
                 Optional<UserSkill> existingUserSkill = userSkillRepository
                         .findByPersonAndSkillId(person, skill.getId());
 
                 if (existingUserSkill.isPresent()) {
-                    // Si ya existe, solo activarla si está inactiva
                     UserSkill userSkill = existingUserSkill.get();
                     if (!userSkill.getActive()) {
                         userSkill.setActive(true);
@@ -224,7 +216,7 @@ public class UserSkillRestController {
                 }
             }
 
-            System.out.println("✅ Skills added for user " + person.getId() + ": " + addedUserSkills.size());
+            System.out.println(" Skills added for user " + person.getId() + ": " + addedUserSkills.size());
 
             return new GlobalResponseHandler().handleResponse(
                     "Skills added successfully",
@@ -234,13 +226,13 @@ public class UserSkillRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println("❌ Error adding skills: " + e.getMessage());
+            System.err.println(" Error adding skills: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error adding skills");
@@ -279,7 +271,6 @@ public class UserSkillRestController {
 
             UserSkill userSkill = userSkillOptional.get();
 
-            // Verificar que la skill pertenece al usuario autenticado
             if (!userSkill.getPerson().getId().equals(authenticatedPerson.getId())) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Forbidden");
@@ -287,7 +278,6 @@ public class UserSkillRestController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
             }
 
-            // Verificar que el usuario tenga al menos 2 skills activas
             List<UserSkill> activeSkills = userSkillRepository
                     .findActiveUserSkillsByPersonId(authenticatedPerson.getId());
 
@@ -298,11 +288,10 @@ public class UserSkillRestController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Marcar como inactiva en lugar de eliminar (soft delete)
             userSkill.setActive(false);
             userSkillRepository.save(userSkill);
 
-            System.out.println("✅ Skill removed for user " + authenticatedPerson.getId() + ": UserSkill ID " + userSkillId);
+            System.out.println(" Skill removed for user " + authenticatedPerson.getId() + ": UserSkill ID " + userSkillId);
 
             return new GlobalResponseHandler().handleResponse(
                     "Skill removed successfully",
@@ -311,13 +300,13 @@ public class UserSkillRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println("❌ Error: Authentication principal is not a Person: " + e.getMessage());
+            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println("❌ Error removing skill: " + e.getMessage());
+            System.err.println(" Error removing skill: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error removing skill");

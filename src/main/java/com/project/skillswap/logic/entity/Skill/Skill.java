@@ -17,7 +17,7 @@ public class Skill {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER) // ⚠️ EAGER para incluir el área
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "knowledge_area_id", referencedColumnName = "id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "skills"})
     private KnowledgeArea knowledgeArea;
