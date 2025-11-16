@@ -85,7 +85,7 @@ public class LearningSession {
     private Date creationDate;
 
     @OneToMany(mappedBy = "learningSession", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"learningSession"})
+    @JsonIgnoreProperties({"learningSession", "learner", "community"})
     private List<Booking> bookings;
 
     @OneToOne(mappedBy = "learningSession", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
