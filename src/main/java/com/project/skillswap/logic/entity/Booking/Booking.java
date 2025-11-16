@@ -5,7 +5,7 @@ import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.Date;
 
 @Table(name = "booking", indexes = {
@@ -25,10 +25,12 @@ public class Booking {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learning_session_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"bookings", "instructor", "skill"})
     private LearningSession learningSession;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learner_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"bookings", "person"})
     private Learner learner;
 
     @Enumerated(EnumType.STRING)
@@ -57,8 +59,8 @@ public class Booking {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_id", referencedColumnName = "id")
-    private LearningCommunity community;
-    //</editor-fold>
+    @JsonIgnoreProperties({"bookings", "members", "documents", "creator"})
+    private LearningCommunity community;    //</editor-fold>
 
     //<editor-fold desc="Constructors">
     public Booking() {}

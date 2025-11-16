@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.CommunityMember;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunity;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import jakarta.persistence.*;
@@ -15,17 +16,18 @@ import java.util.Date;
 @Entity
 public class CommunityMember {
 
-    //<editor-fold desc="Fields">
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learning_community_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"members", "documents", "bookings", "creator", "hibernateLazyInitializer", "handler"})
     private LearningCommunity learningCommunity;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learner_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"person", "bookings", "hibernateLazyInitializer", "handler"})
     private Learner learner;
 
     @Enumerated(EnumType.STRING)
