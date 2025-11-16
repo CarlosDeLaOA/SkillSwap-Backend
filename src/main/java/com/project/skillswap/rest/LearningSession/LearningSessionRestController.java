@@ -19,19 +19,19 @@ import java.util.Map;
 
 /**
  * REST Controller for Learning Session operations
- * Provides endpoints to retrieve available learning sessions
+ * Provides endpoints to retrieve, create and publish learning sessions
  */
 @RestController
 @RequestMapping("/learning-sessions")
 @CrossOrigin(origins = "*")
 public class LearningSessionRestController {
 
-    //<editor-fold desc="Dependencies">
+    //#region Dependencies
     @Autowired
     private LearningSessionService learningSessionService;
-    //</editor-fold>
+    //#endregion
 
-    //<editor-fold desc="GET Endpoints">
+    //#region GET Endpoints
     /**
      * GET /learning-sessions/available
      * Obtiene todas las sesiones disponibles (SCHEDULED o ACTIVE recientes)
@@ -126,6 +126,188 @@ public class LearningSessionRestController {
     }
 
     /**
+     * GET /learning-sessions/{id}
+     * Obtiene una sesión por ID
+     *
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param id ID de la sesión
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with session data
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getSessionById(
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            LearningSession session = learningSessionService.getSessionById(id, authenticatedPerson);
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Session retrieved successfully",
+                    session,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (IllegalArgumentException e) {
+            System.err.println(" Error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse("Not found", e.getMessage()));
+
+        } catch (ClassCastException e) {
+            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+
+        } catch (Exception e) {
+            System.err.println(" Error getting session: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving session",
+                            "Error al obtener la sesión: " + e.getMessage()));
+        }
+    }
+    //#endregion
+
+    //#region POST Endpoints
+    /**
+     * POST /learning-sessions
+     * Crea una nueva sesión de aprendizaje en estado DRAFT
+     *
+     * Requires: Valid JWT token in Authorization header
+     * Requires: User must have INSTRUCTOR role
+     *
+     * @param session Datos de la sesión a crear
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with created session
+     */
+    @PostMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> createSession(
+            @RequestBody LearningSession session,
+            HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            System.out.println(" [LearningSessionController] Creating session for user: " +
+                    authenticatedPerson.getId());
+
+            LearningSession createdSession = learningSessionService.createSession(
+                    session,
+                    authenticatedPerson
+            );
+
+            System.out.println(" [LearningSessionController] Session created in DRAFT: " +
+                    createdSession.getId());
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Sesión creada en borrador",
+                    createdSession,
+                    HttpStatus.CREATED,
+                    request
+            );
+
+        } catch (IllegalStateException e) {
+            System.err.println(" Error: Unauthorized role: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(createErrorResponse("Rol no autorizado", e.getMessage()));
+
+        } catch (IllegalArgumentException e) {
+            System.err.println(" Error: Validation failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Validation error", e.getMessage()));
+
+        } catch (ClassCastException e) {
+            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+
+        } catch (Exception e) {
+            System.err.println(" Error creating session: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error creating session",
+                            "Error al crear la sesión: " + e.getMessage()));
+        }
+    }
+    //#endregion
+
+    //#region PUT Endpoints
+    /**
+     * PUT /learning-sessions/{id}/publish
+     * Publica una sesión, cambiando su estado y haciéndola visible
+     *
+     * Requires: Valid JWT token in Authorization header
+     * Requires: User must be the session owner (instructor)
+     *
+     * @param id ID de la sesión a publicar
+     * @param minorEditsRequest Ediciones menores opcionales
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with published session
+     */
+    @PutMapping("/{id}/publish")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> publishSession(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> minorEditsRequest,
+            HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            System.out.println(" [LearningSessionController] Publishing session: " + id);
+
+            LearningSession publishedSession = learningSessionService.publishSession(
+                    id,
+                    authenticatedPerson,
+                    minorEditsRequest
+            );
+
+            System.out.println(" [LearningSessionController] Session published: " +
+                    publishedSession.getId() + " with status: " + publishedSession.getStatus());
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Sesión publicada exitosamente",
+                    publishedSession,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (IllegalStateException e) {
+            System.err.println(" Error: Unauthorized: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(createErrorResponse("No autorizado", e.getMessage()));
+
+        } catch (IllegalArgumentException e) {
+            System.err.println(" Error: Validation failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Validation error", e.getMessage()));
+
+        } catch (ClassCastException e) {
+            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+
+        } catch (Exception e) {
+            System.err.println(" Error publishing session: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error publishing session",
+                            "Error al publicar la sesión: " + e.getMessage()));
+        }
+    }
+    //#endregion
+
+    //#region Utility Endpoints
+    /**
      * Health check endpoint to verify service status
      *
      * Endpoint: GET /learning-sessions/health
@@ -141,9 +323,9 @@ public class LearningSessionRestController {
         response.put("message", "Learning Session Controller is running");
         return ResponseEntity.ok(response);
     }
-    //</editor-fold>
+    //#endregion
 
-    //<editor-fold desc="Private Helper Methods">
+    //#region Private Helper Methods
     /**
      * Validates that user has either instructor or learner role
      *
@@ -169,5 +351,5 @@ public class LearningSessionRestController {
         errorResponse.put("message", message);
         return errorResponse;
     }
-    //</editor-fold>
+    //#endregion
 }
