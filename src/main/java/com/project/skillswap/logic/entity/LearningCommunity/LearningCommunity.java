@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.LearningCommunity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.CommunityMember.CommunityMember;
 import com.project.skillswap.logic.entity.CommunityDocument.CommunityDocument;
@@ -17,13 +18,13 @@ import java.util.List;
 @Entity
 public class LearningCommunity {
 
-    //<editor-fold desc="Fields">
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "person", "bookings"})
     private Learner creator;
 
     @Column(nullable = false, length = 150)
@@ -46,12 +47,15 @@ public class LearningCommunity {
     private Date creationDate;
 
     @OneToMany(mappedBy = "learningCommunity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"learningCommunity", "learner", "hibernateLazyInitializer", "handler"})
     private List<CommunityMember> members;
 
     @OneToMany(mappedBy = "learningCommunity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"learningCommunity", "hibernateLazyInitializer", "handler"})
     private List<CommunityDocument> documents;
 
     @OneToMany(mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"community", "learningSession", "learner", "hibernateLazyInitializer", "handler"})
     private List<Booking> bookings;
     //</editor-fold>
 
