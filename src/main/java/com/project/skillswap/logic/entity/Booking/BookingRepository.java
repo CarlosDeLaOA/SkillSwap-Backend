@@ -11,6 +11,8 @@ import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
+
+
     Optional<Booking> findByLearningSessionAndLearner(LearningSession learningSession, Learner learner);
 
     List<Booking> findByLearnerId(Long learnerId);
@@ -23,4 +25,33 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Booking b " +
             "WHERE b.learningSession.id = :sessionId AND b.learner.id = :learnerId AND b.status != 'CANCELLED'")
     boolean existsActiveBookingBySessionAndLearner(@Param("sessionId") Long sessionId, @Param("learnerId") Long learnerId);
+
+    /**
+     * Cuenta bookings por sesión y estado
+     */
+    long countByLearningSessionIdAndStatus(Long sessionId, BookingStatus status);
+
+    /**
+     * Encuentra bookings por sesión y estado ordenados por fecha
+     */
+    @Query("SELECT b FROM Booking b WHERE b.learningSession.id = :sessionId AND b.status = :status ORDER BY b.bookingDate ASC")
+    List<Booking> findByLearningSessionIdAndStatusOrderByBookingDateAsc(
+            @Param("sessionId") Long sessionId,
+            @Param("status") BookingStatus status
+    );
+
+    /**
+     * Encuentra un booking activo (CONFIRMED o WAITING) por sesión y learner
+     */
+    @Query("SELECT b FROM Booking b " +
+            "WHERE b.learningSession.id = :sessionId " +
+            "AND b.learner.id = :learnerId " +
+            "AND (b.status = 'CONFIRMED' OR b.status = 'WAITING')")
+    Optional<Booking> findActiveBookingBySessionAndLearner(@Param("sessionId") Long sessionId,
+                                                           @Param("learnerId") Long learnerId);
+
+    /**
+     * Encuentra bookings por learner y sesión
+     */
+    List<Booking> findByLearnerIdAndLearningSessionId(Long learnerId, Long sessionId);
 }
