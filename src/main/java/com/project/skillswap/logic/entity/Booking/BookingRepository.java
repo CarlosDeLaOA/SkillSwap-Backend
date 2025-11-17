@@ -26,8 +26,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "WHERE b.learningSession.id = :sessionId AND b.learner.id = :learnerId AND b.status != 'CANCELLED'")
     boolean existsActiveBookingBySessionAndLearner(@Param("sessionId") Long sessionId, @Param("learnerId") Long learnerId);
 
-    @Query("SELECT b FROM Booking b WHERE b.learningSession.id = :sessionId AND b.community.id = :communityId AND b.status != 'CANCELLED'")
-    List<Booking> findByLearningSessionIdAndCommunityId(@Param("sessionId") Long sessionId, @Param("communityId") Long communityId);
     /**
      * Cuenta bookings por sesión y estado
      */
@@ -56,4 +54,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * Encuentra bookings por learner y sesión
      */
     List<Booking> findByLearnerIdAndLearningSessionId(Long learnerId, Long sessionId);
+
+    @Query("SELECT b FROM Booking b WHERE b.learningSession.id = :sessionId AND b.community.id = :communityId AND b.status != 'CANCELLED'")
+    List<Booking> findByLearningSessionIdAndCommunityId(@Param("sessionId") Long sessionId, @Param("communityId") Long communityId);
+
 }
