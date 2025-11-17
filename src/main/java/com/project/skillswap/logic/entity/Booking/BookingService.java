@@ -256,11 +256,18 @@ public class BookingService {
     }
 
     /**
-     * Cancela un booking
+     * Cancela un booking individual o grupal
+     *
+     * @param bookingId ID del booking a cancelar
+     * @param userEmail Email del usuario que cancela
+     * @return Booking cancelado
      */
     @Transactional
     public Booking cancelBooking(Long bookingId, String userEmail) {
 
+        System.out.println(" [BOOKING_CANCEL] Iniciando cancelación de booking: " + bookingId);
+
+        // 1. Validar usuario
         Person person = personRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -269,29 +276,118 @@ public class BookingService {
             throw new RuntimeException("El usuario no tiene un perfil de estudiante");
         }
 
+        // 2. Obtener booking
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking no encontrado"));
 
+        // 3. Validar permisos
         if (!booking.getLearner().getId().equals(learner.getId())) {
             throw new RuntimeException("No tienes permiso para cancelar este booking");
         }
 
+        // 4. Validar que no esté ya cancelado
         if (BookingStatus.CANCELLED.equals(booking.getStatus())) {
             throw new RuntimeException("Este booking ya está cancelado");
         }
 
-        booking.setStatus(BookingStatus.CANCELLED);
-        Booking updatedBooking = bookingRepository.save(booking);
-
-        // Enviar email de cancelación 📧
-        try {
-            bookingEmailService.sendBookingCancellationEmail(updatedBooking, person);
-            System.out.println("📧 [BOOKING] Email de cancelación enviado a: " + person.getEmail());
-        } catch (Exception e) {
-            System.err.println("❌ [BOOKING] Error al enviar email: " + e.getMessage());
+        // 5. Validar que la sesión no haya iniciado
+        LearningSession session = booking.getLearningSession();
+        if (session.getStatus() == SessionStatus.ACTIVE || session.getStatus() == SessionStatus.FINISHED) {
+            throw new RuntimeException("No se puede cancelar un registro de una sesión que ya inició o terminó");
         }
 
-        return updatedBooking;
+        // 6. Determinar si es cancelación individual o grupal
+        boolean isGroupBooking = BookingType.GROUP.equals(booking.getType());
+
+        if (isGroupBooking) {
+            return cancelGroupBooking(booking, person, session);
+        } else {
+            return cancelIndividualBooking(booking, person, session);
+        }
+    }
+
+    /**
+     * Cancela un booking individual
+     */
+    private Booking cancelIndividualBooking(Booking booking, Person person, LearningSession session) {
+
+        System.out.println(" [BOOKING_CANCEL] Cancelando booking individual: " + booking.getId());
+
+        // Cancelar el booking
+        booking.setStatus(BookingStatus.CANCELLED);
+        Booking cancelledBooking = bookingRepository.save(booking);
+
+        System.out.println(" [SUCCESS] Booking individual cancelado. Cupo liberado: 1");
+
+        // Enviar notificaciones
+        sendCancellationNotifications(cancelledBooking, person, session, false, 1);
+
+        return cancelledBooking;
+    }
+
+    /**
+     * Cancela todos los bookings de un grupo
+     */
+    private Booking cancelGroupBooking(Booking booking, Person person, LearningSession session) {
+
+        System.out.println(" [BOOKING_CANCEL] Cancelando booking grupal");
+
+        LearningCommunity community = booking.getCommunity();
+        if (community == null) {
+            throw new RuntimeException("No se puede determinar la comunidad del booking grupal");
+        }
+
+        // Obtener todos los bookings del grupo para esta sesión
+        List<Booking> groupBookings = bookingRepository.findByLearningSessionIdAndCommunityId(
+                session.getId(),
+                community.getId()
+        );
+
+        int cancelledCount = 0;
+        for (Booking groupBooking : groupBookings) {
+            if (!BookingStatus.CANCELLED.equals(groupBooking.getStatus())) {
+                groupBooking.setStatus(BookingStatus.CANCELLED);
+                bookingRepository.save(groupBooking);
+                cancelledCount++;
+            }
+        }
+
+        System.out.println(" [SUCCESS] Booking grupal cancelado. Cupos liberados: " + cancelledCount);
+
+        // Enviar notificaciones
+        sendCancellationNotifications(booking, person, session, true, cancelledCount);
+
+        return booking;
+    }
+
+    /**
+     * Envía notificaciones de cancelación
+     */
+    private void sendCancellationNotifications(Booking booking, Person learnerPerson,
+                                               LearningSession session, boolean isGroup, int spotsFreed) {
+        try {
+            // 1. Email de confirmación al learner
+            bookingEmailService.sendBookingCancellationEmail(booking, learnerPerson);
+            System.out.println(" [EMAIL] Confirmación de cancelación enviada a: " + learnerPerson.getEmail());
+
+            // 2. Notificar al instructor
+            Person instructorPerson = session.getInstructor().getPerson();
+            bookingEmailService.sendInstructorNotificationEmail(
+                    session,
+                    instructorPerson,
+                    learnerPerson.getFullName(),
+                    isGroup,
+                    spotsFreed
+            );
+            System.out.println(" [EMAIL] Notificación enviada al instructor: " + instructorPerson.getEmail());
+
+            // 3. TODO: Notificar a siguiente en lista de espera si existe
+            // Para esto necesitarías implementar una tabla de waiting_list
+
+        } catch (Exception e) {
+            System.err.println(" [ERROR] Error al enviar notificaciones: " + e.getMessage());
+            // No lanzamos excepción para que la cancelación se complete
+        }
     }
 
     /**

@@ -93,23 +93,49 @@ public class BookingRestController {
             @PathVariable Long id,
             @RequestHeader("Authorization") String authHeader) {
         try {
+            System.out.println("📥 [BOOKING] PUT /api/bookings/" + id + "/cancel");
+
             String token = authHeader.replace("Bearer ", "");
-            String userEmail = jwtService.extractUsername(token); // 👈 CAMBIAR AQUÍ
+            String userEmail = jwtService.extractUsername(token);
+
+            System.out.println("👤 [BOOKING] Usuario autenticado: " + userEmail);
+            System.out.println("🎯 [BOOKING] Cancelando booking ID: " + id);
 
             Booking booking = bookingService.cancelBooking(id, userEmail);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "Booking cancelado exitosamente");
+            response.put("message", "Registro cancelado exitosamente");
             response.put("data", booking);
+
+            System.out.println("✅ [BOOKING] Booking cancelado exitosamente");
 
             return ResponseEntity.ok(response);
 
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            System.err.println("⚠️ [BOOKING] Error de validación: " + e.getMessage());
+
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+
+        } catch (RuntimeException e) {
+            System.err.println("❌ [BOOKING] Error de ejecución: " + e.getMessage());
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+
+        } catch (Exception e) {
+            System.err.println("💥 [BOOKING] Error inesperado: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Error interno del servidor");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
     /**
