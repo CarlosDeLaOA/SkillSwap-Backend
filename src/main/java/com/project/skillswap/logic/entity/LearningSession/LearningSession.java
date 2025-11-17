@@ -84,6 +84,17 @@ public class LearningSession {
     @Column(updatable = false, name = "creation_date")
     private Date creationDate;
 
+
+    @Column(name = "cancellation_reason", columnDefinition = "TEXT")
+    private String cancellationReason;
+
+    @Column(name = "cancellation_date")
+    private Date cancellationDate;
+
+    @Column(name = "cancelled_by_instructor_id")
+    private Long cancelledByInstructorId;
+
+
     @OneToMany(mappedBy = "learningSession", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"learningSession", "learner", "community"})
     private List<Booking> bookings;
@@ -158,6 +169,29 @@ public class LearningSession {
         this.durationMinutes = durationMinutes;
     }
 
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
+    }
+
+    public Date getCancellationDate() {
+        return cancellationDate;
+    }
+
+    public void setCancellationDate(Date cancellationDate) {
+        this.cancellationDate = cancellationDate;
+    }
+
+    public Long getCancelledByInstructorId() {
+        return cancelledByInstructorId;
+    }
+
+    public void setCancelledByInstructorId(Long cancelledByInstructorId) {
+        this.cancelledByInstructorId = cancelledByInstructorId;
+    }
     public SessionType getType() {
         return type;
     }

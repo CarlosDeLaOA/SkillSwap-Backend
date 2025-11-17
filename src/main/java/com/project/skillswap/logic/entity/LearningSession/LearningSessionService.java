@@ -27,6 +27,7 @@ public class LearningSessionService {
     private UserSkillRepository userSkillRepository;
 
     @Autowired
+    private SessionNotificationService sessionNotificationService;
     private SessionEmailService sessionEmailService;
     //#endregion
 
@@ -196,6 +197,81 @@ public class LearningSessionService {
         }
 
         return publishedSession;
+    }
+    //#endregion
+
+    //#region Public Methods - Cancel
+    /**
+     * Cancela una sesión de aprendizaje con validaciones completas
+     *
+     * @param sessionId ID de la sesión a cancelar
+     * @param authenticatedPerson Persona autenticada que cancela
+     * @param reason Razón de cancelación (opcional)
+     * @return Sesión cancelada con metadata actualizada
+     * @throws IllegalArgumentException Si las validaciones fallan
+     * @throws IllegalStateException Si el usuario no es el creador
+     */
+    @Transactional
+    public LearningSession cancelSession(Long sessionId, Person authenticatedPerson, String reason) {
+        validateInstructorRole(authenticatedPerson);
+
+        LearningSession session = getSessionById(sessionId, authenticatedPerson);
+
+        // Validar que la sesión no esté ya cancelada o finalizada
+        validateSessionCanBeCancelled(session);
+
+        // Validar que sea el creador
+        validateIsSessionOwner(session, authenticatedPerson);
+
+        // Validar si la sesión está activa (requiere confirmación adicional)
+        if (session.getStatus() == SessionStatus.ACTIVE) {
+            System.out.println(" [WARNING] Cancelling ACTIVE session - requires additional confirmation");
+        }
+
+        // Obtener emails de participantes ANTES de cancelar
+        List<String> participantEmails = session.getBookings().stream()
+                .map(booking -> booking.getLearner().getPerson().getEmail())
+                .filter(email -> email != null && !email.isEmpty())
+                .toList();
+
+        int participantsCount = participantEmails.size();
+
+        // Actualizar estado y metadata
+        session.setStatus(SessionStatus.CANCELLED);
+        session.setCancellationReason(reason != null ? reason.trim() : "Sin razón especificada");
+        session.setCancellationDate(new Date());
+        session.setCancelledByInstructorId(authenticatedPerson.getInstructor().getId());
+
+        LearningSession cancelledSession = learningSessionRepository.save(session);
+
+        System.out.println(String.format(
+                " [SUCCESS] Session %d cancelled by instructor %d. Participants to notify: %d",
+                sessionId,
+                authenticatedPerson.getInstructor().getId(),
+                participantsCount
+        ));
+
+        // Enviar notificaciones por email a participantes
+        if (!participantEmails.isEmpty()) {
+            try {
+                int emailsSent = sessionNotificationService.sendCancellationNotifications(
+                        cancelledSession,
+                        participantEmails
+                );
+                System.out.println(String.format(
+                        " [EMAIL] Sent %d/%d cancellation notifications",
+                        emailsSent,
+                        participantsCount
+                ));
+            } catch (Exception e) {
+                System.err.println(" [ERROR] Failed to send some notification emails: " + e.getMessage());
+                // No lanzamos excepción porque la sesión ya fue cancelada exitosamente
+            }
+        }
+
+        // TODO: Eliminar evento de Google Calendar si existe
+
+        return cancelledSession;
     }
     //#endregion
 
@@ -452,6 +528,37 @@ public class LearningSessionService {
                     String.format("El cambio en %s excede el 50%% permitido. " +
                             "Considera esto como una edición mayor.", fieldName)
             );
+        }
+    }
+    //#endregion
+
+    //#region Private Methods - Cancel Validation
+    /**
+     * Valida que la sesión pueda ser cancelada
+     *
+     * @param session Sesión a validar
+     * @throws IllegalArgumentException Si la sesión ya está cancelada o finalizada
+     */
+    private void validateSessionCanBeCancelled(LearningSession session) {
+        if (session.getStatus() == SessionStatus.CANCELLED) {
+            throw new IllegalArgumentException("La sesión ya está cancelada");
+        }
+
+        if (session.getStatus() == SessionStatus.FINISHED) {
+            throw new IllegalArgumentException("No se puede cancelar una sesión que ya finalizó");
+        }
+    }
+
+    /**
+     * Valida que el usuario sea el creador de la sesión
+     *
+     * @param session Sesión a validar
+     * @param authenticatedPerson Persona autenticada
+     * @throws IllegalStateException Si el usuario no es el creador
+     */
+    private void validateIsSessionOwner(LearningSession session, Person authenticatedPerson) {
+        if (!session.getInstructor().getId().equals(authenticatedPerson.getInstructor().getId())) {
+            throw new IllegalStateException("Solo el creador de la sesión puede cancelarla");
         }
     }
     //#endregion
