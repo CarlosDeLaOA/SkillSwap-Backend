@@ -16,6 +16,7 @@ import java.util.*;
 public class LearningSessionService {
 
     //#region Dependencies
+
     @Autowired
     private LearningSessionRepository learningSessionRepository;
 
@@ -27,6 +28,7 @@ public class LearningSessionService {
 
     @Autowired
     private SessionNotificationService sessionNotificationService;
+    private SessionEmailService sessionEmailService;
     //#endregion
 
     //#region Constants
@@ -177,7 +179,24 @@ public class LearningSessionService {
         SessionStatus newStatus = determinePublishStatus(session.getScheduledDatetime());
         session.setStatus(newStatus);
 
-        return learningSessionRepository.save(session);
+        LearningSession publishedSession = learningSessionRepository.save(session);
+
+        try {
+            boolean emailSent = sessionEmailService.sendSessionCreationEmail(
+                    publishedSession,
+                    authenticatedPerson
+            );
+
+            if (emailSent) {
+                System.out.println(" [LearningSessionService] Email de confirmación enviado");
+            } else {
+                System.out.println("⚠ [LearningSessionService] Email no enviado (validación fallida)");
+            }
+        } catch (Exception e) {
+            System.err.println(" [LearningSessionService] Error enviando email: " + e.getMessage());
+        }
+
+        return publishedSession;
     }
     //#endregion
 

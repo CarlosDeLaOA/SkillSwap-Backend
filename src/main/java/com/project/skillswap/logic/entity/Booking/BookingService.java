@@ -12,14 +12,12 @@ import com.project.skillswap.logic.entity.LearningSession.LearningSessionReposit
 import com.project.skillswap.logic.entity.LearningSession.SessionStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+
 import java.util.concurrent.CompletableFuture;
-import java.util.Map;
-import java.util.HashMap;
 
 @Service
 public class BookingService {
@@ -294,6 +292,15 @@ public class BookingService {
         LearningSession session = booking.getLearningSession();
         if (session.getStatus() == SessionStatus.ACTIVE || session.getStatus() == SessionStatus.FINISHED) {
             throw new RuntimeException("No se puede cancelar un registro de una sesión que ya inició o terminó");
+        booking.setStatus(BookingStatus.CANCELLED);
+        Booking updatedBooking = bookingRepository.save(booking);
+
+        // Enviar email de cancelación
+        try {
+            bookingEmailService.sendBookingCancellationEmail(updatedBooking, person);
+            System.out.println("[BOOKING] Email de cancelación enviado a: " + person.getEmail());
+        } catch (Exception e) {
+            System.err.println("[BOOKING] Error al enviar email: " + e.getMessage());
         }
 
         // 6. Determinar si es cancelación individual o grupal
@@ -304,6 +311,7 @@ public class BookingService {
         } else {
             return cancelIndividualBooking(booking, person, session);
         }
+    }
     }
 
     /**
@@ -395,5 +403,214 @@ public class BookingService {
      */
     private String generateAccessLink() {
         return "https://skillswap.com/session/join/" + UUID.randomUUID().toString();
+    }
+
+    /**
+     * Une a un usuario a la lista de espera de una sesión
+     */
+    /**
+     * Une a un usuario a la lista de espera de una sesión
+     */
+    @Transactional
+    public Booking joinWaitlist(Long sessionId, String userEmail) {
+
+        System.out.println("📝 [WAITLIST] Uniendo a lista de espera - Sesión: " + sessionId);
+
+        // 1. Validar que el usuario existe y tiene perfil de learner
+        Person person = personRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con email: " + userEmail));
+
+        Learner learner = person.getLearner();
+        if (learner == null) {
+            throw new RuntimeException("El usuario no tiene un perfil de estudiante");
+        }
+
+        // 2. Validar que la sesión existe
+        LearningSession session = learningSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Sesión no encontrada con ID: " + sessionId));
+
+        System.out.println("✅ [WAITLIST] Sesión encontrada: " + session.getTitle());
+
+        // 3. Validar que la sesión está en estado SCHEDULED
+        if (!SessionStatus.SCHEDULED.equals(session.getStatus())) {
+            throw new RuntimeException("No se puede unir a lista de espera de una sesión que no está programada");
+        }
+
+        // 4. Buscar si ya existe un booking para este usuario y sesión
+        List<Booking> existingBookings = bookingRepository.findByLearnerIdAndLearningSessionId(
+                learner.getId(),
+                sessionId
+        );
+
+        // Verificar si tiene un booking activo (CONFIRMED o WAITING)
+        for (Booking booking : existingBookings) {
+            if (BookingStatus.CONFIRMED.equals(booking.getStatus())) {
+                throw new RuntimeException("Ya estás registrado en esta sesión");
+            }
+            if (BookingStatus.WAITING.equals(booking.getStatus())) {
+                throw new RuntimeException("Ya estás en lista de espera para esta sesión");
+            }
+        }
+
+        // 5. Verificar que la sesión realmente está llena
+        long confirmedBookings = bookingRepository.countConfirmedBookingsBySessionId(sessionId);
+        int availableSpots = session.getMaxCapacity() - (int) confirmedBookings;
+
+        if (availableSpots > 0) {
+            throw new RuntimeException("Aún hay cupos disponibles. Por favor, regístrate normalmente.");
+        }
+
+        // 6. Contar cuántos usuarios hay en lista de espera
+        long waitlistCount = bookingRepository.countByLearningSessionIdAndStatus(sessionId, BookingStatus.WAITING);
+
+        System.out.println("📊 [WAITLIST] Usuarios en lista de espera: " + waitlistCount);
+
+        if (waitlistCount >= 20) {
+            throw new RuntimeException("Lista de espera llena. Máximo 20 usuarios permitidos.");
+        }
+
+        // 7. Buscar si existe un booking CANCELLED que podamos reutilizar
+        Booking waitlistBooking = null;
+        for (Booking booking : existingBookings) {
+            if (BookingStatus.CANCELLED.equals(booking.getStatus())) {
+                // Reutilizar el booking existente
+                waitlistBooking = booking;
+                waitlistBooking.setStatus(BookingStatus.WAITING);
+                waitlistBooking.setBookingDate(new Date());
+                waitlistBooking.setAccessLink(null);
+                System.out.println("♻️ [WAITLIST] Reutilizando booking CANCELLED existente");
+                break;
+            }
+        }
+
+        // 8. Si no existe booking previo, crear uno nuevo
+        if (waitlistBooking == null) {
+            waitlistBooking = new Booking();
+            waitlistBooking.setLearningSession(session);
+            waitlistBooking.setLearner(learner);
+            waitlistBooking.setType(BookingType.INDIVIDUAL);
+            waitlistBooking.setStatus(BookingStatus.WAITING);
+            waitlistBooking.setAttended(false);
+            waitlistBooking.setAccessLink(null);
+            System.out.println("🆕 [WAITLIST] Creando nuevo booking");
+        }
+
+        Booking savedBooking = bookingRepository.save(waitlistBooking);
+
+        System.out.println("✅ [WAITLIST] Usuario agregado a lista de espera - Posición: " + (waitlistCount + 1));
+
+        // 9. Enviar email de confirmación de lista de espera
+        try {
+            bookingEmailService.sendWaitlistConfirmationEmail(savedBooking, person);
+            System.out.println("📧 [WAITLIST] Email de confirmación enviado");
+        } catch (Exception e) {
+            System.err.println("❌ [WAITLIST] Error al enviar email: " + e.getMessage());
+        }
+
+        return savedBooking;
+    }
+
+    /**
+     * Procesa la lista de espera y convierte el primer booking WAITING a CONFIRMED
+     * si hay cupos disponibles
+     */
+    @Transactional
+    public void processWaitlist(Long sessionId) {
+
+        System.out.println("📝 [WAITLIST] Procesando lista de espera para sesión: " + sessionId);
+
+        // 1. Obtener la sesión
+        LearningSession session = learningSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+        // 2. Verificar cupos disponibles
+        long confirmedBookings = bookingRepository.countConfirmedBookingsBySessionId(sessionId);
+        int availableSpots = session.getMaxCapacity() - (int) confirmedBookings;
+
+        System.out.println("📊 [WAITLIST] Cupos disponibles: " + availableSpots);
+
+        if (availableSpots <= 0) {
+            System.out.println("⚠️ [WAITLIST] No hay cupos disponibles");
+            return;
+        }
+
+        // 3. Obtener lista de espera ordenada por fecha
+        List<Booking> waitlist = bookingRepository
+                .findByLearningSessionIdAndStatusOrderByBookingDateAsc(
+                        sessionId,
+                        BookingStatus.WAITING
+                );
+
+        if (waitlist.isEmpty()) {
+            System.out.println("ℹ️ [WAITLIST] No hay usuarios en lista de espera");
+            return;
+        }
+
+        // 4. Procesar solo los primeros N usuarios (según cupos disponibles)
+        int spotsToFill = Math.min(availableSpots, waitlist.size());
+
+        for (int i = 0; i < spotsToFill; i++) {
+            Booking waitlistBooking = waitlist.get(i);
+
+            // Cambiar estado a CONFIRMED y generar enlace
+            waitlistBooking.setStatus(BookingStatus.CONFIRMED);
+            waitlistBooking.setAccessLink(generateAccessLink());
+            bookingRepository.save(waitlistBooking);
+
+            System.out.println("✅ [WAITLIST] Usuario promovido de lista de espera a confirmado: " +
+                    waitlistBooking.getLearner().getPerson().getEmail());
+
+            // Enviar email de notificación
+            try {
+                Person person = waitlistBooking.getLearner().getPerson();
+                bookingEmailService.sendSpotAvailableEmail(waitlistBooking, person);
+                System.out.println("📧 [WAITLIST] Email de cupo disponible enviado");
+            } catch (Exception e) {
+                System.err.println("❌ [WAITLIST] Error al enviar email: " + e.getMessage());
+            }
+        }
+
+        System.out.println("✅ [WAITLIST] Procesamiento completado. " + spotsToFill + " usuarios promovidos.");
+    }
+
+
+    /**
+     * Permite que un usuario salga voluntariamente de la lista de espera
+     */
+    @Transactional
+    public void leaveWaitlist(Long bookingId, String userEmail) {
+
+        System.out.println("📝 [WAITLIST] Usuario saliendo de lista de espera - Booking ID: " + bookingId);
+
+        // 1. Buscar el booking
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking no encontrado con ID: " + bookingId));
+
+        // 2. Validar que el booking pertenece al usuario
+        Person person = personRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (!booking.getLearner().getId().equals(person.getLearner().getId())) {
+            throw new RuntimeException("No tienes permiso para modificar este booking");
+        }
+
+        // 3. Validar que el booking está en estado WAITING
+        if (!BookingStatus.WAITING.equals(booking.getStatus())) {
+            throw new RuntimeException("Solo puedes salir de una lista de espera si estás en estado WAITING");
+        }
+
+        // 4. Cambiar estado a CANCELLED
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+
+        System.out.println("✅ [WAITLIST] Usuario removido de lista de espera exitosamente");
+
+        // 5. Enviar email de confirmación de salida
+        try {
+            bookingEmailService.sendWaitlistExitConfirmationEmail(booking, person);
+            System.out.println("📧 [WAITLIST] Email de confirmación de salida enviado");
+        } catch (Exception e) {
+            System.err.println("❌ [WAITLIST] Error al enviar email: " + e.getMessage());
+        }
     }
 }

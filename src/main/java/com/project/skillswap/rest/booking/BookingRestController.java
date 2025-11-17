@@ -185,4 +185,117 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }
+
+    /**
+     * POST /api/bookings/waitlist
+     * Une a un usuario a la lista de espera de una sesión
+     */
+    @PostMapping("/waitlist")
+    public ResponseEntity<Map<String, Object>> joinWaitlist(
+            @RequestBody Map<String, Long> request,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            System.out.println("[WAITLIST] POST /api/bookings/waitlist");
+
+            String token = authHeader.replace("Bearer ", "");
+            String userEmail = jwtService.extractUsername(token);
+
+            System.out.println("👤 [WAITLIST] Usuario autenticado: " + userEmail);
+
+            Long sessionId = request.get("learningSessionId");
+
+            if (sessionId == null) {
+                throw new RuntimeException("El ID de la sesión es requerido");
+            }
+
+            Booking waitlistBooking = bookingService.joinWaitlist(sessionId, userEmail);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Te has unido exitosamente a la lista de espera");
+            response.put("data", waitlistBooking);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (Exception e) {
+            System.err.println("[WAITLIST] Error: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+    }
+
+
+    /**
+     * POST /api/bookings/process-waitlist/{sessionId}
+     * Procesa la lista de espera manualmente (para testing)
+     */
+    @PostMapping("/process-waitlist/{sessionId}")
+    public ResponseEntity<Map<String, Object>> processWaitlist(
+            @PathVariable Long sessionId,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            System.out.println("📥 [WAITLIST] POST /api/bookings/process-waitlist/" + sessionId);
+
+            bookingService.processWaitlist(sessionId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Lista de espera procesada exitosamente");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ [WAITLIST] Error: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+    }
+
+
+    /**
+     * DELETE /api/bookings/waitlist/{bookingId}
+     * Permite al usuario salir voluntariamente de la lista de espera
+     */
+    @DeleteMapping("/waitlist/{bookingId}")
+    public ResponseEntity<Map<String, Object>> leaveWaitlist(
+            @PathVariable Long bookingId,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            System.out.println("📥 [WAITLIST] DELETE /api/bookings/waitlist/" + bookingId);
+
+            String token = authHeader.replace("Bearer ", "");
+            String userEmail = jwtService.extractUsername(token);
+
+            System.out.println("👤 [WAITLIST] Usuario autenticado: " + userEmail);
+
+            bookingService.leaveWaitlist(bookingId, userEmail);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Has salido exitosamente de la lista de espera");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ [WAITLIST] Error: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+    }
+
+
+
 }
+
