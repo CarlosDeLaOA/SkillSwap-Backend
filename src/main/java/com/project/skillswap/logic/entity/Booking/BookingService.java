@@ -84,19 +84,24 @@ public class BookingService {
             throw new RuntimeException("No hay cupos disponibles para esta sesión");
         }
 
-        // 7. Crear el booking
+        // 7. Validar que la sesión tenga un video_call_link configurado
+        if (session.getVideoCallLink() == null || session.getVideoCallLink().isEmpty()) {
+            throw new RuntimeException("La sesión no tiene un enlace de videollamada configurado");
+        }
+
+        // 8. Crear el booking
         Booking booking = new Booking();
         booking.setLearningSession(session);
         booking.setLearner(learner);
         booking.setType(BookingType.INDIVIDUAL);
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setAttended(false);
-        booking.setAccessLink(generateAccessLink());
+        booking.setAccessLink(session.getVideoCallLink()); // Usar el video_call_link de la sesión
 
         Booking savedBooking = bookingRepository.save(booking);
         System.out.println("[BOOKING] Booking creado exitosamente con ID: " + savedBooking.getId());
 
-        // 8. Enviar email de confirmación
+        // 9. Enviar email de confirmación con el video_call_link
         try {
             bookingEmailService.sendBookingConfirmationEmail(savedBooking, person);
             System.out.println("[BOOKING] Email de confirmación enviado a: " + person.getEmail());
@@ -161,14 +166,19 @@ public class BookingService {
             throw new RuntimeException("No se puede registrar en una sesión que no está programada");
         }
 
-        // 7. Validar que ningún miembro esté ya registrado
+        // 7. Validar que la sesión tenga un video_call_link configurado
+        if (session.getVideoCallLink() == null || session.getVideoCallLink().isEmpty()) {
+            throw new RuntimeException("La sesión no tiene un enlace de videollamada configurado");
+        }
+
+        // 8. Validar que ningún miembro esté ya registrado
         for (CommunityMember member : allMembers) {
             if (bookingRepository.existsActiveBookingBySessionAndLearner(sessionId, member.getLearner().getId())) {
                 throw new RuntimeException("Uno o más miembros ya están registrados en esta sesión");
             }
         }
 
-        // 8. Validar que haya cupo suficiente para todos los miembros
+        // 9. Validar que haya cupo suficiente para todos los miembros
         long confirmedBookings = bookingRepository.countConfirmedBookingsBySessionId(sessionId);
         int availableSpots = session.getMaxCapacity() - (int) confirmedBookings;
 
@@ -178,7 +188,7 @@ public class BookingService {
             throw new RuntimeException("No hay suficientes cupos disponibles. Disponibles: " + availableSpots + ", Necesarios: " + allMembers.size());
         }
 
-        // 9. Crear bookings para todos los miembros
+        // 10. Crear bookings para todos los miembros
         List<Booking> createdBookings = new ArrayList<>();
 
         for (CommunityMember member : allMembers) {
@@ -189,7 +199,7 @@ public class BookingService {
             booking.setStatus(BookingStatus.CONFIRMED);
             booking.setAttended(false);
             booking.setCommunity(community);
-            booking.setAccessLink(generateAccessLink());
+            booking.setAccessLink(session.getVideoCallLink()); // Usar el video_call_link de la sesión
 
             Booking savedBooking = bookingRepository.save(booking);
             createdBookings.add(savedBooking);
@@ -199,14 +209,14 @@ public class BookingService {
 
         System.out.println("[BOOKING] " + createdBookings.size() + " bookings grupales creados exitosamente");
 
-        // 10. Preparar datos para emails (antes de que la transacción termine)
+        // 11. Preparar datos para emails (antes de que la transacción termine)
         List<Map<String, Object>> emailData = new ArrayList<>();
         for (Booking booking : createdBookings) {
             Person memberPerson = booking.getLearner().getPerson();
 
             Map<String, Object> data = new HashMap<>();
             data.put("bookingId", booking.getId());
-            data.put("accessLink", booking.getAccessLink());
+            data.put("accessLink", booking.getAccessLink()); // Ahora contiene el video_call_link
             data.put("personEmail", memberPerson.getEmail());
             data.put("personFullName", memberPerson.getFullName());
             data.put("sessionTitle", session.getTitle());
@@ -221,7 +231,7 @@ public class BookingService {
             emailData.add(data);
         }
 
-        // 11. Enviar emails de forma asíncrona a todos los miembros
+        // 12. Enviar emails de forma asíncrona a todos los miembros
         CompletableFuture.runAsync(() -> {
             for (Map<String, Object> data : emailData) {
                 try {
@@ -256,6 +266,7 @@ public class BookingService {
 
     /**
      * Genera un enlace único de acceso
+     * se mantiene solo para compatibilidad con lista de espera
      */
     private String generateAccessLink() {
         return "https://skillswap.com/session/join/" + UUID.randomUUID().toString();
@@ -408,9 +419,9 @@ public class BookingService {
         for (int i = 0; i < spotsToFill; i++) {
             Booking waitlistBooking = waitlist.get(i);
 
-            // Cambiar estado a CONFIRMED y generar enlace
+            // Cambiar estado a CONFIRMED y usar el video_call_link de la sesión
             waitlistBooking.setStatus(BookingStatus.CONFIRMED);
-            waitlistBooking.setAccessLink(generateAccessLink());
+            waitlistBooking.setAccessLink(session.getVideoCallLink()); // Usar video_call_link
             bookingRepository.save(waitlistBooking);
 
             System.out.println("[WAITLIST] Usuario promovido de lista de espera a confirmado: " +
@@ -623,4 +634,3 @@ public class BookingService {
     }
 
 }
-

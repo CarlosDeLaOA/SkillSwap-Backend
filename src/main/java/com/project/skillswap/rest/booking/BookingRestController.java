@@ -32,12 +32,12 @@ public class BookingRestController {
             @RequestBody Map<String, Long> request,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println("📥 [BOOKING] POST /api/bookings");
+            System.out.println("[BOOKING] POST /api/bookings");
 
             String token = authHeader.replace("Bearer ", "");
-            String userEmail = jwtService.extractUsername(token); // 👈 CAMBIAR AQUÍ
+            String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("👤 [BOOKING] Usuario autenticado: " + userEmail);
+            System.out.println("[BOOKING] Usuario autenticado: " + userEmail);
 
             Long sessionId = request.get("learningSessionId");
             if (sessionId == null) {
@@ -54,7 +54,7 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("❌ [BOOKING] Error: " + e.getMessage());
+            System.err.println("[BOOKING] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -69,7 +69,7 @@ public class BookingRestController {
             @RequestHeader("Authorization") String authHeader) {
         try {
             String token = authHeader.replace("Bearer ", "");
-            String userEmail = jwtService.extractUsername(token); // 👈 CAMBIAR AQUÍ
+            String userEmail = jwtService.extractUsername(token);
 
             List<Booking> bookings = bookingService.getBookingsByUserEmail(userEmail);
 

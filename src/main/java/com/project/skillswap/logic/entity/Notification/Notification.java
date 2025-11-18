@@ -1,10 +1,14 @@
 package com.project.skillswap.logic.entity.Notification;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.skillswap.logic.entity.Person.Person;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Table(name = "notification", indexes = {
         @Index(name = "idx_notification_person", columnList = "person_id"),
@@ -100,6 +104,62 @@ public class Notification {
 
     public void setSendDate(Date sendDate) {
         this.sendDate = sendDate;
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Helper Methods">
+    /**
+     * Obtiene la metadata del mensaje como Map (si el mensaje es JSON)
+     */
+    @Transient
+    public Map<String, Object> getMetadata() {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(this.message, Map.class);
+        } catch (Exception e) {
+            // Si no es JSON, retornar un Map con el mensaje como contenido
+            Map<String, Object> fallback = new HashMap<>();
+            fallback.put("content", this.message);
+            return fallback;
+        }
+    }
+
+    /**
+     * Establece la metadata del mensaje desde un Map
+     */
+    public void setMetadata(Map<String, Object> metadata) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            this.message = mapper.writeValueAsString(metadata);
+        } catch (JsonProcessingException e) {
+            this.message = metadata.getOrDefault("content", "").toString();
+        }
+    }
+
+    /**
+     * Obtiene el contenido legible del mensaje
+     */
+    @Transient
+    public String getReadableContent() {
+        try {
+            Map<String, Object> metadata = getMetadata();
+            return metadata.getOrDefault("content", this.message).toString();
+        } catch (Exception e) {
+            return this.message;
+        }
+    }
+
+    /**
+     * Obtiene el tipo de evento (si está en metadata)
+     */
+    @Transient
+    public String getEventType() {
+        try {
+            Map<String, Object> metadata = getMetadata();
+            return metadata.getOrDefault("eventType", "GENERAL").toString();
+        } catch (Exception e) {
+            return "GENERAL";
+        }
     }
     //</editor-fold>
 }
