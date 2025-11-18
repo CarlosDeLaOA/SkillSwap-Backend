@@ -147,7 +147,7 @@ public class SessionEmailService {
                                 <tr>
                                     <td align='center'>
                                         <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; margin-right: 10px;'>Ver Sesión</a>
-                                        <a href='%s' style='display: inline-block; background-color: #39434b; color: #aae16b; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; border: 2px solid #aae16b;'>Editar Sesión</a>
+                                        <a href='%s' style='display: inline-block; background-color: #39434b; color: #aae16b; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; border: 2px solid #aae16b;'> Unirse a Videollamada</a>
                                     </td>
                                 </tr>
                             </table>
@@ -188,7 +188,7 @@ public class SessionEmailService {
                 getLanguageName(session.getLanguage()),
                 session.getMaxCapacity(),
                 sessionLink,
-                editLink
+                session.getVideoCallLink()
         );
     }
 

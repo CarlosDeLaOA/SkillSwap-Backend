@@ -9,6 +9,8 @@ import com.project.skillswap.logic.entity.UserSkill.UserSkillRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
+
 
 import java.util.*;
 
@@ -28,7 +30,13 @@ public class LearningSessionService {
 
     @Autowired
     private SessionNotificationService sessionNotificationService;
+
+    @Autowired
     private SessionEmailService sessionEmailService;
+
+    @Value("${app.frontend.url}")
+    private String frontendBaseUrl;
+    //#endregion
     //#endregion
 
     //#region Constants
@@ -180,6 +188,15 @@ public class LearningSessionService {
         session.setStatus(newStatus);
 
         LearningSession publishedSession = learningSessionRepository.save(session);
+
+        // Si la sesión aún no tiene link de videollamada, se genera el link del frontend
+        if (publishedSession.getVideoCallLink() == null ||
+                publishedSession.getVideoCallLink().trim().isEmpty()) {
+
+            String videoCallLink = frontendBaseUrl + "/app/video-call/" + publishedSession.getId();
+            publishedSession.setVideoCallLink(videoCallLink);
+            publishedSession = learningSessionRepository.save(publishedSession);
+        }
 
         try {
             boolean emailSent = sessionEmailService.sendSessionCreationEmail(
