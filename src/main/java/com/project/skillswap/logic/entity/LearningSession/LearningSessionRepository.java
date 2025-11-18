@@ -92,4 +92,58 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             @Param("language") String language
     );
     //</editor-fold>
+
+    //<editor-fold desc="Schedule Conflict Queries">
+    /// *** CRITERIO 1 & 2: Queries para detectar conflictos y sugerir horarios
+    /**
+     * Busca todas las sesiones de un instructor en un rango de tiempo específico
+     * Utilizado para detectar conflictos de horario
+     * CRITERIO 1: Validar disponibilidad del SkillSwapper
+     */
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.instructor.id = :instructorId " +
+            "AND ls.status IN ('SCHEDULED', 'ACTIVE') " +
+            "AND ls.scheduledDatetime < :endTime " +
+            "AND DATE_ADD(ls.scheduledDatetime, INTERVAL ls.durationMinutes MINUTE) > :startTime")
+    List<LearningSession> findConflictingSessions(
+            @Param("instructorId") Long instructorId,
+            @Param("startTime") Date startTime,
+            @Param("endTime") Date endTime
+    );
+
+    /**
+     * Busca todas las sesiones ocupadas de un instructor en un rango de fechas
+     * Utilizado para sugerir horarios alternativos
+     * CRITERIO 1: Sugerir horarios alternos
+     */
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.instructor.id = :instructorId " +
+            "AND ls.status IN ('SCHEDULED', 'ACTIVE') " +
+            "AND ls.scheduledDatetime >= :startDate " +
+            "AND ls.scheduledDatetime <= :endDate " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findInstructorScheduledSessions(
+            @Param("instructorId") Long instructorId,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
+    );
+    //</editor-fold>
+
+    //<editor-fold desc="Reminder Queries">
+    /// *** CRITERIO 6: Queries para recordatorios automáticos
+    /**
+     * Busca sesiones programadas dentro de un rango de fechas
+     * Utilizado para encontrar sesiones próximas a 24 horas
+     * CRITERIO 6: Recordatorio automático 24 horas antes vía email
+     */
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.status IN ('SCHEDULED', 'ACTIVE') " +
+            "AND ls.scheduledDatetime >= :startDate " +
+            "AND ls.scheduledDatetime <= :endDate " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findScheduledSessionsInDateRange(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
+    );
+    //</editor-fold>
 }

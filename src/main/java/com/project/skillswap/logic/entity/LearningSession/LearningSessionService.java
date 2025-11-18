@@ -6,6 +6,11 @@ import com.project.skillswap.logic.entity.Skill.Skill;
 import com.project.skillswap.logic.entity.Skill.SkillRepository;
 import com.project.skillswap.logic.entity.UserSkill.UserSkill;
 import com.project.skillswap.logic.entity.UserSkill.UserSkillRepository;
+import com.project.skillswap.logic.entity.LearningSession.email.SessionEmailService;
+import com.project.skillswap.logic.entity.LearningSession.persistence.SessionIntegrationLogger;
+import com.project.skillswap.logic.entity.LearningSession.persistence.SessionPersistenceValidator;
+import com.project.skillswap.logic.entity.LearningSession.scheduling.SessionGoogleCalendarService;
+import com.project.skillswap.logic.entity.LearningSession.scheduling.SessionScheduleValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +33,25 @@ public class LearningSessionService {
 
     @Autowired
     private SessionNotificationService sessionNotificationService;
+
+    @Autowired
     private SessionEmailService sessionEmailService;
+
+    // *** CRITERIO 3: Servicio de Google Calendar
+    @Autowired
+    private SessionGoogleCalendarService googleCalendarService;
+
+    // *** CRITERIO 1 & 2: Validator para agendar la sesion
+    @Autowired
+    private SessionScheduleValidator scheduleValidator;
+
+    // *** CRITERIO 5: Validador de persistencia en BD
+    @Autowired
+    private SessionPersistenceValidator persistenceValidator;
+
+    // *** CRITERIO 5: Logger de integraciones
+    @Autowired
+    private SessionIntegrationLogger integrationLogger;
     //#endregion
 
     //#region Constants
@@ -139,6 +162,17 @@ public class LearningSessionService {
         validateCapacity(session.getMaxCapacity());
         validateScheduledDatetime(session.getScheduledDatetime());
 
+        // *** CRITERIO 2: Validar anticipación mínima
+        scheduleValidator.validateMinimumAdvanceTime(session.getScheduledDatetime());
+
+        // *** CRITERIO 1: Validar conflictos de horario del instructor
+        scheduleValidator.validateNoScheduleConflicts(
+                instructor.getId(),
+                session.getScheduledDatetime(),
+                session.getDurationMinutes(),
+                null // No hay ID de sesión a excluir porque es nueva
+        );
+
         String language = validateAndNormalizeLanguage(session.getLanguage());
         session.setLanguage(language);
 
@@ -150,7 +184,13 @@ public class LearningSessionService {
         session.setType(SessionType.SCHEDULED);
         session.setStatus(SessionStatus.DRAFT);
 
-        return learningSessionRepository.save(session);
+        LearningSession createdSession = learningSessionRepository.save(session);
+
+        /// *** CRITERIO 5: Validar y loguear guardado en BD interna
+        persistenceValidator.validateSessionSavedCorrectly(createdSession);
+        integrationLogger.logSessionCreatedAsDraft(createdSession);
+
+        return createdSession;
     }
     //#endregion
 
@@ -172,14 +212,65 @@ public class LearningSessionService {
 
         validateSessionIsComplete(session);
 
+        /// *** CRITERIO 7: Validar que la sesión esté en estado DRAFT
+        validateSessionStatusIsPublishable(session);
+
         if (minorEdits != null) {
             applyMinorEdits(session, minorEdits);
         }
 
+        // *** CRITERIO 3: Obtener parámetro de integración Google Calendar
+        boolean enableGoogleCalendar = false;
+        if (minorEdits != null && minorEdits.containsKey("enableGoogleCalendar")) {
+            String enableValue = minorEdits.get("enableGoogleCalendar");
+            enableGoogleCalendar = "true".equalsIgnoreCase(enableValue);
+        }
+
+        // *** CRITERIO 1 & 2: revalidar anticipación y conflictos al publicar
+        scheduleValidator.validateMinimumAdvanceTime(session.getScheduledDatetime());
+        scheduleValidator.validateNoScheduleConflicts(
+                session.getInstructor().getId(),
+                session.getScheduledDatetime(),
+                session.getDurationMinutes(),
+                sessionId // Excluir esta sesión de la búsqueda de conflictos
+        );
+
+        /// *** CRITERIO 4: Determinar nuevo estado (SCHEDULED o ACTIVE)
         SessionStatus newStatus = determinePublishStatus(session.getScheduledDatetime());
+
+        /// *** CRITERIO 4: Log del cambio de estado
+        System.out.println(" [LearningSessionService] Cambio de estado: " + session.getStatus() + " → " + newStatus);
         session.setStatus(newStatus);
 
+        // *** CRITERIO 3: Intentar crear evento en Google Calendar
+        if (enableGoogleCalendar) {
+            String googleCalendarEventId = googleCalendarService.tryCreateCalendarEvent(
+                    session,
+                    authenticatedPerson,
+                    true
+            );
+
+            if (googleCalendarEventId != null) {
+                session.setGoogleCalendarId(googleCalendarEventId);
+                System.out.println(" [LearningSessionService] Google Calendar ID asignado: " + googleCalendarEventId);
+            } else {
+                System.out.println("⚠️ [LearningSessionService] Sesión creada sin integración con Google Calendar");
+            }
+        }
+
         LearningSession publishedSession = learningSessionRepository.save(session);
+
+        /// *** CRITERIO 5: Validar y loguear guardado en BD interna
+        persistenceValidator.validateSessionSavedCorrectly(publishedSession);
+
+        if (publishedSession.getGoogleCalendarId() != null) {
+            integrationLogger.logSessionSavedWithIntegration(
+                    publishedSession,
+                    publishedSession.getGoogleCalendarId()
+            );
+        } else {
+            integrationLogger.logSessionSavedWithoutIntegration(publishedSession);
+        }
 
         try {
             boolean emailSent = sessionEmailService.sendSessionCreationEmail(
@@ -269,7 +360,13 @@ public class LearningSessionService {
             }
         }
 
-        // TODO: Eliminar evento de Google Calendar si existe
+        // *** CRITERIO 3: Eliminar evento de Google Calendar si existe
+        if (cancelledSession.getGoogleCalendarId() != null) {
+            googleCalendarService.tryDeleteCalendarEvent(
+                    cancelledSession.getGoogleCalendarId(),
+                    authenticatedPerson.getEmail()
+            );
+        }
 
         return cancelledSession;
     }
@@ -480,6 +577,32 @@ public class LearningSessionService {
             throw new IllegalArgumentException(
                     "La sesión está incompleta. Campos pendientes: " + String.join(", ", missingFields)
             );
+        }
+    }
+
+    /// *** CRITERIO 7: Validar que la sesión esté en estado DRAFT
+    /**
+     * Valida que la sesión esté en estado DRAFT y sea programable
+     * Solo se pueden publicar sesiones que aún no han sido programadas
+     *
+     * @param session Sesión a validar
+     * @throws IllegalArgumentException Si la sesión no puede ser programada
+     */
+    private void validateSessionStatusIsPublishable(LearningSession session) {
+        if (session.getStatus() == null) {
+            throw new IllegalArgumentException("La sesión no tiene estado definido");
+        }
+
+        // *** CRITERIO 7: Solo se permite programar sesiones en estado DRAFT
+        if (session.getStatus() != SessionStatus.DRAFT) {
+            String errorMessage = switch (session.getStatus()) {
+                case SCHEDULED -> "Esta sesión ya está programada. No puedes reprogramarla.";
+                case ACTIVE -> "Esta sesión ya está activa. No puedes cambiarla.";
+                case FINISHED -> "Esta sesión ya ha finalizado. No puedes modificarla.";
+                case CANCELLED -> "Esta sesión ha sido cancelada. No puedes modificarla.";
+                default -> "Esta sesión no puede ser programada en su estado actual.";
+            };
+            throw new IllegalArgumentException(errorMessage);
         }
     }
     //#endregion
