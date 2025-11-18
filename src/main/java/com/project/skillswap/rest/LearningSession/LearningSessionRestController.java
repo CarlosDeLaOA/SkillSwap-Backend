@@ -1,5 +1,8 @@
 package com.project.skillswap.rest.LearningSession;
 
+
+import com.project.skillswap.logic.entity.LearningSession.CancelSessionRequest;
+import com.project.skillswap.logic.entity.LearningSession.CancelSessionResponse;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionService;
 import com.project.skillswap.logic.entity.Person.Person;
@@ -302,6 +305,82 @@ public class LearningSessionRestController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error publishing session",
                             "Error al publicar la sesión: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * PUT /learning-sessions/{id}/cancel
+     * Cancela una sesión de aprendizaje
+     *
+     * Requires: Valid JWT token in Authorization header
+     * Requires: User must be the session owner (instructor)
+     *
+     * @param id ID de la sesión a cancelar
+     * @param cancelRequest Razón de cancelación (opcional)
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with cancellation confirmation
+     */
+    @PutMapping("/{id}/cancel")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> cancelSession(
+            @PathVariable Long id,
+            @RequestBody(required = false) CancelSessionRequest cancelRequest,
+            HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            System.out.println(" [LearningSessionController] Cancelling session: " + id);
+
+            String reason = cancelRequest != null ? cancelRequest.getReason() : null;
+
+            LearningSession cancelledSession = learningSessionService.cancelSession(
+                    id,
+                    authenticatedPerson,
+                    reason
+            );
+
+            // Crear respuesta con información de participantes notificados
+            CancelSessionResponse response = new CancelSessionResponse(
+                    cancelledSession.getId(),
+                    cancelledSession.getTitle(),
+                    cancelledSession.getCurrentBookings(),
+                    cancelledSession.getStatus().toString(),
+                    cancelledSession.getCancellationDate().toString()
+            );
+
+            System.out.println(" [LearningSessionController] Session cancelled: " +
+                    cancelledSession.getId() + " with status: " + cancelledSession.getStatus());
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Sesión cancelada exitosamente",
+                    response,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (IllegalStateException e) {
+            System.err.println(" Error: Unauthorized: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(createErrorResponse("No autorizado", e.getMessage()));
+
+        } catch (IllegalArgumentException e) {
+            System.err.println(" Error: Validation failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Validation error", e.getMessage()));
+
+        } catch (ClassCastException e) {
+            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+
+        } catch (Exception e) {
+            System.err.println(" Error cancelling session: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error cancelling session",
+                            "Error al cancelar la sesión: " + e.getMessage()));
         }
     }
     //#endregion

@@ -1,13 +1,8 @@
-package com.project.skillswap.logic.entity.dashboard;
+package com.project.skillswap.logic.entity.LearningSession;
 
 import java.util.Date;
 
-/**
- * Response containing information about an upcoming session
- */
-public class UpcomingSessionResponse {
-
-    //#region Fields
+public class SessionListResponse {
     private Long id;
     private String title;
     private String description;
@@ -16,18 +11,19 @@ public class UpcomingSessionResponse {
     private String status;
     private String videoCallLink;
     private String skillName;
+    private Integer maxCapacity;
+    private Integer currentBookings;
+    private Integer availableSpots;
+    private Boolean isPremium;
+    private Date creationDate;
 
-    // ✅ NUEVOS CAMPOS para cancelación de bookings (solo para LEARNERS)
-    private Long bookingId;
-    private String bookingType;  // INDIVIDUAL o GROUP
-    //#endregion
+    public SessionListResponse() {}
 
-    //#region Constructors
-    public UpcomingSessionResponse() {}
-
-    // Constructor para INSTRUCTORES (sin booking info)
-    public UpcomingSessionResponse(Long id, String title, String description, Date scheduledDatetime,
-                                   Integer durationMinutes, String status, String videoCallLink, String skillName) {
+    public SessionListResponse(Long id, String title, String description,
+                               Date scheduledDatetime, Integer durationMinutes,
+                               String status, String videoCallLink, String skillName,
+                               Integer maxCapacity, Long currentBookings, Boolean isPremium,
+                               Date creationDate) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -36,19 +32,13 @@ public class UpcomingSessionResponse {
         this.status = status;
         this.videoCallLink = videoCallLink;
         this.skillName = skillName;
+        this.maxCapacity = maxCapacity;
+        this.currentBookings = currentBookings != null ? currentBookings.intValue() : 0;
+        this.availableSpots = maxCapacity - this.currentBookings;
+        this.isPremium = isPremium;
+        this.creationDate = creationDate;
     }
 
-    // Constructor para LEARNERS (con booking info)
-    public UpcomingSessionResponse(Long id, String title, String description, Date scheduledDatetime,
-                                   Integer durationMinutes, String status, String videoCallLink, String skillName,
-                                   Long bookingId, String bookingType) {
-        this(id, title, description, scheduledDatetime, durationMinutes, status, videoCallLink, skillName);
-        this.bookingId = bookingId;
-        this.bookingType = bookingType;
-    }
-    //#endregion
-
-    //#region Getters and Setters
     public Long getId() {
         return id;
     }
@@ -113,20 +103,43 @@ public class UpcomingSessionResponse {
         this.skillName = skillName;
     }
 
-    public Long getBookingId() {
-        return bookingId;
+    public Integer getMaxCapacity() {
+        return maxCapacity;
     }
 
-    public void setBookingId(Long bookingId) {
-        this.bookingId = bookingId;
+    public void setMaxCapacity(Integer maxCapacity) {
+        this.maxCapacity = maxCapacity;
     }
 
-    public String getBookingType() {
-        return bookingType;
+    public Integer getCurrentBookings() {
+        return currentBookings;
     }
 
-    public void setBookingType(String bookingType) {
-        this.bookingType = bookingType;
+    public void setCurrentBookings(Integer currentBookings) {
+        this.currentBookings = currentBookings;
     }
-    //#endregion
+
+    public Integer getAvailableSpots() {
+        return availableSpots;
+    }
+
+    public void setAvailableSpots(Integer availableSpots) {
+        this.availableSpots = availableSpots;
+    }
+
+    public Boolean getIsPremium() {
+        return isPremium;
+    }
+
+    public void setIsPremium(Boolean isPremium) {
+        this.isPremium = isPremium;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
 }
