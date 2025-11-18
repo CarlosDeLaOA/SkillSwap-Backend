@@ -6,15 +6,18 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
 
+/**
+ * Entidad que representa un reporte semanal enviado a un usuario.
+ */
 @Table(name = "weekly_report", indexes = {
-        @Index(name = "idx_weekly_report_person", columnList = "person_id")
-}, uniqueConstraints = {
-        @UniqueConstraint(name = "idx_weekly_report_person_week", columnNames = {"person_id", "week_start"})
+        @Index(name = "idx_weekly_report_person", columnList = "person_id"),
+        @Index(name = "idx_weekly_report_date", columnList = "report_date"),
+        @Index(name = "idx_weekly_report_week", columnList = "week_start_date, week_end_date")
 })
 @Entity
 public class WeeklyReport {
 
-    //<editor-fold desc="Fields">
+    //#region Fields
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,31 +26,52 @@ public class WeeklyReport {
     @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false)
     private Person person;
 
-    @Column(name = "week_start", nullable = false)
-    private Date weekStart;
+    @Column(name = "week_start_date", nullable = false)
+    private Date weekStartDate;
 
-    @Column(name = "week_end", nullable = false)
-    private Date weekEnd;
+    @Column(name = "week_end_date", nullable = false)
+    private Date weekEndDate;
 
-    @Column(name = "total_sessions")
-    private Integer totalSessions = 0;
+    @Column(name = "user_type", nullable = false, length = 20)
+    private String userType;
 
-    @Column(name = "pdf_url", length = 500)
-    private String pdfUrl;
+    @Column(name = "credentials_obtained")
+    private Integer credentialsObtained;
+
+    @Column(name = "sessions_attended")
+    private Integer sessionsAttended;
+
+    @Column(name = "skillcoins_invested")
+    private Integer skillcoinsInvested;
+
+    @Column(name = "sessions_taught")
+    private Integer sessionsTaught;
+
+    @Column(name = "total_hours_taught")
+    private Integer totalHoursTaught;
+
+    @Column(name = "skillcoins_earned")
+    private Integer skillcoinsEarned;
+
+    @Column(name = "average_rating_week")
+    private Double averageRatingWeek;
+
+    @Column(name = "total_reviews_received")
+    private Integer totalReviewsReceived;
+
+    @Column(name = "email_sent")
+    private Boolean emailSent = false;
 
     @CreationTimestamp
-    @Column(updatable = false, name = "generation_date")
-    private Date generationDate;
+    @Column(updatable = false, name = "report_date")
+    private Date reportDate;
+    //#endregion
 
-    @Column(name = "sent")
-    private Boolean sent = false;
-    //</editor-fold>
-
-    //<editor-fold desc="Constructors">
+    //#region Constructors
     public WeeklyReport() {}
-    //</editor-fold>
+    //#endregion
 
-    //<editor-fold desc="Getters and Setters">
+    //#region Getters and Setters
     public Long getId() {
         return id;
     }
@@ -64,52 +88,108 @@ public class WeeklyReport {
         this.person = person;
     }
 
-    public Date getWeekStart() {
-        return weekStart;
+    public Date getWeekStartDate() {
+        return weekStartDate;
     }
 
-    public void setWeekStart(Date weekStart) {
-        this.weekStart = weekStart;
+    public void setWeekStartDate(Date weekStartDate) {
+        this.weekStartDate = weekStartDate;
     }
 
-    public Date getWeekEnd() {
-        return weekEnd;
+    public Date getWeekEndDate() {
+        return weekEndDate;
     }
 
-    public void setWeekEnd(Date weekEnd) {
-        this.weekEnd = weekEnd;
+    public void setWeekEndDate(Date weekEndDate) {
+        this.weekEndDate = weekEndDate;
     }
 
-    public Integer getTotalSessions() {
-        return totalSessions;
+    public String getUserType() {
+        return userType;
     }
 
-    public void setTotalSessions(Integer totalSessions) {
-        this.totalSessions = totalSessions;
+    public void setUserType(String userType) {
+        this.userType = userType;
     }
 
-    public String getPdfUrl() {
-        return pdfUrl;
+    public Integer getCredentialsObtained() {
+        return credentialsObtained;
     }
 
-    public void setPdfUrl(String pdfUrl) {
-        this.pdfUrl = pdfUrl;
+    public void setCredentialsObtained(Integer credentialsObtained) {
+        this.credentialsObtained = credentialsObtained;
     }
 
-    public Date getGenerationDate() {
-        return generationDate;
+    public Integer getSessionsAttended() {
+        return sessionsAttended;
     }
 
-    public void setGenerationDate(Date generationDate) {
-        this.generationDate = generationDate;
+    public void setSessionsAttended(Integer sessionsAttended) {
+        this.sessionsAttended = sessionsAttended;
     }
 
-    public Boolean getSent() {
-        return sent;
+    public Integer getSkillcoinsInvested() {
+        return skillcoinsInvested;
     }
 
-    public void setSent(Boolean sent) {
-        this.sent = sent;
+    public void setSkillcoinsInvested(Integer skillcoinsInvested) {
+        this.skillcoinsInvested = skillcoinsInvested;
     }
-    //</editor-fold>
+
+    public Integer getSessionsTaught() {
+        return sessionsTaught;
+    }
+
+    public void setSessionsTaught(Integer sessionsTaught) {
+        this.sessionsTaught = sessionsTaught;
+    }
+
+    public Integer getTotalHoursTaught() {
+        return totalHoursTaught;
+    }
+
+    public void setTotalHoursTaught(Integer totalHoursTaught) {
+        this.totalHoursTaught = totalHoursTaught;
+    }
+
+    public Integer getSkillcoinsEarned() {
+        return skillcoinsEarned;
+    }
+
+    public void setSkillcoinsEarned(Integer skillcoinsEarned) {
+        this.skillcoinsEarned = skillcoinsEarned;
+    }
+
+    public Double getAverageRatingWeek() {
+        return averageRatingWeek;
+    }
+
+    public void setAverageRatingWeek(Double averageRatingWeek) {
+        this.averageRatingWeek = averageRatingWeek;
+    }
+
+    public Integer getTotalReviewsReceived() {
+        return totalReviewsReceived;
+    }
+
+    public void setTotalReviewsReceived(Integer totalReviewsReceived) {
+        this.totalReviewsReceived = totalReviewsReceived;
+    }
+
+    public Boolean getEmailSent() {
+        return emailSent;
+    }
+
+    public void setEmailSent(Boolean emailSent) {
+        this.emailSent = emailSent;
+    }
+
+    public Date getReportDate() {
+        return reportDate;
+    }
+
+    public void setReportDate(Date reportDate) {
+        this.reportDate = reportDate;
+    }
+    //#endregion
 }
