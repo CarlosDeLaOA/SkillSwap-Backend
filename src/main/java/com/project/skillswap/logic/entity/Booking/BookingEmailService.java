@@ -177,14 +177,9 @@ public class BookingEmailService {
                 "                                </p>" +
                 "                            </div>" +
 
-                "                            <!-- Botón para ver mis sesiones -->" +
-                "                            <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>" +
-                "                                <tr>" +
-                "                                    <td align='center'>" +
-                "                                        <a href='" + mySessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'>Ver Mis Sesiones</a>" +
-                "                                    </td>" +
-                "                                </tr>" +
-                "                            </table>" +
+                "                            <!-- Botón para ver mis sesiones -->" + " <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>" + " <tr>" + " <td align='center'>" + " <a href='" + mySessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'>Ver Mis Sesiones</a>" + " </td>" + " </tr>" +
+
+
 
                 "                            <!-- Recordatorios -->" +
                 "                            <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #504ab7;'>" +

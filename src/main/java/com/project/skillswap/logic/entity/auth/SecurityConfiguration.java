@@ -58,6 +58,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/dashboard/**").authenticated()
                         .requestMatchers("/user-skills/**").permitAll()
                         .requestMatchers("/verification/**").permitAll()
+                        .requestMatchers("/videocall/**").authenticated()
                         .anyRequest().authenticated()
                 )
 
