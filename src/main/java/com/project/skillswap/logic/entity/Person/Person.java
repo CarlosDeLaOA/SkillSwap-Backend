@@ -7,6 +7,7 @@ import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Transaction.Transaction;
 import com.project.skillswap.logic.entity.Notification.Notification;
+import com.project.skillswap.logic.entity.UserSkill.UserSkill;
 import com.project.skillswap.logic.entity.WeeklyReport.WeeklyReport;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -64,12 +65,16 @@ public class Person implements UserDetails {
     @Column(name = "last_connection")
     private Date lastConnection;
 
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"person"})
+    private List<UserSkill> userSkills;
+
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"}) // ⚠ Evitar referencia circular
+    @JsonIgnoreProperties({"person"})
     private Instructor instructor;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"person"}) // ⚠ Evitar referencia circular
+    @JsonIgnoreProperties({"person"})
     private Learner learner;
 
     @JsonIgnore
@@ -157,6 +162,8 @@ public class Person implements UserDetails {
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
     }
+
+    public void setPassword(String encodedPassword) { this.passwordHash = encodedPassword;  }
 
     public String getFullName() {
         return fullName;
@@ -262,5 +269,32 @@ public class Person implements UserDetails {
         this.weeklyReports = weeklyReports;
     }
 
+    public List<UserSkill> getUserSkills() {
+        return userSkills;
+    }
+
+    public void setUserSkills(List<UserSkill> userSkills) {
+        this.userSkills = userSkills;
+    }
+
+    /**
+     * Determina el rol del usuario basado en sus relaciones
+     * @return "INSTRUCTOR", "LEARNER", "BOTH" o "USER"
+     */
+    @JsonIgnore
+    public String getRole() {
+        boolean isInstructor = (instructor != null);
+        boolean isLearner = (learner != null);
+
+        if (isInstructor && isLearner) {
+            return "BOTH";
+        } else if (isInstructor) {
+            return "INSTRUCTOR";
+        } else if (isLearner) {
+            return "LEARNER";
+        } else {
+            return "USER";
+        }
+    }
     //#endregion
 }

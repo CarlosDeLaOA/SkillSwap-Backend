@@ -88,302 +88,267 @@ public class LearningSessionSeeder implements ApplicationListener<ContextRefresh
         List<LearningSessionData> sessions = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
 
-        sessions.add(new LearningSessionData(
-                6L, 21L, "Introduction to Data Science",
-                "Learn the fundamentals of data science and analytics",
-                toDate(now.minusDays(45)), 120, SessionType.SCHEDULED,
-                15, true, new BigDecimal("15.00"), "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-ds-001"
-        ));
+        sessions.add(new LearningSessionData(1L, 12L, "Español Conversacional Básico",
+                "Mejora tu fluidez hablando sobre temas cotidianos: saludos, compras, viajes.",
+                toDate(now.minusDays(40)), 90, SessionType.SCHEDULED, 12, false, BigDecimal.ZERO, "es", SessionStatus.FINISHED,
+                "https://meet.google.com/maria-esp-001"));
+        sessions.add(new LearningSessionData(1L, 12L, "Gramática Española Intermedia",
+                "Domina el uso del subjuntivo, tiempos compuestos y conectores.",
+                toDate(now.minusDays(30)), 120, SessionType.SCHEDULED, 10, true, new BigDecimal("8.00"), "es", SessionStatus.FINISHED,
+                "https://meet.google.com/maria-gram-002"));
 
-        sessions.add(new LearningSessionData(
-                6L, 21L, "Machine Learning Fundamentals",
-                "Deep dive into ML algorithms and applications",
-                toDate(now.minusDays(30)), 150, SessionType.SCHEDULED,
-                12, true, new BigDecimal("20.00"), "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-ml-002"
-        ));
+        sessions.add(new LearningSessionData(3L, 2L, "Python desde Cero",
+                "Aprende variables, funciones, listas y POO con proyectos reales.",
+                toDate(now.minusDays(25)), 150, SessionType.SCHEDULED, 15, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
+                "https://meet.google.com/sophie-py-001"));
+        sessions.add(new LearningSessionData(3L, 5L, "React Avanzado: Hooks y Context",
+                "Crea apps dinámicas con useState, useEffect y useContext.",
+                toDate(now.plusDays(3)), 180, SessionType.IMMEDIATE, 8, true, new BigDecimal("18.00"), "en", SessionStatus.SCHEDULED,
+                "https://meet.google.com/sophie-react-002"));
 
-        sessions.add(new LearningSessionData(
-                6L, 21L, "Data Pipelines with Python",
-                "Build robust data pipelines using Python",
-                toDate(now.minusDays(20)), 90, SessionType.SCHEDULED,
-                10, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-dp-003"
-        ));
+        sessions.add(new LearningSessionData(9L, 18L, "Caligrafía Japonesa para Principiantes",
+                "Aprende hiragana y katakana con pincel tradicional. Incluye materiales.",
+                toDate(now.minusDays(50)), 120, SessionType.SCHEDULED, 8, false, BigDecimal.ZERO, "ja", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-cal-201"));
+        sessions.add(new LearningSessionData(9L, 18L, "Sumi-e: Pintura con Tinta",
+                "Técnicas de pincel para paisajes y naturaleza. Filosofía zen incluida.",
+                toDate(now.minusDays(45)), 150, SessionType.SCHEDULED, 6, true, new BigDecimal("22.00"), "ja", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-ink-203"));
 
-        sessions.add(new LearningSessionData(
-                6L, 21L, "Advanced Machine Learning Techniques",
-                "Explore advanced ML concepts and neural networks",
-                toDate(now.minusDays(15)), 180, SessionType.IMMEDIATE,
-                8, true, new BigDecimal("25.00"), "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-aml-004"
-        ));
+        sessions.add(new LearningSessionData(9L, 21L, "Machine Learning con Python",
+                "Regresión, clasificación y clustering con scikit-learn.",
+                toDate(now.minusDays(35)), 180, SessionType.SCHEDULED, 12, true, new BigDecimal("25.00"), "es", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-ml-103"));
+        sessions.add(new LearningSessionData(9L, 21L, "Deep Learning con TensorFlow",
+                "Redes neuronales, CNN y RNN. Proyecto final incluido.",
+                toDate(now.plusDays(7)), 240, SessionType.SCHEDULED, 10, true, new BigDecimal("35.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-dl-108"));
 
-        sessions.add(new LearningSessionData(
-                6L, 21L, "Deep Learning Workshop",
-                "Hands-on workshop on deep learning architectures",
-                toDate(now.plusDays(2)), 120, SessionType.SCHEDULED,
-                15, true, new BigDecimal("30.00"), "en", SessionStatus.SCHEDULED,
-                "https://meet.google.com/carlos-dl-005"
-        ));
+        sessions.add(new LearningSessionData(9L, 16L, "Guitarra para Principiantes",
+                "Acordes básicos, ritmo y canciones populares.",
+                toDate(now.minusDays(20)), 90, SessionType.SCHEDULED, 5, false, BigDecimal.ZERO, "pt", SessionStatus.FINISHED,
+                "https://meet.google.com/lucas-guitar-001"));
 
-        sessions.add(new LearningSessionData(
-                6L, 21L, "Natural Language Processing",
-                "Introduction to NLP techniques and applications",
-                toDate(now.plusDays(5)), 90, SessionType.SCHEDULED,
-                12, false, BigDecimal.ZERO, "en", SessionStatus.SCHEDULED,
-                "https://meet.google.com/carlos-nlp-006"
-        ));
+        sessions.add(new LearningSessionData(6L, 8L, "SQL Avanzado: Joins y Subqueries",
+                "Optimiza consultas complejas y mejora rendimiento.",
+                toDate(now.minusDays(15)), 120, SessionType.SCHEDULED, 15, true, new BigDecimal("15.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/ahmed-sql-001"));
 
-        sessions.add(new LearningSessionData(
-                6L, 21L, "Computer Vision Basics",
-                "Learn image processing and computer vision",
-                toDate(now.plusDays(8)), 120, SessionType.SCHEDULED,
-                10, true, new BigDecimal("20.00"), "en", SessionStatus.SCHEDULED,
-                "https://meet.google.com/carlos-cv-007"
-        ));
+        sessions.add(new LearningSessionData(1L, 12L, "Español para Viajes",
+                "Vocabulario útil en aeropuertos, hoteles y restaurantes.",
+                toDate(now.minusDays(28)), 75, SessionType.SCHEDULED, 15, false, BigDecimal.ZERO, "es", SessionStatus.FINISHED,
+                "https://meet.google.com/maria-viajes-003"));
+        sessions.add(new LearningSessionData(9L, 12L, "Español de Negocios",
+                "Redacción de correos, presentaciones y reuniones formales.",
+                toDate(now.minusDays(22)), 120, SessionType.SCHEDULED, 8, true, new BigDecimal("12.00"), "es", SessionStatus.FINISHED,
+                "https://meet.google.com/maria-negocios-004"));
 
-        sessions.add(new LearningSessionData(
-                6L, 21L, "Big Data Analytics",
-                "Working with large datasets and distributed computing",
-                toDate(now.plusDays(12)), 150, SessionType.SCHEDULED,
-                15, true, new BigDecimal("25.00"), "en", SessionStatus.SCHEDULED,
-                "https://meet.google.com/carlos-bda-008"
-        ));
+        sessions.add(new LearningSessionData(3L, 3L, "JavaScript Moderno: ES6+",
+                "Arrow functions, destructuring, async/await y módulos.",
+                toDate(now.minusDays(18)), 150, SessionType.SCHEDULED, 12, true, new BigDecimal("15.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/sophie-js-003"));
+        sessions.add(new LearningSessionData(9L, 3L, "DOM y Eventos Avanzados",
+                "Manipulación avanzada del DOM y delegación de eventos.",
+                toDate(now.plusDays(5)), 120, SessionType.SCHEDULED, 10, true, new BigDecimal("12.00"), "en", SessionStatus.SCHEDULED,
+                "https://meet.google.com/sophie-dom-004"));
 
-        sessions.add(new LearningSessionData(
-                6L, 21L, "AI Ethics and Responsible AI",
-                "Understanding ethical considerations in AI development",
-                toDate(now.plusDays(15)), 60, SessionType.SCHEDULED,
-                20, false, BigDecimal.ZERO, "en", SessionStatus.SCHEDULED,
-                "https://meet.google.com/carlos-ethics-009"
-        ));
+        sessions.add(new LearningSessionData(9L, 18L, "Origami Avanzado",
+                "Figuras complejas: grullas, dragones y flores.",
+                toDate(now.minusDays(38)), 90, SessionType.SCHEDULED, 6, true, new BigDecimal("18.00"), "ja", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-orig-205"));
+        sessions.add(new LearningSessionData(9L, 18L, "Ikebana Moderna",
+                "Arreglos florales contemporáneos con enfoque minimalista.",
+                toDate(now.minusDays(32)), 120, SessionType.SCHEDULED, 8, true, new BigDecimal("20.00"), "ja", SessionStatus.FINISHED,
+                "https://meet.google.com/yuki-ike-206"));
 
-        sessions.add(new LearningSessionData(
-                1L, 1L, "Java Basics Workshop",
-                "Introduction to Java programming",
-                toDate(now.minusDays(35)), 90, SessionType.SCHEDULED,
-                15, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
-                "https://meet.google.com/java-basic-001"
-        ));
+        sessions.add(new LearningSessionData(9L, 21L, "Análisis de Datos con Pandas",
+                "Limpieza, transformación y visualización de datos.",
+                toDate(now.minusDays(26)), 180, SessionType.SCHEDULED, 15, true, new BigDecimal("22.00"), "es", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-pandas-109"));
+        sessions.add(new LearningSessionData(12L, 21L, "Visualización con Seaborn",
+                "Gráficos avanzados: heatmaps, pairplots y más.",
+                toDate(now.plusDays(10)), 120, SessionType.SCHEDULED, 12, true, new BigDecimal("18.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-seaborn-110"));
 
-        sessions.add(new LearningSessionData(
-                1L, 2L, "Python for Beginners",
-                "Start your Python programming journey",
-                toDate(now.minusDays(25)), 120, SessionType.SCHEDULED,
-                15, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
-                "https://meet.google.com/python-beg-002"
-        ));
+        sessions.add(new LearningSessionData(4L, 16L, "Guitarra Eléctrica: Riffs y Solos",
+                "Técnicas de bending, tapping y escalas pentatónicas.",
+                toDate(now.minusDays(15)), 90, SessionType.SCHEDULED, 5, true, new BigDecimal("15.00"), "pt", SessionStatus.FINISHED,
+                "https://meet.google.com/lucas-electric-002"));
+        sessions.add(new LearningSessionData(9L, 16L, "Fingerstyle Acústico",
+                "Patrones rítmicos y melodías simultáneas.",
+                toDate(now.plusDays(8)), 75, SessionType.SCHEDULED, 6, false, BigDecimal.ZERO, "pt", SessionStatus.SCHEDULED,
+                "https://meet.google.com/lucas-finger-003"));
 
-        sessions.add(new LearningSessionData(
-                3L, 3L, "JavaScript Fundamentals",
-                "Learn JavaScript from scratch",
-                toDate(now.minusDays(18)), 90, SessionType.SCHEDULED,
-                12, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
-                "https://meet.google.com/js-fund-003"
-        ));
+        sessions.add(new LearningSessionData(6L, 8L, "Optimización de Consultas SQL",
+                "Índices, EXPLAIN y mejores prácticas.",
+                toDate(now.minusDays(12)), 120, SessionType.SCHEDULED, 10, true, new BigDecimal("18.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/ahmed-sql-opt-002"));
+        sessions.add(new LearningSessionData(6L, 8L, "SQL para Business Intelligence",
+                "Reportes, KPIs y dashboards con SQL.",
+                toDate(now.plusDays(12)), 150, SessionType.SCHEDULED, 12, true, new BigDecimal("20.00"), "en", SessionStatus.SCHEDULED,
+                "https://meet.google.com/ahmed-bi-003"));
 
-        sessions.add(new LearningSessionData(
-                1L, 1L, "Advanced Java Programming",
-                "Deep dive into Java frameworks",
-                toDate(now.plusDays(3)), 120, SessionType.SCHEDULED,
-                10, true, new BigDecimal("10.00"), "en", SessionStatus.SCHEDULED,
-                "https://meet.google.com/java-adv-004"
-        ));
+        sessions.add(new LearningSessionData(17L, 7L, "Álgebra Lineal para ML",
+                "Vectores, matrices, eigenvalores y aplicaciones.",
+                toDate(now.minusDays(30)), 180, SessionType.SCHEDULED, 8, true, new BigDecimal("25.00"), "ru", SessionStatus.FINISHED,
+                "https://meet.google.com/elena-algebra-001"));
+        sessions.add(new LearningSessionData(9L, 7L, "Cálculo Diferencial",
+                "Límites, derivadas y optimización.",
+                toDate(now.plusDays(15)), 150, SessionType.SCHEDULED, 10, true, new BigDecimal("22.00"), "ru", SessionStatus.SCHEDULED,
+                "https://meet.google.com/elena-calculo-002"));
 
-        sessions.add(new LearningSessionData(
-                3L, 4L, "React Development",
-                "Building modern web apps with React",
-                toDate(now.plusDays(6)), 150, SessionType.SCHEDULED,
-                12, true, new BigDecimal("15.00"), "en", SessionStatus.SCHEDULED,
-                "https://meet.google.com/react-dev-005"
-        ));
+        sessions.add(new LearningSessionData(19L, 17L, "Mandarín Básico: Pinyin y Tonos",
+                "Pronunciación correcta y primeras frases.",
+                toDate(now.minusDays(20)), 90, SessionType.SCHEDULED, 12, false, BigDecimal.ZERO, "zh", SessionStatus.FINISHED,
+                "https://meet.google.com/li-pinyin-001"));
+        sessions.add(new LearningSessionData(19L, 17L, "Conversación en Mandarín",
+                "Diálogos cotidianos: compras, saludos, direcciones.",
+                toDate(now.plusDays(6)), 120, SessionType.SCHEDULED, 10, true, new BigDecimal("15.00"), "zh", SessionStatus.SCHEDULED,
+                "https://meet.google.com/li-conversacion-002"));
 
-        sessions.add(new LearningSessionData(
-                1L, 2L, "Python Advanced Topics",
-                "Advanced Python programming concepts",
-                toDate(now.plusDays(10)), 120, SessionType.SCHEDULED,
-                10, false, BigDecimal.ZERO, "en", SessionStatus.SCHEDULED,
-                "https://meet.google.com/python-adv-006"
-        ));
+        sessions.add(new LearningSessionData(20L, 8L, "Diseño UI/UX con Figma",
+                "Prototipado, wireframes y diseño de interfaces.",
+                toDate(now.minusDays(14)), 180, SessionType.SCHEDULED, 15, true, new BigDecimal("20.00"), "de", SessionStatus.FINISHED,
+                "https://meet.google.com/clara-figma-001"));
+        sessions.add(new LearningSessionData(20L, 8L, "Branding y Identidad Visual",
+                "Logotipos, paletas y guías de estilo.",
+                toDate(now.plusDays(18)), 150, SessionType.SCHEDULED, 12, true, new BigDecimal("22.00"), "de", SessionStatus.SCHEDULED,
+                "https://meet.google.com/clara-branding-002"));
 
-        sessions.add(new LearningSessionData(
-                3L, 5L, "Angular Framework",
-                "Complete guide to Angular development",
-                toDate(now.plusDays(14)), 180, SessionType.SCHEDULED,
-                15, true, new BigDecimal("20.00"), "en", SessionStatus.SCHEDULED,
-                "https://meet.google.com/angular-guide-007"
-        ));
+        sessions.add(new LearningSessionData(14L, 3L, "Yoga para Principiantes",
+                "Posturas básicas, respiración y relajación.",
+                toDate(now.minusDays(10)), 60, SessionType.SCHEDULED, 20, false, BigDecimal.ZERO, "pt", SessionStatus.FINISHED,
+                "https://meet.google.com/marco-yoga-001"));
+        sessions.add(new LearningSessionData(14L, 3L, "Vinyasa Flow",
+                "Secuencias dinámicas y sincronización con respiración.",
+                toDate(now.plusDays(4)), 75, SessionType.SCHEDULED, 15, true, new BigDecimal("10.00"), "pt", SessionStatus.SCHEDULED,
+                "https://meet.google.com/marco-vinyasa-002"));
 
-        sessions.add(new LearningSessionData(
-                1L, 1L, "Java Spring Boot",
-                "Building REST APIs with Spring Boot",
-                toDate(now.plusDays(18)), 150, SessionType.SCHEDULED,
-                12, true, new BigDecimal("18.00"), "en", SessionStatus.SCHEDULED,
-                "https://meet.google.com/spring-boot-008"
-        ));
+        sessions.add(new LearningSessionData(7L, 3L, "Fotografía con Móvil",
+                "Técnicas de composición, luz natural y edición en apps gratuitas.",
+                toDate(now.minusDays(18)), 90, SessionType.SCHEDULED, 20, false, BigDecimal.ZERO, "es", SessionStatus.FINISHED,
+                "https://meet.google.com/ana-foto-movil-050"));
+        sessions.add(new LearningSessionData(7L, 3L, "Fotografía Nocturna",
+                "Larga exposición, trípodes y edición de estrellas.",
+                toDate(now.plusDays(9)), 120, SessionType.SCHEDULED, 10, true, new BigDecimal("18.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/ana-nocturna-051"));
+        sessions.add(new LearningSessionData(11L, 7L, "Microservicios con Spring Boot",
+                "Patrones, API Gateway, Docker y despliegue.",
+                toDate(now.minusDays(25)), 180, SessionType.IMMEDIATE, 8, true, new BigDecimal("30.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/david-micro-052"));
+        sessions.add(new LearningSessionData(11L, 7L, "Clean Architecture en Java",
+                "Capas, inyección de dependencias y testing.",
+                toDate(now.plusDays(14)), 150, SessionType.SCHEDULED, 12, true, new BigDecimal("25.00"), "en", SessionStatus.SCHEDULED,
+                "https://meet.google.com/david-clean-053"));
+        sessions.add(new LearningSessionData(10L, 1L, "Pasta Casera desde Cero",
+                "Amasado, corte y salsas tradicionales.",
+                toDate(now.minusDays(30)), 120, SessionType.SCHEDULED, 6, true, new BigDecimal("22.00"), "it", SessionStatus.FINISHED,
+                "https://meet.google.com/isa-pasta-054"));
+        sessions.add(new LearningSessionData(10L, 1L, "Pizza Napoletana Auténtica",
+                "Masa de 48h, horno y técnica profesional.",
+                toDate(now.plusDays(5)), 90, SessionType.SCHEDULED, 8, true, new BigDecimal("20.00"), "it", SessionStatus.SCHEDULED,
+                "https://meet.google.com/isa-pizza-055"));
+        sessions.add(new LearningSessionData(16L, 10L, "SEO Técnico 2025",
+                "Core Web Vitals, indexación y schema.org.",
+                toDate(now.minusDays(20)), 150, SessionType.SCHEDULED, 15, true, new BigDecimal("18.00"), "es", SessionStatus.FINISHED,
+                "https://meet.google.com/miguel-seo-056"));
+        sessions.add(new LearningSessionData(16L, 10L, "Google Ads Avanzado",
+                "Campañas de remarketing y conversiones.",
+                toDate(now.plusDays(11)), 120, SessionType.SCHEDULED, 12, true, new BigDecimal("15.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/miguel-ads-057"));
+        sessions.add(new LearningSessionData(13L, 13L, "Francés para Viajes",
+                "Frases clave en aeropuertos, restaurantes y transporte.",
+                toDate(now.minusDays(15)), 75, SessionType.SCHEDULED, 18, false, BigDecimal.ZERO, "fr", SessionStatus.FINISHED,
+                "https://meet.google.com/natalie-viajes-058"));
+        sessions.add(new LearningSessionData(13L, 13L, "Francés Comercial",
+                "Redacción de emails y presentaciones formales.",
+                toDate(now.plusDays(7)), 90, SessionType.SCHEDULED, 10, true, new BigDecimal("12.00"), "fr", SessionStatus.SCHEDULED,
+                "https://meet.google.com/natalie-comercial-059"));
+        sessions.add(new LearningSessionData(15L, 4L, "Gestión del Tiempo con GTD",
+                "Método Getting Things Done aplicado a la vida real.",
+                toDate(now.minusDays(22)), 90, SessionType.SCHEDULED, 20, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
+                "https://meet.google.com/sara-gtd-060"));
+        sessions.add(new LearningSessionData(15L, 4L, "Hablar en Público sin Miedo",
+                "Técnicas de oratoria, voz y manejo de nervios.",
+                toDate(now.plusDays(16)), 120, SessionType.SCHEDULED, 15, true, new BigDecimal("15.00"), "en", SessionStatus.SCHEDULED,
+                "https://meet.google.com/sara-oratoria-061"));
+        sessions.add(new LearningSessionData(21L, 10L, "Git Avanzado: Branching y CI/CD",
+                "Estrategias de ramas, rebase y pipelines.",
+                toDate(now.minusDays(12)), 120, SessionType.SCHEDULED, 12, true, new BigDecimal("18.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/thomas-git-062"));
+        sessions.add(new LearningSessionData(21L, 10L, "GitHub Actions desde Cero",
+                "Automatización de pruebas y despliegues.",
+                toDate(now.plusDays(13)), 90, SessionType.SCHEDULED, 10, true, new BigDecimal("15.00"), "en", SessionStatus.SCHEDULED,
+                "https://meet.google.com/thomas-actions-063"));
+        sessions.add(new LearningSessionData(8L, 2L, "Automatización con Python",
+                "Scripts para tareas repetitivas: Excel, PDFs, web scraping.",
+                toDate(now.minusDays(28)), 150, SessionType.SCHEDULED, 15, true, new BigDecimal("20.00"), "en", SessionStatus.FINISHED,
+                "https://meet.google.com/oliver-auto-064"));
+        sessions.add(new LearningSessionData(8L, 2L, "Python para Finanzas",
+                "Análisis de datos financieros con pandas y yfinance.",
+                toDate(now.plusDays(20)), 180, SessionType.SCHEDULED, 10, true, new BigDecimal("25.00"), "en", SessionStatus.SCHEDULED,
+                "https://meet.google.com/oliver-finanzas-065"));
+        sessions.add(new LearningSessionData(20L, 8L, "Tipografía y Jerarquía Visual",
+                "Cómo elegir fuentes y organizar información.",
+                toDate(now.minusDays(16)), 120, SessionType.SCHEDULED, 12, true, new BigDecimal("18.00"), "de", SessionStatus.FINISHED,
+                "https://meet.google.com/clara-tipo-066"));
+        sessions.add(new LearningSessionData(20L, 8L, "Motion Graphics con After Effects",
+                "Animaciones para redes sociales y presentaciones.",
+                toDate(now.plusDays(8)), 150, SessionType.SCHEDULED, 8, true, new BigDecimal("22.00"), "de", SessionStatus.SCHEDULED,
+                "https://meet.google.com/clara-motion-067"));
+        sessions.add(new LearningSessionData(14L, 3L, "Yoga Restaurativo",
+                "Posturas pasivas con soportes para relajación profunda.",
+                toDate(now.minusDays(10)), 60, SessionType.SCHEDULED, 20, false, BigDecimal.ZERO, "pt", SessionStatus.FINISHED,
+                "https://meet.google.com/marco-restaurativo-068"));
+        sessions.add(new LearningSessionData(14L, 3L, "Yoga para Office Workers",
+                "Estiramientos en silla para aliviar tensiones diarias.",
+                toDate(now.plusDays(3)), 45, SessionType.SCHEDULED, 25, false, BigDecimal.ZERO, "pt", SessionStatus.SCHEDULED,
+                "https://meet.google.com/marco-oficina-069"));
 
-        sessions.add(new LearningSessionData(
-                9L, 16L, "Guitar for Beginners",
-                "Learn to play guitar from scratch",
-                toDate(now.plusDays(2)), 60, SessionType.SCHEDULED,
-                5, false, BigDecimal.ZERO, "en", SessionStatus.SCHEDULED,
-                "https://meet.google.com/stu-vwxy-zab"
-        ));
+        sessions.add(new LearningSessionData(9L, 2L, "Python para Data Science",
+                "Pandas, NumPy, visualización de datos y análisis exploratorio.",
+                toDate(now.plusDays(5)), 180, SessionType.SCHEDULED, 15, true, new BigDecimal("28.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-datascience-201"));
 
-        sessions.add(new LearningSessionData(
-                12L, 21L, "Data Science Fundamentals",
-                "Introduction to data analysis and statistical methods",
-                toDate(now.minusDays(50)), 120, SessionType.SCHEDULED,
-                15, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-ds-101"
-        ));
+        sessions.add(new LearningSessionData(9L, 10L, "DevOps con Docker y Kubernetes",
+                "Contenedores, orquestación y despliegue en la nube.",
+                toDate(now.plusDays(10)), 150, SessionType.SCHEDULED, 12, true, new BigDecimal("32.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-devops-202"));
 
-        sessions.add(new LearningSessionData(
-                12L, 21L, "Python for Data Analysis",
-                "Using pandas and numpy for data manipulation",
-                toDate(now.minusDays(48)), 150, SessionType.SCHEDULED,
-                12, true, new BigDecimal("15.00"), "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-py-102"
-        ));
+        sessions.add(new LearningSessionData(9L, 21L, "MLOps: ML en Producción",
+                "Pipelines de ML, monitoreo de modelos y CI/CD para Data Science.",
+                toDate(now.plusDays(15)), 200, SessionType.SCHEDULED, 10, true, new BigDecimal("40.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-mlops-203"));
 
-        sessions.add(new LearningSessionData(
-                12L, 21L, "Machine Learning Basics",
-                "Introduction to supervised and unsupervised learning",
-                toDate(now.minusDays(45)), 180, SessionType.SCHEDULED,
-                10, true, new BigDecimal("20.00"), "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-ml-103"
-        ));
+        sessions.add(new LearningSessionData(9L, 3L, "JavaScript Avanzado: Async/Await",
+                "Promesas, async/await, event loop y manejo de errores asíncronos.",
+                toDate(now.plusDays(12)), 120, SessionType.SCHEDULED, 20, true, new BigDecimal("22.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-jsasync-204"));
 
-        sessions.add(new LearningSessionData(
-                12L, 21L, "Data Visualization with Python",
-                "Creating insightful visualizations using matplotlib and seaborn",
-                toDate(now.minusDays(42)), 120, SessionType.SCHEDULED,
-                15, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-viz-104"
-        ));
+        sessions.add(new LearningSessionData(9L, 5L, "React + TypeScript",
+                "Desarrollo con React usando TypeScript para mayor robustez.",
+                toDate(now.plusDays(18)), 180, SessionType.SCHEDULED, 15, true, new BigDecimal("35.00"), "es", SessionStatus.SCHEDULED,
+                "https://meet.google.com/carlos-reactts-205"));
 
-        sessions.add(new LearningSessionData(
-                12L, 21L, "SQL for Data Scientists",
-                "Advanced SQL queries and database optimization",
-                toDate(now.minusDays(38)), 150, SessionType.SCHEDULED,
-                12, true, new BigDecimal("12.00"), "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-sql-105"
-        ));
+        sessions.add(new LearningSessionData(9L, 2L, "Python Intermedio: Decoradores",
+                "Decoradores, generadores, context managers y programación funcional.",
+                toDate(now.minusDays(45)), 150, SessionType.SCHEDULED, 15, true, new BigDecimal("25.00"), "es", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-pyinter-101"));
 
-        sessions.add(new LearningSessionData(
-                12L, 21L, "Statistical Analysis Workshop",
-                "Hypothesis testing and statistical inference",
-                toDate(now.minusDays(35)), 120, SessionType.SCHEDULED,
-                10, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-stats-106"
-        ));
+        sessions.add(new LearningSessionData(9L, 8L, "SQL para Análisis de Datos",
+                "Window functions, CTEs, optimización de queries complejas.",
+                toDate(now.minusDays(38)), 120, SessionType.SCHEDULED, 12, true, new BigDecimal("20.00"), "es", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-sqlanalysis-102"));
 
-        sessions.add(new LearningSessionData(
-                12L, 21L, "Deep Learning Introduction",
-                "Neural networks and deep learning fundamentals",
-                toDate(now.minusDays(30)), 180, SessionType.SCHEDULED,
-                8, true, new BigDecimal("25.00"), "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-dl-107"
-        ));
+        sessions.add(new LearningSessionData(9L, 10L, "Git Colaborativo: Workflows",
+                "Git flow, trunk-based development y resolución de conflictos.",
+                toDate(now.minusDays(32)), 90, SessionType.SCHEDULED, 18, false, BigDecimal.ZERO, "es", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-gitflow-103"));
 
-        sessions.add(new LearningSessionData(
-                12L, 21L, "Time Series Analysis",
-                "Forecasting and time series modeling",
-                toDate(now.minusDays(25)), 120, SessionType.SCHEDULED,
-                12, true, new BigDecimal("18.00"), "en", SessionStatus.FINISHED,
-                "https://meet.google.com/carlos-ts-108"
-        ));
-
-        sessions.add(new LearningSessionData(
-                9L, 18L, "Japanese Calligraphy Basics",
-                "Introduction to traditional Japanese brush writing",
-                toDate(now.minusDays(55)), 120, SessionType.SCHEDULED,
-                8, false, BigDecimal.ZERO, "ja", SessionStatus.FINISHED,
-                "https://meet.google.com/yuki-cal-201"
-        ));
-
-        sessions.add(new LearningSessionData(
-                9L, 18L, "Advanced Calligraphy Techniques",
-                "Mastering different calligraphy styles",
-                toDate(now.minusDays(52)), 150, SessionType.SCHEDULED,
-                8, true, new BigDecimal("20.00"), "ja", SessionStatus.FINISHED,
-                "https://meet.google.com/yuki-cal-202"
-        ));
-
-        sessions.add(new LearningSessionData(
-                9L, 18L, "Ink Painting Workshop",
-                "Traditional sumi-e painting techniques",
-                toDate(now.minusDays(48)), 180, SessionType.SCHEDULED,
-                6, true, new BigDecimal("25.00"), "ja", SessionStatus.FINISHED,
-                "https://meet.google.com/yuki-ink-203"
-        ));
-
-        sessions.add(new LearningSessionData(
-                9L, 18L, "Japanese Art History",
-                "Understanding the evolution of Japanese art",
-                toDate(now.minusDays(45)), 120, SessionType.SCHEDULED,
-                10, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
-                "https://meet.google.com/yuki-hist-204"
-        ));
-
-        sessions.add(new LearningSessionData(
-                9L, 18L, "Origami and Paper Arts",
-                "Traditional Japanese paper folding techniques",
-                toDate(now.minusDays(42)), 90, SessionType.SCHEDULED,
-                12, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
-                "https://meet.google.com/yuki-orig-205"
-        ));
-
-        sessions.add(new LearningSessionData(
-                9L, 18L, "Ikebana - Flower Arrangement",
-                "Japanese art of flower arrangement",
-                toDate(now.minusDays(38)), 120, SessionType.SCHEDULED,
-                8, true, new BigDecimal("15.00"), "ja", SessionStatus.FINISHED,
-                "https://meet.google.com/yuki-ike-206"
-        ));
-
-        sessions.add(new LearningSessionData(
-                9L, 18L, "Tea Ceremony Introduction",
-                "Understanding the Japanese tea ceremony tradition",
-                toDate(now.minusDays(35)), 150, SessionType.SCHEDULED,
-                10, true, new BigDecimal("22.00"), "ja", SessionStatus.FINISHED,
-                "https://meet.google.com/yuki-tea-207"
-        ));
-
-        sessions.add(new LearningSessionData(
-                9L, 18L, "Zen Meditation and Art",
-                "Combining meditation with artistic expression",
-                toDate(now.minusDays(32)), 120, SessionType.SCHEDULED,
-                12, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
-                "https://meet.google.com/yuki-zen-208"
-        ));
-
-        sessions.add(new LearningSessionData(
-                9L, 18L, "Modern Japanese Design",
-                "Contemporary applications of traditional aesthetics",
-                toDate(now.minusDays(28)), 150, SessionType.SCHEDULED,
-                10, true, new BigDecimal("18.00"), "en", SessionStatus.FINISHED,
-                "https://meet.google.com/yuki-mod-209"
-        ));
-
-        sessions.add(new LearningSessionData(
-                9L, 18L, "Calligraphy Masterclass",
-                "Advanced techniques for experienced practitioners",
-                toDate(now.minusDays(25)), 180, SessionType.SCHEDULED,
-                6, true, new BigDecimal("30.00"), "ja", SessionStatus.FINISHED,
-                "https://meet.google.com/yuki-master-210"
-        ));
-
-        sessions.add(new LearningSessionData(
-                9L, 18L, "Japanese Aesthetics Philosophy",
-                "Wabi-sabi and other aesthetic principles",
-                toDate(now.minusDays(20)), 120, SessionType.SCHEDULED,
-                15, false, BigDecimal.ZERO, "en", SessionStatus.FINISHED,
-                "https://meet.google.com/yuki-aes-211"
-        ));
-
+        sessions.add(new LearningSessionData(9L, 3L, "Node.js Backend con Express",
+                "APIs RESTful, middleware, autenticación y conexión a bases de datos.",
+                toDate(now.minusDays(28)), 180, SessionType.SCHEDULED, 12, true, new BigDecimal("30.00"), "es", SessionStatus.FINISHED,
+                "https://meet.google.com/carlos-nodejs-104"));
 
         return sessions;
     }

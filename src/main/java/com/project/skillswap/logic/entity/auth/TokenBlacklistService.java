@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @EnableScheduling
 public class TokenBlacklistService {
 
-    // token -> fecha/hora en que deja de considerarse inválido (suele ser la expiración del JWT)
     private final Map<String, Instant> blacklist = new ConcurrentHashMap<>();
 
     /**
@@ -30,7 +29,6 @@ public class TokenBlacklistService {
     public void invalidateToken(String token, Instant expiresAt) {
         Objects.requireNonNull(token, "token no puede ser null");
         if (expiresAt == null) {
-            // fallback agresivo: invalídalo por 30 min si no hay exp (ajusta a tu necesidad)
             expiresAt = Instant.now().plusSeconds(30 * 60);
         }
         blacklist.put(token, expiresAt);
@@ -41,7 +39,6 @@ public class TokenBlacklistService {
         Instant until = blacklist.get(token);
         if (until == null) return false;
         if (Instant.now().isAfter(until)) {
-            // ya pasó el TTL: limpiamos
             blacklist.remove(token);
             return false;
         }

@@ -4,6 +4,21 @@
 # Log file
 *.log
 
+# Gradle
+.gradle/
+build/
+
+# IntelliJ / IDEA
+.idea/
+*.iml
+out/
+
+
+
+# Sistema
+.DS_Store
+Thumbs.db
+
 # BlueJ files
 *.ctxt
 
@@ -41,3 +56,4 @@ build/resources/
 .gradle/8.7/fileHashes/resourceHashesCache.bin
 .gradle/8.7/gc.properties
 .gradle/vcs-1/gc.properties
+.gradle/

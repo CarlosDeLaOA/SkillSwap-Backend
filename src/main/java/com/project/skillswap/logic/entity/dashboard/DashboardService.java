@@ -65,5 +65,23 @@ public class DashboardService {
     public List<FeedbackResponse> getRecentFeedbacks(Long personId) {
         return dashboardRepository.getRecentFeedbacks(personId);
     }
+
+    // ✅ NUEVO
+    @Transactional(readOnly = true)
+    public List<SkillSessionStatsResponse> getSkillSessionStats(Long personId, String role) {
+        return dashboardRepository.getSkillSessionStats(personId, role);
+    }
+
+    // ✅ NUEVO
+    @Transactional(readOnly = true)
+    public List<MonthlyAchievementResponse> getMonthlyAchievements(Long personId) {
+        return dashboardRepository.getMonthlyAchievements(personId);
+    }
+
+    // ✅ NUEVO
+    @Transactional(readOnly = true)
+    public List<MonthlyAttendanceResponse> getMonthlyAttendance(Long personId) {
+        return dashboardRepository.getMonthlyAttendance(personId);
+    }
     //#endregion
 }

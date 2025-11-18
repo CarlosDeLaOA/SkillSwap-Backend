@@ -1,0 +1,41 @@
+package com.project.skillswap.logic.entity.dashboard;
+
+public class SkillSessionStatsResponse {
+
+    private String skillName;
+    private Integer completed;
+    private Integer pending;
+
+    public SkillSessionStatsResponse() {
+    }
+
+    public SkillSessionStatsResponse(String skillName, Integer completed, Integer pending) {
+        this.skillName = skillName;
+        this.completed = completed;
+        this.pending = pending;
+    }
+
+    public String getSkillName() {
+        return skillName;
+    }
+
+    public void setSkillName(String skillName) {
+        this.skillName = skillName;
+    }
+
+    public Integer getCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(Integer completed) {
+        this.completed = completed;
+    }
+
+    public Integer getPending() {
+        return pending;
+    }
+
+    public void setPending(Integer pending) {
+        this.pending = pending;
+    }
+}

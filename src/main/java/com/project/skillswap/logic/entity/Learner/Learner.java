@@ -28,7 +28,7 @@ public class Learner {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false, unique = true)
-    @JsonIgnore // 👈 evita Person -> Learner -> Person -> ...
+    @JsonIgnore
     private Person person;
 
     @Column(name = "skillcoins_balance", precision = 10, scale = 2)
@@ -41,7 +41,7 @@ public class Learner {
     private Integer credentialsObtained = 0;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore // 👈 evita Learner -> bookings -> learner -> ...
+    @JsonIgnore
     private List<Booking> bookings;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

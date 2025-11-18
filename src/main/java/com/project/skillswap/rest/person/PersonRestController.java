@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Controlador REST para gestionar el registro de usuarios.
@@ -87,15 +88,18 @@ public class PersonRestController {
                 return validationError;
             }
 
-            List<String> categories = (List<String>) request.get("categories");
-            if (categories == null || categories.isEmpty()) {
+            List<Integer> skillIdsRaw = (List<Integer>) request.get("skillIds");
+            if (skillIdsRaw == null || skillIdsRaw.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Debe seleccionar al menos una categoría de habilidad");
+                        .body("Debe seleccionar al menos una habilidad");
             }
+
+            List<Long> skillIds = skillIdsRaw.stream()
+                    .map(Integer::longValue)
+                    .toList();
 
             person.setPasswordHash(passwordEncoder.encode(person.getPasswordHash()));
 
-            // En modo desarrollo, verificar automáticamente el email
             person.setEmailVerified(developmentMode);
             personRepository.save(person);
 
@@ -103,35 +107,29 @@ public class PersonRestController {
             learner.setPerson(person);
             learnerRepository.save(learner);
 
-            List<Long> skillIds = findSkillIdsByCategories(categories);
-            if (!skillIds.isEmpty()) {
-                try {
-                    userSkillService.saveUserSkills(person, skillIds);
-                } catch (Exception e) {
-                    System.err.println("⚠️ Error guardando skills del usuario: " + e.getMessage());
-                }
+            try {
+                userSkillService.saveUserSkills(person, skillIds);
+            } catch (Exception e) {
+                System.err.println(" Error guardando skills del usuario: " + e.getMessage());
             }
 
-            // Intentar enviar correo de verificación solo si no estamos en modo desarrollo
             boolean emailSent = false;
             if (!developmentMode) {
                 try {
                     verificationService.createAndSendVerificationToken(person);
                     emailSent = true;
-
-                } catch (MessagingException e) {
                 } catch (Exception e) {
+                    System.err.println(" Error enviando correo: " + e.getMessage());
                 }
             }
 
             Map<String, Object> response = new HashMap<>();
-
             if (developmentMode) {
                 response.put("message", "Estudiante registrado exitosamente (modo desarrollo - email auto-verificado)");
             } else if (emailSent) {
                 response.put("message", "Estudiante registrado exitosamente. Por favor verifica tu correo electrónico");
             } else {
-                response.put("message", "Estudiante registrado exitosamente. Nota: El correo de verificación no pudo ser enviado. Contacta al administrador.");
+                response.put("message", "Estudiante registrado exitosamente. Nota: no se pudo enviar el correo de verificación.");
                 response.put("emailWarning", true);
             }
 
@@ -143,7 +141,7 @@ public class PersonRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("❌ Error en registro de learner: " + e.getMessage());
+            System.err.println(" Error en registro de learner: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al procesar el registro. Por favor intente nuevamente.");
@@ -171,15 +169,18 @@ public class PersonRestController {
                 return validationError;
             }
 
-            List<String> categories = (List<String>) request.get("categories");
-            if (categories == null || categories.isEmpty()) {
+            List<Integer> skillIdsRaw = (List<Integer>) request.get("skillIds");
+            if (skillIdsRaw == null || skillIdsRaw.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Debe seleccionar al menos una categoría de habilidad");
+                        .body("Debe seleccionar al menos una habilidad");
             }
+
+            List<Long> skillIds = skillIdsRaw.stream()
+                    .map(Integer::longValue)
+                    .toList();
 
             person.setPasswordHash(passwordEncoder.encode(person.getPasswordHash()));
 
-            // En modo desarrollo, verificar automáticamente el email
             person.setEmailVerified(developmentMode);
             personRepository.save(person);
 
@@ -187,34 +188,29 @@ public class PersonRestController {
             instructor.setPerson(person);
             instructorRepository.save(instructor);
 
-            List<Long> skillIds = findSkillIdsByCategories(categories);
-            if (!skillIds.isEmpty()) {
-                try {
-                    userSkillService.saveUserSkills(person, skillIds);
-                } catch (Exception e) {
-                    System.err.println("⚠️ Error guardando skills del usuario: " + e.getMessage());
-                }
+            try {
+                userSkillService.saveUserSkills(person, skillIds);
+            } catch (Exception e) {
+                System.err.println(" Error guardando skills del usuario: " + e.getMessage());
             }
 
-            // Intentar enviar correo de verificación solo si no estamos en modo desarrollo
             boolean emailSent = false;
             if (!developmentMode) {
                 try {
                     verificationService.createAndSendVerificationToken(person);
                     emailSent = true;
-                } catch (MessagingException e) {
                 } catch (Exception e) {
+                    System.err.println("Error enviando correo: " + e.getMessage());
                 }
             }
 
             Map<String, Object> response = new HashMap<>();
-
             if (developmentMode) {
                 response.put("message", "Instructor registrado exitosamente (modo desarrollo - email auto-verificado)");
             } else if (emailSent) {
                 response.put("message", "Instructor registrado exitosamente. Por favor verifica tu correo electrónico");
             } else {
-                response.put("message", "Instructor registrado exitosamente. Nota: El correo de verificación no pudo ser enviado. Contacta al administrador.");
+                response.put("message", "Instructor registrado exitosamente. Nota: no se pudo enviar el correo de verificación.");
                 response.put("emailWarning", true);
             }
 
@@ -226,7 +222,7 @@ public class PersonRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("❌ Error en registro de instructor: " + e.getMessage());
+            System.err.println(" Error en registro de instructor: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al procesar el registro. Por favor intente nuevamente.");
@@ -349,7 +345,7 @@ public class PersonRestController {
      * @return lista de skill IDs
      */
     private List<Long> findSkillIdsByCategories(List<String> categories) {
-        return categories.stream()
+        List<Long> collect = categories.stream()
                 .flatMap(categoryName ->
                         knowledgeAreaRepository.findByName(categoryName)
                                 .map(knowledgeArea ->
@@ -357,9 +353,10 @@ public class PersonRestController {
                                                 .stream()
                                                 .map(Skill::getId)
                                 )
-                                .orElse(java.util.stream.Stream.empty())
+                                .orElse(Stream.empty())
                 )
                 .collect(Collectors.toList());
+        return collect;
     }
     //#endregion
 }

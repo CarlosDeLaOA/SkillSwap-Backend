@@ -16,10 +16,36 @@ public class UpcomingSessionResponse {
     private String status;
     private String videoCallLink;
     private String skillName;
+
+    // ✅ NUEVOS CAMPOS para cancelación de bookings (solo para LEARNERS)
+    private Long bookingId;
+    private String bookingType;  // INDIVIDUAL o GROUP
     //#endregion
 
     //#region Constructors
     public UpcomingSessionResponse() {}
+
+    // Constructor para INSTRUCTORES (sin booking info)
+    public UpcomingSessionResponse(Long id, String title, String description, Date scheduledDatetime,
+                                   Integer durationMinutes, String status, String videoCallLink, String skillName) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.scheduledDatetime = scheduledDatetime;
+        this.durationMinutes = durationMinutes;
+        this.status = status;
+        this.videoCallLink = videoCallLink;
+        this.skillName = skillName;
+    }
+
+    // Constructor para LEARNERS (con booking info)
+    public UpcomingSessionResponse(Long id, String title, String description, Date scheduledDatetime,
+                                   Integer durationMinutes, String status, String videoCallLink, String skillName,
+                                   Long bookingId, String bookingType) {
+        this(id, title, description, scheduledDatetime, durationMinutes, status, videoCallLink, skillName);
+        this.bookingId = bookingId;
+        this.bookingType = bookingType;
+    }
     //#endregion
 
     //#region Getters and Setters
@@ -85,6 +111,22 @@ public class UpcomingSessionResponse {
 
     public void setSkillName(String skillName) {
         this.skillName = skillName;
+    }
+
+    public Long getBookingId() {
+        return bookingId;
+    }
+
+    public void setBookingId(Long bookingId) {
+        this.bookingId = bookingId;
+    }
+
+    public String getBookingType() {
+        return bookingType;
+    }
+
+    public void setBookingType(String bookingType) {
+        this.bookingType = bookingType;
     }
     //#endregion
 }
