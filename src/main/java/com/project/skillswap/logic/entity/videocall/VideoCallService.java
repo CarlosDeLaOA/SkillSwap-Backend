@@ -33,6 +33,9 @@ public class VideoCallService {
 
     @Value("${jitsi.token-expiration}")
     private Long tokenExpiration;
+
+    @Value("${frontend.video-call-url:http://localhost:4200/app/video-call}")
+    private String frontendVideoCallUrl;
     //#endregion
 
     //#region Public Methods
@@ -47,32 +50,33 @@ public class VideoCallService {
         LearningSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-        // Validar que la sesión esté activa o programada
         if (session.getStatus() != SessionStatus.SCHEDULED &&
                 session.getStatus() != SessionStatus.ACTIVE) {
             throw new RuntimeException("La sesión no está disponible para videollamada");
         }
 
-        // Generar nombre de sala único
         String roomName = "skillswap_" + sessionId + "_" + session.getTitle().replaceAll("[^a-zA-Z0-9]", "_");
 
-        // Generar JWT token para Jitsi
         String jitsiToken = generateJitsiJWT(roomName, person, isModerator);
 
-        // Generar enlace de videollamada
-        String videoCallLink = "https://" + jitsiDomain + "/" + roomName;
+        // CAMBIO HECHO AQUÍ:
+        // Este será el link que se guarda en la DB y se envía en los correos
+        String videoCallLink = frontendVideoCallUrl + "/" + sessionId;
 
-        // Actualizar enlace en la sesión si no existe
+        // SOLO si la DB no tiene link, se asigna el del FRONTEND
         if (session.getVideoCallLink() == null || session.getVideoCallLink().isEmpty()) {
             session.setVideoCallLink(videoCallLink);
             sessionRepository.save(session);
         }
 
-        // Preparar respuesta
+        // Este es el link real de Jitsi (NO se guarda en DB)
+        String jitsiJoinLink = "https://" + jitsiDomain + "/" + roomName;
+
         Map<String, Object> response = new HashMap<>();
         response.put("sessionId", sessionId);
         response.put("roomName", roomName);
-        response.put("videoCallLink", videoCallLink);
+        response.put("videoCallLink", videoCallLink); // link frontend
+        response.put("jitsiJoinLink", jitsiJoinLink); // link jitsi real
         response.put("jitsiToken", jitsiToken);
         response.put("domain", jitsiDomain);
         response.put("displayName", person.getFullName());
@@ -98,12 +102,10 @@ public class VideoCallService {
 
         LearningSession session = sessionOpt.get();
 
-        // Validar que el enlace coincida con la sesión
         if (session.getVideoCallLink() == null) {
             return false;
         }
 
-        // Validar que la sesión esté en estado válido
         return session.getVideoCallLink().equals(joinLink) &&
                 (session.getStatus() == SessionStatus.SCHEDULED ||
                         session.getStatus() == SessionStatus.ACTIVE);
@@ -119,7 +121,6 @@ public class VideoCallService {
         LearningSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-        // Actualizar estado de la sesión a ACTIVE si estaba SCHEDULED
         if (session.getStatus() == SessionStatus.SCHEDULED) {
             session.setStatus(SessionStatus.ACTIVE);
             sessionRepository.save(session);
@@ -159,13 +160,6 @@ public class VideoCallService {
     //#endregion
 
     //#region Private Methods
-    /**
-     * Genera un JWT token para Jitsi Meet
-     * @param roomName Nombre de la sala
-     * @param person Usuario
-     * @param isModerator Si es moderador
-     * @return JWT token
-     */
     private String generateJitsiJWT(String roomName, Person person, boolean isModerator) {
         Date now = new Date();
         Date expirationDate = new Date(now.getTime() + (tokenExpiration * 1000));
@@ -180,7 +174,7 @@ public class VideoCallService {
 
         Map<String, Object> features = new HashMap<>();
         features.put("livestreaming", false);
-        features.put("recording", true); // Solo audio según requisitos
+        features.put("recording", true);
         features.put("transcription", false);
         context.put("features", features);
 
