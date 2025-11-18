@@ -1,5 +1,7 @@
 package com.project.skillswap.logic.entity.LearningSession;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -7,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface LearningSessionRepository extends JpaRepository<LearningSession, Long> {
@@ -90,6 +93,65 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             @Param("fiveMinutesAgo") Date fiveMinutesAgo,
             @Param("categoryId") Long categoryId,
             @Param("language") String language
+    );
+    //</editor-fold>
+
+    //<editor-fold desc="Instructor Session Management">
+    /**
+     * Lista todas las sesiones de un instructor con filtro por estado
+     *
+     * @param instructorId ID del instructor
+     * @param status Estado de la sesión (null para traer todos)
+     * @param pageable Configuración de paginación
+     * @return Página de sesiones
+     */
+    @Query("""
+    SELECT new com.project.skillswap.logic.entity.LearningSession.SessionListResponse(
+        ls.id,
+        ls.title,
+        ls.description,
+        ls.scheduledDatetime,
+        ls.durationMinutes,
+        CAST(ls.status AS string),
+        ls.videoCallLink,
+        s.name,
+        ls.maxCapacity,
+        COUNT(b.id),
+        ls.isPremium,
+        ls.creationDate
+    )
+    FROM LearningSession ls
+    INNER JOIN ls.skill s
+    INNER JOIN ls.instructor i
+    LEFT JOIN Booking b ON b.learningSession.id = ls.id AND b.status = 'CONFIRMED'
+    WHERE i.id = :instructorId
+    AND (:status IS NULL OR ls.status = :status)
+    GROUP BY ls.id, ls.title, ls.description, ls.scheduledDatetime, 
+             ls.durationMinutes, ls.status, ls.videoCallLink, s.name, 
+             ls.maxCapacity, ls.isPremium, ls.creationDate
+    ORDER BY ls.scheduledDatetime DESC
+""")
+    Page<SessionListResponse> findInstructorSessions(
+            @Param("instructorId") Long instructorId,
+            @Param("status") SessionStatus status,
+            Pageable pageable
+    );
+
+    /**
+     * Busca una sesión por ID y verifica que pertenezca al instructor
+     *
+     * @param sessionId ID de la sesión
+     * @param instructorId ID del instructor
+     * @return Optional con la sesión si existe y pertenece al instructor
+     */
+    @Query("""
+        SELECT ls FROM LearningSession ls
+        WHERE ls.id = :sessionId
+        AND ls.instructor.id = :instructorId
+    """)
+    Optional<LearningSession> findByIdAndInstructor(
+            @Param("sessionId") Long sessionId,
+            @Param("instructorId") Long instructorId
     );
     //</editor-fold>
 }
