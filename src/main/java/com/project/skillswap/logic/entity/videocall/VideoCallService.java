@@ -33,7 +33,8 @@ public class VideoCallService {
 
     //#region Public Methods
     /**
-     *  Genera sala con nombre completamente aleatorio
+     * ✅ Genera datos de videollamada con nombre de sala CONSISTENTE
+     * Todos los participantes de la misma sesión usan la MISMA sala
      *
      * @param sessionId ID de la sesión de aprendizaje
      * @param person Usuario que se une a la videollamada
@@ -44,7 +45,7 @@ public class VideoCallService {
         LearningSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-
+        // Validar estado de la sesión
         if (developmentMode) {
             System.out.println("🛠️ [DEV MODE] Permitiendo acceso a sesión");
             if (session.getStatus() == SessionStatus.CANCELLED) {
@@ -66,10 +67,17 @@ public class VideoCallService {
             }
         }
 
-        //  Usar nombre de sala COMPLETAMENTE ALEATORIO
+        // ✅ SOLUCIÓN: Usar nombre de sala CONSISTENTE basado solo en sessionId
+        // Todos los participantes de la misma sesión usarán la MISMA sala
+        String roomName = "skillswap_session_" + sessionId;
 
-        String randomToken = UUID.randomUUID().toString().replaceAll("-", "");
-        String roomName = "ss" + sessionId + randomToken.substring(0, 12);
+        System.out.println("========================================");
+        System.out.println("🎬 GENERANDO DATOS DE VIDEOLLAMADA");
+        System.out.println("   Session ID: " + sessionId);
+        System.out.println("   Room Name: " + roomName);
+        System.out.println("   Usuario: " + person.getFullName());
+        System.out.println("   Es Moderador: " + isModerator);
+        System.out.println("========================================");
 
         // Link del frontend
         String videoCallLink = frontendVideoCallUrl + "/" + sessionId;
@@ -78,13 +86,13 @@ public class VideoCallService {
         if (session.getVideoCallLink() == null || session.getVideoCallLink().isEmpty()) {
             session.setVideoCallLink(videoCallLink);
             sessionRepository.save(session);
-            System.out.println(" Link guardado: " + videoCallLink);
+            System.out.println("🔗 Link guardado: " + videoCallLink);
         }
 
         // Link directo de Jitsi
         String jitsiJoinLink = "https://" + jitsiDomain + "/" + roomName;
 
-        System.out.println(" Datos de videollamada:");
+        System.out.println("📝 Datos de videollamada:");
         System.out.println("   Domain: " + jitsiDomain);
         System.out.println("   Room: " + roomName);
         System.out.println("   User: " + person.getFullName());
