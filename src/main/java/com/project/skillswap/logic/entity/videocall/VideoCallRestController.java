@@ -1,5 +1,7 @@
 package com.project.skillswap.logic.entity.videocall;
 
+import com.project.skillswap.logic.entity.LearningSession.LearningSession;
+import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,25 +28,24 @@ public class VideoCallRestController {
 
     @Autowired
     private PersonRepository personRepository;
+
+    @Autowired
+    private LearningSessionRepository sessionRepository;
     //#endregion
 
     //#region Endpoints
     /**
      * Genera token y datos para unirse a una videollamada
-     * @param request Map con sessionId, joinLink (opcional), cameraEnabled, microphoneEnabled
-     * @return ResponseEntity con datos de la videollamada
      */
     @PostMapping("/join")
     public ResponseEntity<Map<String, Object>> joinVideoCall(@RequestBody Map<String, Object> request) {
         try {
-            // Obtener usuario autenticado
             Person person = getAuthenticatedPerson();
             if (person == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("message", "Usuario no autenticado"));
             }
 
-            // Validar que sessionId exista
             if (request.get("sessionId") == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("message", "sessionId es requerido"));
@@ -52,29 +53,33 @@ public class VideoCallRestController {
 
             Long sessionId = Long.valueOf(request.get("sessionId").toString());
 
-            // joinLink es opcional - si no existe, el servicio lo generará
             String joinLink = request.get("joinLink") != null
                     ? request.get("joinLink").toString()
                     : null;
 
-            // Si hay joinLink Y NO está vacío, validarlo
             if (joinLink != null && !joinLink.isEmpty() &&
                     !videoCallService.validateVideoCallLink(sessionId, joinLink)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("message", "Enlace no válido o sesión no disponible"));
             }
 
-            // Determinar si es moderador (instructor)
-            boolean isModerator = isInstructor(person);
+            //  Determinar rol correctamente
+            boolean isModerator = isSessionInstructor(person, sessionId);
 
-            // Generar token y datos
+            System.out.println("========================================");
+            System.out.println("🔐 DETERMINANDO ROL DE USUARIO");
+            System.out.println("   Usuario: " + person.getFullName());
+            System.out.println("   Email: " + person.getEmail());
+            System.out.println("   Session ID: " + sessionId);
+            System.out.println("   Tiene perfil instructor: " + isInstructor(person));
+            System.out.println("   Es instructor de ESTA sesión: " + isModerator);
+            System.out.println("========================================");
+
             Map<String, Object> videoCallData = videoCallService.generateVideoCallToken(sessionId, person, isModerator);
 
-            // Agregar controles iniciales
-            videoCallData.put("cameraEnabled", request.getOrDefault("cameraEnabled", false));
-            videoCallData.put("microphoneEnabled", request.getOrDefault("microphoneEnabled", false));
+            videoCallData.put("cameraEnabled", request.getOrDefault("cameraEnabled", true));
+            videoCallData.put("microphoneEnabled", request.getOrDefault("microphoneEnabled", true));
 
-            // Registrar unión
             videoCallService.registerParticipantJoin(sessionId, person.getId());
 
             Map<String, Object> response = new HashMap<>();
@@ -87,20 +92,15 @@ public class VideoCallRestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", "sessionId debe ser un número válido"));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Error al unirse a videollamada: " + e.getMessage()));
         }
     }
 
-    /**
-     * Obtiene información de una videollamada
-     * @param sessionId ID de la sesión
-     * @return ResponseEntity con información de la videollamada
-     */
     @GetMapping("/info/{sessionId}")
     public ResponseEntity<Map<String, Object>> getVideoCallInfo(@PathVariable Long sessionId) {
         try {
-            // Obtener usuario autenticado
             Person person = getAuthenticatedPerson();
             if (person == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -121,11 +121,6 @@ public class VideoCallRestController {
         }
     }
 
-    /**
-     * Valida permiso para compartir pantalla (solo instructores)
-     * @param request Map con sessionId
-     * @return ResponseEntity con validación
-     */
     @PostMapping("/validate-screen-share")
     public ResponseEntity<Map<String, Object>> validateScreenShare(@RequestBody Map<String, Object> request) {
         try {
@@ -135,8 +130,8 @@ public class VideoCallRestController {
                         .body(Map.of("message", "Usuario no autenticado"));
             }
 
-            // Validar que sea instructor (SkillSwapper)
-            boolean canShare = isInstructor(person);
+            Long sessionId = Long.valueOf(request.get("sessionId").toString());
+            boolean canShare = isSessionInstructor(person, sessionId);
 
             if (!canShare) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -159,11 +154,6 @@ public class VideoCallRestController {
         }
     }
 
-    /**
-     * Finaliza una videollamada
-     * @param sessionId ID de la sesión
-     * @return ResponseEntity con confirmación
-     */
     @PostMapping("/end/{sessionId}")
     public ResponseEntity<Map<String, Object>> endVideoCall(@PathVariable Long sessionId) {
         try {
@@ -173,8 +163,7 @@ public class VideoCallRestController {
                         .body(Map.of("message", "Usuario no autenticado"));
             }
 
-            // Solo instructores pueden finalizar la sesión
-            if (!isInstructor(person)) {
+            if (!isSessionInstructor(person, sessionId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "Solo el instructor puede finalizar la sesión"));
             }
@@ -194,10 +183,6 @@ public class VideoCallRestController {
     //#endregion
 
     //#region Private Methods
-    /**
-     * Obtiene la persona autenticada del contexto de seguridad
-     * @return Person autenticada o null
-     */
     private Person getAuthenticatedPerson() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -208,13 +193,42 @@ public class VideoCallRestController {
         return personRepository.findByEmail(email).orElse(null);
     }
 
-    /**
-     * Determina si una persona es instructor
-     * @param person Persona a verificar
-     * @return true si es instructor, false en caso contrario
-     */
+
+    private boolean isSessionInstructor(Person person, Long sessionId) {
+        try {
+            // 1. Verificar que tenga perfil de instructor
+            if (!isInstructor(person)) {
+                System.out.println("    No tiene perfil de instructor");
+                return false;
+            }
+
+            // 2. Obtener la sesión
+            LearningSession session = sessionRepository.findById(sessionId).orElse(null);
+            if (session == null) {
+                System.out.println("    Sesión no encontrada");
+                return false;
+            }
+
+            // 3. Verificar que el instructor de la sesión sea esta persona
+            Long sessionInstructorId = session.getInstructor().getId();
+            Long personInstructorId = person.getInstructor().getId();
+
+            System.out.println("   ID Instructor de la sesión: " + sessionInstructorId);
+            System.out.println("   ID Instructor de la persona: " + personInstructorId);
+
+            boolean isMatch = sessionInstructorId.equals(personInstructorId);
+            System.out.println("   ¿Coinciden? " + isMatch);
+
+            return isMatch;
+
+        } catch (Exception e) {
+            System.err.println("    Error al verificar instructor: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private boolean isInstructor(Person person) {
-        // Verificar si tiene un perfil de Instructor
         return person.getInstructor() != null && person.getInstructor().getId() != null;
     }
     //#endregion
