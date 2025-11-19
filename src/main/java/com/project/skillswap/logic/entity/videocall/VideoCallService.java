@@ -4,8 +4,6 @@ import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
 import com.project.skillswap.logic.entity.LearningSession.SessionStatus;
 import com.project.skillswap.logic.entity.Person.Person;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,6 +12,7 @@ import java.util.*;
 
 /**
  * Servicio para manejar operaciones de videollamadas con Jitsi Meet
+ * MODO SIN JWT - Para pruebas con Jitsi público
  */
 @Service
 public class VideoCallService {
@@ -22,25 +21,21 @@ public class VideoCallService {
     @Autowired
     private LearningSessionRepository sessionRepository;
 
-    @Value("${jitsi.app-id}")
-    private String jitsiAppId;
-
-    @Value("${jitsi.app-secret}")
-    private String jitsiAppSecret;
-
-    @Value("${jitsi.domain}")
+    @Value("${jitsi.domain:meet.jit.si}")
     private String jitsiDomain;
-
-    @Value("${jitsi.token-expiration}")
-    private Long tokenExpiration;
 
     @Value("${frontend.video-call-url:http://localhost:4200/app/video-call}")
     private String frontendVideoCallUrl;
+
+    @Value("${app.development.mode:true}")
+    private Boolean developmentMode;
     //#endregion
 
     //#region Public Methods
     /**
-     * Genera un token JWT para unirse a una videollamada
+     * ✅ Genera datos de videollamada con nombre de sala CONSISTENTE
+     * Todos los participantes de la misma sesión usan la MISMA sala
+     *
      * @param sessionId ID de la sesión de aprendizaje
      * @param person Usuario que se une a la videollamada
      * @param isModerator Si el usuario es moderador (instructor)
@@ -50,48 +45,78 @@ public class VideoCallService {
         LearningSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-        if (session.getStatus() != SessionStatus.SCHEDULED &&
-                session.getStatus() != SessionStatus.ACTIVE) {
-            throw new RuntimeException("La sesión no está disponible para videollamada");
+        // Validar estado de la sesión
+        if (developmentMode) {
+            System.out.println("🛠️ [DEV MODE] Permitiendo acceso a sesión");
+            if (session.getStatus() == SessionStatus.CANCELLED) {
+                throw new RuntimeException("La sesión ha sido cancelada");
+            }
+
+            // Cambiar a ACTIVE si está SCHEDULED o DRAFT
+            if (session.getStatus() == SessionStatus.SCHEDULED ||
+                    session.getStatus() == SessionStatus.DRAFT) {
+                session.setStatus(SessionStatus.ACTIVE);
+                sessionRepository.save(session);
+                System.out.println("🟢 Sesión cambiada a ACTIVE");
+            }
+        } else {
+            System.out.println("🔒 [PROD MODE] Validando estado: " + session.getStatus());
+            if (session.getStatus() != SessionStatus.SCHEDULED &&
+                    session.getStatus() != SessionStatus.ACTIVE) {
+                throw new RuntimeException("La sesión no está disponible. Estado: " + session.getStatus());
+            }
         }
 
-        String roomName = "skillswap_" + sessionId + "_" + session.getTitle().replaceAll("[^a-zA-Z0-9]", "_");
+        // ✅ SOLUCIÓN: Usar nombre de sala CONSISTENTE basado solo en sessionId
+        // Todos los participantes de la misma sesión usarán la MISMA sala
+        String roomName = "skillswap_session_" + sessionId;
 
-        String jitsiToken = generateJitsiJWT(roomName, person, isModerator);
+        System.out.println("========================================");
+        System.out.println("🎬 GENERANDO DATOS DE VIDEOLLAMADA");
+        System.out.println("   Session ID: " + sessionId);
+        System.out.println("   Room Name: " + roomName);
+        System.out.println("   Usuario: " + person.getFullName());
+        System.out.println("   Es Moderador: " + isModerator);
+        System.out.println("========================================");
 
-        // CAMBIO HECHO AQUÍ:
-        // Este será el link que se guarda en la DB y se envía en los correos
+        // Link del frontend
         String videoCallLink = frontendVideoCallUrl + "/" + sessionId;
 
-        // SOLO si la DB no tiene link, se asigna el del FRONTEND
+        // Actualizar link en BD si no existe
         if (session.getVideoCallLink() == null || session.getVideoCallLink().isEmpty()) {
             session.setVideoCallLink(videoCallLink);
             sessionRepository.save(session);
+            System.out.println("🔗 Link guardado: " + videoCallLink);
         }
 
-        // Este es el link real de Jitsi (NO se guarda en DB)
+        // Link directo de Jitsi
         String jitsiJoinLink = "https://" + jitsiDomain + "/" + roomName;
+
+        System.out.println("📝 Datos de videollamada:");
+        System.out.println("   Domain: " + jitsiDomain);
+        System.out.println("   Room: " + roomName);
+        System.out.println("   User: " + person.getFullName());
+        System.out.println("   Moderator: " + isModerator);
 
         Map<String, Object> response = new HashMap<>();
         response.put("sessionId", sessionId);
         response.put("roomName", roomName);
-        response.put("videoCallLink", videoCallLink); // link frontend
-        response.put("jitsiJoinLink", jitsiJoinLink); // link jitsi real
-        response.put("jitsiToken", jitsiToken);
+        response.put("videoCallLink", videoCallLink);
+        response.put("jitsiJoinLink", jitsiJoinLink);
         response.put("domain", jitsiDomain);
         response.put("displayName", person.getFullName());
         response.put("email", person.getEmail());
         response.put("isModerator", isModerator);
         response.put("status", session.getStatus().toString());
+        response.put("useJWT", false);
+        response.put("cameraEnabled", true);
+        response.put("microphoneEnabled", true);
 
         return response;
     }
 
     /**
      * Valida un enlace de videollamada contra una sesión
-     * @param sessionId ID de la sesión
-     * @param joinLink Enlace de unión
-     * @return true si el enlace es válido
      */
     public boolean validateVideoCallLink(Long sessionId, String joinLink) {
         Optional<LearningSession> sessionOpt = sessionRepository.findById(sessionId);
@@ -108,22 +133,23 @@ public class VideoCallService {
 
         return session.getVideoCallLink().equals(joinLink) &&
                 (session.getStatus() == SessionStatus.SCHEDULED ||
-                        session.getStatus() == SessionStatus.ACTIVE);
+                        session.getStatus() == SessionStatus.ACTIVE ||
+                        (developmentMode && session.getStatus() != SessionStatus.CANCELLED));
     }
 
     /**
      * Registra la unión de un participante a la videollamada
-     * @param sessionId ID de la sesión
-     * @param personId ID del usuario
-     * @return Map con confirmación
      */
     public Map<String, Object> registerParticipantJoin(Long sessionId, Long personId) {
         LearningSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-        if (session.getStatus() == SessionStatus.SCHEDULED) {
+        // Cambiar a ACTIVE si está en SCHEDULED o DRAFT
+        if (session.getStatus() == SessionStatus.SCHEDULED ||
+                (developmentMode && session.getStatus() == SessionStatus.DRAFT)) {
             session.setStatus(SessionStatus.ACTIVE);
             sessionRepository.save(session);
+            System.out.println("🟢 Sesión activada al unirse participante");
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -137,8 +163,6 @@ public class VideoCallService {
 
     /**
      * Obtiene información de una videollamada activa
-     * @param sessionId ID de la sesión
-     * @return Map con información de la videollamada
      */
     public Map<String, Object> getVideoCallInfo(Long sessionId) {
         LearningSession session = sessionRepository.findById(sessionId)
@@ -156,38 +180,6 @@ public class VideoCallService {
         response.put("currentBookings", session.getCurrentBookings());
 
         return response;
-    }
-    //#endregion
-
-    //#region Private Methods
-    private String generateJitsiJWT(String roomName, Person person, boolean isModerator) {
-        Date now = new Date();
-        Date expirationDate = new Date(now.getTime() + (tokenExpiration * 1000));
-
-        Map<String, Object> context = new HashMap<>();
-        Map<String, Object> user = new HashMap<>();
-        user.put("name", person.getFullName());
-        user.put("email", person.getEmail());
-        user.put("id", person.getId().toString());
-        user.put("moderator", isModerator);
-        context.put("user", user);
-
-        Map<String, Object> features = new HashMap<>();
-        features.put("livestreaming", false);
-        features.put("recording", true);
-        features.put("transcription", false);
-        context.put("features", features);
-
-        return Jwts.builder()
-                .setSubject(jitsiDomain)
-                .setAudience(jitsiAppId)
-                .setIssuer(jitsiAppId)
-                .claim("room", roomName)
-                .claim("context", context)
-                .setIssuedAt(now)
-                .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.HS256, jitsiAppSecret.getBytes())
-                .compact();
     }
     //#endregion
 }

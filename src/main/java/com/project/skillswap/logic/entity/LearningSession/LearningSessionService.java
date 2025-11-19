@@ -11,14 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 
-
 import java.util.*;
 
 @Service
 public class LearningSessionService {
 
     //#region Dependencies
-
     @Autowired
     private LearningSessionRepository learningSessionRepository;
 
@@ -36,7 +34,6 @@ public class LearningSessionService {
 
     @Value("${app.frontend.url}")
     private String frontendBaseUrl;
-    //#endregion
     //#endregion
 
     //#region Constants
@@ -127,11 +124,11 @@ public class LearningSessionService {
 
     //#region Public Methods - Create
     /**
-     * Crea una nueva sesión de aprendizaje con validaciones completas
+     * Crea una nueva sesión y genera el videoCallLink inmediatamente
      *
      * @param session Sesión a crear con todos los datos
      * @param authenticatedPerson Persona autenticada que crea la sesión
-     * @return Sesión creada y guardada
+     * @return Sesión creada y guardada con videoCallLink
      * @throws IllegalArgumentException Si las validaciones fallan
      * @throws IllegalStateException Si el usuario no es instructor
      */
@@ -158,7 +155,21 @@ public class LearningSessionService {
         session.setType(SessionType.SCHEDULED);
         session.setStatus(SessionStatus.DRAFT);
 
-        return learningSessionRepository.save(session);
+
+        LearningSession savedSession = learningSessionRepository.save(session);
+
+        System.out.println("📝 [LearningSessionService] Session created with ID: " + savedSession.getId());
+
+
+        String videoCallLink = frontendBaseUrl + "/app/video-call/" + savedSession.getId();
+        savedSession.setVideoCallLink(videoCallLink);
+
+
+        savedSession = learningSessionRepository.save(savedSession);
+
+        System.out.println("🔗 [LearningSessionService] Video call link assigned: " + videoCallLink);
+
+        return savedSession;
     }
     //#endregion
 
@@ -189,15 +200,18 @@ public class LearningSessionService {
 
         LearningSession publishedSession = learningSessionRepository.save(session);
 
-        // Si la sesión aún no tiene link de videollamada, se genera el link del frontend
+        //  Si  no tiene link, generarlo
         if (publishedSession.getVideoCallLink() == null ||
                 publishedSession.getVideoCallLink().trim().isEmpty()) {
 
             String videoCallLink = frontendBaseUrl + "/app/video-call/" + publishedSession.getId();
             publishedSession.setVideoCallLink(videoCallLink);
             publishedSession = learningSessionRepository.save(publishedSession);
+
+            System.out.println(" [LearningSessionService] Video call link was missing, assigned: " + videoCallLink);
         }
 
+        // Enviar email de confirmación
         try {
             boolean emailSent = sessionEmailService.sendSessionCreationEmail(
                     publishedSession,
@@ -207,7 +221,7 @@ public class LearningSessionService {
             if (emailSent) {
                 System.out.println(" [LearningSessionService] Email de confirmación enviado");
             } else {
-                System.out.println("⚠ [LearningSessionService] Email no enviado (validación fallida)");
+                System.out.println(" [LearningSessionService] Email no enviado (validación fallida)");
             }
         } catch (Exception e) {
             System.err.println(" [LearningSessionService] Error enviando email: " + e.getMessage());
@@ -234,18 +248,13 @@ public class LearningSessionService {
 
         LearningSession session = getSessionById(sessionId, authenticatedPerson);
 
-        // Validar que la sesión no esté ya cancelada o finalizada
         validateSessionCanBeCancelled(session);
-
-        // Validar que sea el creador
         validateIsSessionOwner(session, authenticatedPerson);
 
-        // Validar si la sesión está activa (requiere confirmación adicional)
         if (session.getStatus() == SessionStatus.ACTIVE) {
-            System.out.println(" [WARNING] Cancelling ACTIVE session - requires additional confirmation");
+            System.out.println("️ [WARNING] Cancelling ACTIVE session - requires additional confirmation");
         }
 
-        // Obtener emails de participantes ANTES de cancelar
         List<String> participantEmails = session.getBookings().stream()
                 .map(booking -> booking.getLearner().getPerson().getEmail())
                 .filter(email -> email != null && !email.isEmpty())
@@ -253,7 +262,6 @@ public class LearningSessionService {
 
         int participantsCount = participantEmails.size();
 
-        // Actualizar estado y metadata
         session.setStatus(SessionStatus.CANCELLED);
         session.setCancellationReason(reason != null ? reason.trim() : "Sin razón especificada");
         session.setCancellationDate(new Date());
@@ -268,7 +276,6 @@ public class LearningSessionService {
                 participantsCount
         ));
 
-        // Enviar notificaciones por email a participantes
         if (!participantEmails.isEmpty()) {
             try {
                 int emailsSent = sessionNotificationService.sendCancellationNotifications(
@@ -276,17 +283,14 @@ public class LearningSessionService {
                         participantEmails
                 );
                 System.out.println(String.format(
-                        " [EMAIL] Sent %d/%d cancellation notifications",
+                        "📧 [EMAIL] Sent %d/%d cancellation notifications",
                         emailsSent,
                         participantsCount
                 ));
             } catch (Exception e) {
                 System.err.println(" [ERROR] Failed to send some notification emails: " + e.getMessage());
-                // No lanzamos excepción porque la sesión ya fue cancelada exitosamente
             }
         }
-
-        // TODO: Eliminar evento de Google Calendar si existe
 
         return cancelledSession;
     }
