@@ -85,9 +85,6 @@ public class BookingEmailService {
         mailSender.send(message);
     }
 
-    /**
-     * Construye el template HTML para el correo de confirmación de booking.
-     */
     private String buildBookingConfirmationTemplate(Booking booking, Person person) {
         LearningSession session = booking.getLearningSession();
 
@@ -102,7 +99,7 @@ public class BookingEmailService {
         String formattedTime = formatTime(session.getScheduledDatetime());
         String duration = session.getDurationMinutes() + " minutos";
 
-        String accessLink = booking.getAccessLink();
+        String videoCallLink = booking.getAccessLink();
         String mySessionsLink = frontendUrl + "/app/my-sessions";
 
         return "<!DOCTYPE html>" +
@@ -170,16 +167,20 @@ public class BookingEmailService {
                 "                            <div style='background-color: #39434b; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #504ab7;'>" +
                 "                                <h4 style='color: #aae16b; margin-top: 0; font-size: 16px;'>Enlace de acceso a la sesión:</h4>" +
                 "                                <p style='font-size: 14px; word-break: break-all; color: #aae16b; background-color: #141414; padding: 15px; border-radius: 5px; margin: 10px 0;'>" +
-                "                                    <a href='" + accessLink + "' style='color: #aae16b; text-decoration: none;'>" + accessLink + "</a>" +
+                "                                    <a href='" + videoCallLink + "' style='color: #aae16b; text-decoration: none;'>" + videoCallLink + "</a>" +
                 "                                </p>" +
                 "                                <p style='font-size: 12px; color: #b0b0b0; margin: 5px 0 0 0;'>" +
                 "                                    Guarda este enlace en un lugar seguro. Lo necesitarás para acceder a la sesión." +
                 "                                </p>" +
                 "                            </div>" +
 
-                "                            <!-- Botón para ver mis sesiones -->" + " <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>" + " <tr>" + " <td align='center'>" + " <a href='" + mySessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'>Ver Mis Sesiones</a>" + " </td>" + " </tr>" +
-
-
+                "                            <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>" +
+                "                                <tr>" +
+                "                                    <td align='center'>" +
+                "                                        <a href='" + videoCallLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'>Ir a la Videollamada</a>" +
+                "                                    </td>" +
+                "                                </tr>" +
+                "                            </table>" +
 
                 "                            <!-- Recordatorios -->" +
                 "                            <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #504ab7;'>" +
@@ -193,7 +194,7 @@ public class BookingEmailService {
                 "                            </div>" +
 
                 "                            <p style='font-size: 14px; line-height: 1.6; color: #b0b0b0; margin: 30px 0 0 0;'>" +
-                "                                Si necesitas cancelar tu registro, puedes hacerlo desde tu panel de sesiones." +
+                "                                Si necesitas cancelar tu registro, puedes hacerlo desde tu <a href='" + mySessionsLink + "' style='color: #aae16b; text-decoration: none;'>panel de sesiones</a>." +
                 "                            </p>" +
                 "                        </td>" +
                 "                    </tr>" +
@@ -326,7 +327,7 @@ public class BookingEmailService {
         String duration = session.getDurationMinutes() + " minutos";
 
         String accessLink = booking.getAccessLink();
-        String mySessionsLink = frontendUrl + "/app/my-sessions";
+        String videoCallLink = session.getVideoCallLink();
 
         return "<!DOCTYPE html>" +
                 "<html lang='es'>" +
@@ -404,11 +405,11 @@ public class BookingEmailService {
                 "                                </p>" +
                 "                            </div>" +
 
-                "                            <!-- Botón para ver mis sesiones -->" +
+                "                            <!-- Botón para ir a la videollamada -->" +
                 "                            <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>" +
                 "                                <tr>" +
                 "                                    <td align='center'>" +
-                "                                        <a href='" + mySessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'>Ver Mis Sesiones</a>" +
+                "                                        <a href='" + videoCallLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'>Ir a la Videollamada</a>" +
                 "                                    </td>" +
                 "                                </tr>" +
                 "                            </table>" +
@@ -463,7 +464,7 @@ public class BookingEmailService {
         String duration = data.get("sessionDuration") + " minutos";
 
         String accessLink = (String) data.get("accessLink");
-        String mySessionsLink = frontendUrl + "/app/my-sessions";
+        String videoCallLink = (String) data.get("videoCallLink");
 
         return "<!DOCTYPE html>" +
                 "<html lang='es'>" +
@@ -541,11 +542,11 @@ public class BookingEmailService {
                 "                                </p>" +
                 "                            </div>" +
 
-                "                            <!-- Botón para ver mis sesiones -->" +
+                "                            <!-- Botón para ir a la videollamada -->" +
                 "                            <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>" +
                 "                                <tr>" +
                 "                                    <td align='center'>" +
-                "                                        <a href='" + mySessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'>Ver Mis Sesiones</a>" +
+                "                                        <a href='" + videoCallLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'>Ir a la Videollamada</a>" +
                 "                                    </td>" +
                 "                                </tr>" +
                 "                            </table>" +
@@ -893,7 +894,7 @@ public class BookingEmailService {
         String formattedDate = formatDate(session.getScheduledDatetime());
         String formattedTime = formatTime(session.getScheduledDatetime());
 
-        long confirmedBookings = session.getCurrentBookings() - spotsFreed; // Aproximación
+        long confirmedBookings = session.getCurrentBookings() - spotsFreed;
         int availableSpots = session.getMaxCapacity() - (int)confirmedBookings;
 
         String cancellationType = isGroup ? "grupal" : "individual";
