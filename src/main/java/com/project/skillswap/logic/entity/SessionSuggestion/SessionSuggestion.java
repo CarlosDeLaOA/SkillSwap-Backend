@@ -33,11 +33,11 @@ public class SessionSuggestion {
     @JoinColumn(name = "learning_session_id", referencedColumnName = "id", nullable = false)
     private LearningSession learningSession;
 
-    @Column(name = "match_score", precision = 3, scale = 2)
-    private Double matchScore; // 0.00 - 1.00
+    @Column(name = "match_score")
+    private Double matchScore;
 
     @Column(name = "reason", columnDefinition = "TEXT")
-    private String reason; // Explicación del matching
+    private String reason;
 
     @Column(name = "viewed")
     private Boolean viewed = false;
