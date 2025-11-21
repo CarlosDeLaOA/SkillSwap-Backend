@@ -66,9 +66,9 @@ public class BookingService {
 
         System.out.println("[BOOKING] Sesión encontrada: " + session.getTitle());
 
-        // 4. Validar que la sesión está en estado SCHEDULED
-        if (!SessionStatus.SCHEDULED.equals(session.getStatus())) {
-            throw new RuntimeException("No se puede registrar en una sesión que no está programada");
+        // 4. Validar que la sesión está en estado SCHEDULED o ACTIVE
+        if (!SessionStatus.SCHEDULED.equals(session.getStatus()) && !SessionStatus.ACTIVE.equals(session.getStatus())) {
+            throw new RuntimeException("No se puede registrar en una sesión que no está programada o activa");
         }
 
         // 5. Validar que el usuario no esté ya registrado
@@ -161,9 +161,9 @@ public class BookingService {
 
         System.out.println("[BOOKING] Sesión encontrada: " + session.getTitle());
 
-        // 6. Validar que la sesión está en estado SCHEDULED
-        if (!SessionStatus.SCHEDULED.equals(session.getStatus())) {
-            throw new RuntimeException("No se puede registrar en una sesión que no está programada");
+        // 6. Validar que la sesión está en estado SCHEDULED o ACTIVE
+        if (!SessionStatus.SCHEDULED.equals(session.getStatus()) && !SessionStatus.ACTIVE.equals(session.getStatus())) {
+            throw new RuntimeException("No se puede registrar en una sesión que no está programada o activa");
         }
 
         // 7. Validar que la sesión tenga un video_call_link configurado
@@ -216,7 +216,8 @@ public class BookingService {
 
             Map<String, Object> data = new HashMap<>();
             data.put("bookingId", booking.getId());
-            data.put("accessLink", booking.getAccessLink()); // Ahora contiene el video_call_link
+            data.put("accessLink", booking.getAccessLink());
+            data.put("videoCallLink", session.getVideoCallLink());
             data.put("personEmail", memberPerson.getEmail());
             data.put("personFullName", memberPerson.getFullName());
             data.put("sessionTitle", session.getTitle());

@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-/**
- * Servicio para manejar operaciones de videollamadas con Jitsi Meet
- * MODO SIN JWT - Para pruebas con Jitsi público
- */
+
 @Service
 public class VideoCallService {
 
@@ -33,7 +30,7 @@ public class VideoCallService {
 
     //#region Public Methods
     /**
-     * ✅ Genera datos de videollamada con nombre de sala CONSISTENTE
+     *  Genera datos de videollamada con nombre de sala CONSISTENTE
      * Todos los participantes de la misma sesión usan la MISMA sala
      *
      * @param sessionId ID de la sesión de aprendizaje
@@ -52,23 +49,22 @@ public class VideoCallService {
                 throw new RuntimeException("La sesión ha sido cancelada");
             }
 
-            // Cambiar a ACTIVE si está SCHEDULED o DRAFT
+
             if (session.getStatus() == SessionStatus.SCHEDULED ||
                     session.getStatus() == SessionStatus.DRAFT) {
                 session.setStatus(SessionStatus.ACTIVE);
                 sessionRepository.save(session);
-                System.out.println("🟢 Sesión cambiada a ACTIVE");
+                System.out.println(" Sesión cambiada a ACTIVE");
             }
         } else {
-            System.out.println("🔒 [PROD MODE] Validando estado: " + session.getStatus());
+            System.out.println(" [PROD MODE] Validando estado: " + session.getStatus());
             if (session.getStatus() != SessionStatus.SCHEDULED &&
                     session.getStatus() != SessionStatus.ACTIVE) {
                 throw new RuntimeException("La sesión no está disponible. Estado: " + session.getStatus());
             }
         }
 
-        // ✅ SOLUCIÓN: Usar nombre de sala CONSISTENTE basado solo en sessionId
-        // Todos los participantes de la misma sesión usarán la MISMA sala
+
         String roomName = "skillswap_session_" + sessionId;
 
         System.out.println("========================================");
@@ -79,20 +75,20 @@ public class VideoCallService {
         System.out.println("   Es Moderador: " + isModerator);
         System.out.println("========================================");
 
-        // Link del frontend
+
         String videoCallLink = frontendVideoCallUrl + "/" + sessionId;
 
-        // Actualizar link en BD si no existe
+
         if (session.getVideoCallLink() == null || session.getVideoCallLink().isEmpty()) {
             session.setVideoCallLink(videoCallLink);
             sessionRepository.save(session);
-            System.out.println("🔗 Link guardado: " + videoCallLink);
+            System.out.println(" Link guardado: " + videoCallLink);
         }
 
-        // Link directo de Jitsi
+
         String jitsiJoinLink = "https://" + jitsiDomain + "/" + roomName;
 
-        System.out.println("📝 Datos de videollamada:");
+        System.out.println(" Datos de videollamada:");
         System.out.println("   Domain: " + jitsiDomain);
         System.out.println("   Room: " + roomName);
         System.out.println("   User: " + person.getFullName());
@@ -149,7 +145,7 @@ public class VideoCallService {
                 (developmentMode && session.getStatus() == SessionStatus.DRAFT)) {
             session.setStatus(SessionStatus.ACTIVE);
             sessionRepository.save(session);
-            System.out.println("🟢 Sesión activada al unirse participante");
+            System.out.println(" Sesión activada al unirse participante");
         }
 
         Map<String, Object> response = new HashMap<>();
