@@ -32,12 +32,12 @@ public class BookingRestController {
             @RequestBody Map<String, Long> request,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println("📥 [BOOKING] POST /api/bookings");
+            System.out.println("[BOOKING] POST /api/bookings");
 
             String token = authHeader.replace("Bearer ", "");
-            String userEmail = jwtService.extractUsername(token); // 👈 CAMBIAR AQUÍ
+            String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("👤 [BOOKING] Usuario autenticado: " + userEmail);
+            System.out.println("[BOOKING] Usuario autenticado: " + userEmail);
 
             Long sessionId = request.get("learningSessionId");
             if (sessionId == null) {
@@ -54,7 +54,7 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("❌ [BOOKING] Error: " + e.getMessage());
+            System.err.println("[BOOKING] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -69,7 +69,7 @@ public class BookingRestController {
             @RequestHeader("Authorization") String authHeader) {
         try {
             String token = authHeader.replace("Bearer ", "");
-            String userEmail = jwtService.extractUsername(token); // 👈 CAMBIAR AQUÍ
+            String userEmail = jwtService.extractUsername(token);
 
             List<Booking> bookings = bookingService.getBookingsByUserEmail(userEmail);
 
@@ -98,8 +98,8 @@ public class BookingRestController {
             String token = authHeader.replace("Bearer ", "");
             String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("👤 [BOOKING] Usuario autenticado: " + userEmail);
-            System.out.println("🎯 [BOOKING] Cancelando booking ID: " + id);
+            System.out.println("[BOOKING] Usuario autenticado: " + userEmail);
+            System.out.println("[BOOKING] Cancelando booking ID: " + id);
 
             Booking booking = bookingService.cancelBooking(id, userEmail);
 
@@ -108,12 +108,12 @@ public class BookingRestController {
             response.put("message", "Registro cancelado exitosamente");
             response.put("data", booking);
 
-            System.out.println("✅ [BOOKING] Booking cancelado exitosamente");
+            System.out.println("[BOOKING] Booking cancelado exitosamente");
 
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
-            System.err.println("⚠️ [BOOKING] Error de validación: " + e.getMessage());
+            System.err.println("[BOOKING] Error de validación: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -121,7 +121,7 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 
         } catch (RuntimeException e) {
-            System.err.println("❌ [BOOKING] Error de ejecución: " + e.getMessage());
+            System.err.println("[BOOKING] Error de ejecución: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -129,7 +129,7 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 
         } catch (Exception e) {
-            System.err.println("💥 [BOOKING] Error inesperado: " + e.getMessage());
+            System.err.println("[BOOKING] Error inesperado: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -147,12 +147,12 @@ public class BookingRestController {
             @RequestBody Map<String, Long> request,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println("📥 [BOOKING] POST /api/bookings/group");
+            System.out.println("[BOOKING] POST /api/bookings/group");
 
             String token = authHeader.replace("Bearer ", "");
             String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("👤 [BOOKING] Usuario autenticado: " + userEmail);
+            System.out.println("[BOOKING] Usuario autenticado: " + userEmail);
 
             Long sessionId = request.get("learningSessionId");
             Long communityId = request.get("communityId");
@@ -176,7 +176,7 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("❌ [BOOKING] Error: " + e.getMessage());
+            System.err.println("[BOOKING] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -200,7 +200,7 @@ public class BookingRestController {
             String token = authHeader.replace("Bearer ", "");
             String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("👤 [WAITLIST] Usuario autenticado: " + userEmail);
+            System.out.println("[WAITLIST] Usuario autenticado: " + userEmail);
 
             Long sessionId = request.get("learningSessionId");
 
@@ -238,7 +238,7 @@ public class BookingRestController {
             @PathVariable Long sessionId,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println("📥 [WAITLIST] POST /api/bookings/process-waitlist/" + sessionId);
+            System.out.println("[WAITLIST] POST /api/bookings/process-waitlist/" + sessionId);
 
             bookingService.processWaitlist(sessionId);
 
@@ -249,7 +249,7 @@ public class BookingRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("❌ [WAITLIST] Error: " + e.getMessage());
+            System.err.println("[WAITLIST] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -269,12 +269,12 @@ public class BookingRestController {
             @PathVariable Long bookingId,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println("📥 [WAITLIST] DELETE /api/bookings/waitlist/" + bookingId);
+            System.out.println("[WAITLIST] DELETE /api/bookings/waitlist/" + bookingId);
 
             String token = authHeader.replace("Bearer ", "");
             String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("👤 [WAITLIST] Usuario autenticado: " + userEmail);
+            System.out.println("[WAITLIST] Usuario autenticado: " + userEmail);
 
             bookingService.leaveWaitlist(bookingId, userEmail);
 
@@ -285,7 +285,7 @@ public class BookingRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("❌ [WAITLIST] Error: " + e.getMessage());
+            System.err.println("[WAITLIST] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();

@@ -6,7 +6,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface CommunityMemberRepository extends JpaRepository<CommunityMember, Long> {  // 👈 Cambiar Integer a Long
+public interface CommunityMemberRepository extends JpaRepository<CommunityMember, Long> {
 
     /**
      * Obtiene todos los miembros activos de una comunidad
