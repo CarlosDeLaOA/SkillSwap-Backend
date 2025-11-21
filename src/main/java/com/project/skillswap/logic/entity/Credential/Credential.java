@@ -4,6 +4,7 @@ import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Skill.Skill;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.Quiz.Quiz;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -25,18 +26,22 @@ public class Credential {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learner_id", referencedColumnName = "id", nullable = false)
+    @JsonBackReference("learner-credentials")
     private Learner learner;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "skill_id", referencedColumnName = "id", nullable = false)
+    @JsonBackReference("skill-credentials")
     private Skill skill;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learning_session_id", referencedColumnName = "id", nullable = false)
+    @JsonBackReference("session-credentials") 
     private LearningSession learningSession;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", referencedColumnName = "id", nullable = false)
+    @JsonBackReference("quiz-credential")
     private Quiz quiz;
 
     @Column(name = "percentage_achieved", nullable = false, precision = 5, scale = 2)

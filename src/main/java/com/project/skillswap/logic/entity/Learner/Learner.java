@@ -2,6 +2,7 @@ package com.project.skillswap.logic.entity.Learner;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Booking.Booking;
 import com.project.skillswap.logic.entity.Credential.Credential;
@@ -45,7 +46,7 @@ public class Learner {
     private List<Booking> bookings;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
+    @JsonManagedReference("learner-credentials")
     private List<Credential> credentials;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
