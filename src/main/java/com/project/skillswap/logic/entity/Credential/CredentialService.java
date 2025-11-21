@@ -8,9 +8,6 @@ import java.util.List;
 
 /**
  * Servicio para gestionar las credenciales
- *
- * @author Byte&Bite Team
- * @version 1.0
  */
 @Service
 public class CredentialService {
@@ -24,9 +21,6 @@ public class CredentialService {
 
     /**
      * Obtiene todas las credenciales de los miembros de una comunidad
-     *
-     * @param communityId ID de la comunidad
-     * @return Lista de credenciales
      */
     @Transactional(readOnly = true)
     public List<Credential> getCommunityCredentials(Long communityId) {

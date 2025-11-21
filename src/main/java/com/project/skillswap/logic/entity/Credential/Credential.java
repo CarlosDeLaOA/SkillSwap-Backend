@@ -27,22 +27,22 @@ public class Credential {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learner_id", referencedColumnName = "id", nullable = false)
-    @JsonIgnoreProperties({"credentials", "hibernateLazyInitializer", "handler"}) // ← CAMBIAR
+    @JsonIgnoreProperties({"credentials", "hibernateLazyInitializer", "handler"})
     private Learner learner;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "skill_id", referencedColumnName = "id", nullable = false)
-    @JsonIgnoreProperties({"credentials", "hibernateLazyInitializer", "handler"}) // ← CAMBIAR
+    @JsonIgnoreProperties({"credentials", "hibernateLazyInitializer", "handler"})
     private Skill skill;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learning_session_id", referencedColumnName = "id", nullable = false)
-    @JsonIgnoreProperties({"credentials", "bookings", "hibernateLazyInitializer", "handler"}) // ← CAMBIAR
+    @JsonIgnoreProperties({"credentials", "bookings", "hibernateLazyInitializer", "handler"})
     private LearningSession learningSession;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", referencedColumnName = "id", nullable = false)
-    @JsonIgnoreProperties({"credential", "questions", "hibernateLazyInitializer", "handler"}) // ← CAMBIAR
+    @JsonIgnoreProperties({"credential", "questions", "hibernateLazyInitializer", "handler"})
     private Quiz quiz;
 
     @Column(name = "percentage_achieved", nullable = false, precision = 5, scale = 2)

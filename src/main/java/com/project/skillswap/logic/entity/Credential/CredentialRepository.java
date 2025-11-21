@@ -11,9 +11,6 @@ public interface CredentialRepository extends JpaRepository<Credential, Long> {
     /**
      * Obtiene todas las credenciales de los miembros de una comunidad específica
      * con datos completos del learner, person, skill y knowledge area
-     *
-     * @param communityId ID de la comunidad
-     * @return Lista de credenciales con datos cargados
      */
     @Query("SELECT DISTINCT c FROM Credential c " +
             "JOIN FETCH c.learner l " +
