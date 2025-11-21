@@ -6,7 +6,6 @@ import com.project.skillswap.logic.entity.Skill.Skill;
 import com.project.skillswap.logic.entity.Skill.SkillRepository;
 import com.project.skillswap.logic.entity.UserSkill.UserSkill;
 import com.project.skillswap.logic.entity.UserSkill.UserSkillRepository;
-import com.project.skillswap.logic.entity.LearningSession.email.SessionEmailService;
 import com.project.skillswap.logic.entity.LearningSession.persistence.SessionIntegrationLogger;
 import com.project.skillswap.logic.entity.LearningSession.persistence.SessionPersistenceValidator;
 import com.project.skillswap.logic.entity.LearningSession.scheduling.SessionGoogleCalendarService;
