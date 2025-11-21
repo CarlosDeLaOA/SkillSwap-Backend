@@ -10,6 +10,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -84,7 +85,6 @@ public class LearningSession {
     @Column(updatable = false, name = "creation_date")
     private Date creationDate;
 
-
     @Column(name = "cancellation_reason", columnDefinition = "TEXT")
     private String cancellationReason;
 
@@ -94,6 +94,15 @@ public class LearningSession {
     @Column(name = "cancelled_by_instructor_id")
     private Long cancelledByInstructorId;
 
+    // ⭐ Campos para control de grabación
+    @Transient
+    private boolean recording = false;
+
+    @Transient
+    private LocalDateTime recordingStartTime;
+
+    @Transient
+    private LocalDateTime recordingEndTime;
 
     @OneToMany(mappedBy = "learningSession", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"learningSession", "learner", "community"})
@@ -192,6 +201,7 @@ public class LearningSession {
     public void setCancelledByInstructorId(Long cancelledByInstructorId) {
         this.cancelledByInstructorId = cancelledByInstructorId;
     }
+
     public SessionType getType() {
         return type;
     }
@@ -294,6 +304,31 @@ public class LearningSession {
 
     public void setAttendanceRecord(AttendanceRecord attendanceRecord) {
         this.attendanceRecord = attendanceRecord;
+    }
+
+    // ⭐ Getters y Setters para grabación
+    public boolean isRecording() {
+        return recording;
+    }
+
+    public void setRecording(boolean recording) {
+        this.recording = recording;
+    }
+
+    public LocalDateTime getRecordingStartTime() {
+        return recordingStartTime;
+    }
+
+    public void setRecordingStartTime(LocalDateTime recordingStartTime) {
+        this.recordingStartTime = recordingStartTime;
+    }
+
+    public LocalDateTime getRecordingEndTime() {
+        return recordingEndTime;
+    }
+
+    public void setRecordingEndTime(LocalDateTime recordingEndTime) {
+        this.recordingEndTime = recordingEndTime;
     }
     //</editor-fold>
 
