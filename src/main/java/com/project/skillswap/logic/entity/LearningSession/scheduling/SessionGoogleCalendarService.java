@@ -10,7 +10,7 @@ import java.util.Date;
 
 /**
  * Servicio para integración con Google Calendar
- * Orquesta la creación de eventos en Google Calendar (CRITERIO 3)
+ * Orquesta la creación de eventos en Google Calendar
  */
 @Service
 public class SessionGoogleCalendarService {
@@ -20,7 +20,7 @@ public class SessionGoogleCalendarService {
     private GoogleCalendarClient googleCalendarClient;
     //#endregion
 
-    //#region Public Methods - CRITERIO 3
+    //#region Public Methods -
     /**
      * Intenta crear un evento en Google Calendar
      * Si falla, retorna null (permite crear sesión sin integración)
@@ -32,18 +32,18 @@ public class SessionGoogleCalendarService {
      */
     public String tryCreateCalendarEvent(LearningSession session, Person instructor, boolean enableIntegration) {
 
-        // *** CRITERIO 3: Si no está habilitada la integración, skip
+        // Si no está habilitada la integración, skip
         if (!enableIntegration || !googleCalendarClient.isConfigured()) {
             System.out.println(" [SessionGoogleCalendarService] Google Calendar deshabilitado o no configurado");
             return null;
         }
 
         try {
-            // *** CRITERIO 3: Calcular hora de fin
+            // Calcular hora de fin
             Date startTime = session.getScheduledDatetime();
             Date endTime = calculateEndTime(startTime, session.getDurationMinutes());
 
-            // *** CRITERIO 3: Crear evento en Google Calendar
+            // Crear evento en Google Calendar
             String googleCalendarEventId = googleCalendarClient.createCalendarEvent(
                     session.getTitle(),
                     session.getDescription(),
@@ -57,7 +57,7 @@ public class SessionGoogleCalendarService {
             return googleCalendarEventId;
 
         } catch (Exception e) {
-            // *** CRITERIO 3: Si falla Google Calendar, permitir creación sin integración
+            //  Si falla Google Calendar, permitir creación sin integración
             System.err.println(" [SessionGoogleCalendarService] Error creando evento en Google Calendar: " + e.getMessage());
             System.out.println(" [SessionGoogleCalendarService] ⚠️ Continuando con creación de sesión sin integración...");
             return null;

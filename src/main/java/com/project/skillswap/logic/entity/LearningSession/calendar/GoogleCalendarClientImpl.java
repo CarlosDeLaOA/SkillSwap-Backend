@@ -14,7 +14,7 @@ import java.util.UUID;
 @Component
 public class GoogleCalendarClientImpl implements GoogleCalendarClient {
 
-    // *** CRITERIO 3: Configuración de Google Calendar
+    // Configuración de Google Calendar
     @Value("${google.calendar.enabled:false}")
     private boolean googleCalendarEnabled;
 
@@ -23,7 +23,7 @@ public class GoogleCalendarClientImpl implements GoogleCalendarClient {
 
     //#region Public Methods
     /**
-     * Crea un evento en Google Calendar (CRITERIO 3)
+     * Crea un evento en Google Calendar
      * Si falla, permite continuar sin integración
      */
     @Override
@@ -42,7 +42,7 @@ public class GoogleCalendarClientImpl implements GoogleCalendarClient {
         }
 
         try {
-            // *** CRITERIO 3: Simular creación de evento
+            // Simular creación de evento
             // En producción, usar Google Calendar API v3
             String calendarEventId = generateCalendarEventId();
 
@@ -69,7 +69,7 @@ public class GoogleCalendarClientImpl implements GoogleCalendarClient {
     }
 
     /**
-     * Elimina un evento de Google Calendar (CRITERIO 3)
+     * Elimina un evento de Google Calendar
      */
     @Override
     public void deleteCalendarEvent(String calendarEventId, String instructorEmail) throws Exception {
@@ -88,7 +88,7 @@ public class GoogleCalendarClientImpl implements GoogleCalendarClient {
     }
 
     /**
-     * Verifica si Google Calendar está configurado (CRITERIO 3)
+     * Verifica si Google Calendar está configurado
      */
     @Override
     public boolean isConfigured() {

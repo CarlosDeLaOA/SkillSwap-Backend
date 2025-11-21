@@ -36,19 +36,19 @@ public class LearningSessionService {
     @Autowired
     private SessionEmailService sessionEmailService;
 
-    // *** CRITERIO 3: Servicio de Google Calendar
+    // Servicio de Google Calendar
     @Autowired
     private SessionGoogleCalendarService googleCalendarService;
 
-    // *** CRITERIO 1 & 2: Validator para agendar la sesion
+    // Validator para agendar la sesion
     @Autowired
     private SessionScheduleValidator scheduleValidator;
 
-    // *** CRITERIO 5: Validador de persistencia en BD
+    //  Validador de persistencia en BD
     @Autowired
     private SessionPersistenceValidator persistenceValidator;
 
-    // *** CRITERIO 5: Logger de integraciones
+    //  Logger de integraciones
     @Autowired
     private SessionIntegrationLogger integrationLogger;
     //#endregion
@@ -161,10 +161,10 @@ public class LearningSessionService {
         validateCapacity(session.getMaxCapacity());
         validateScheduledDatetime(session.getScheduledDatetime());
 
-        // *** CRITERIO 2: Validar anticipación mínima
+        // Validar anticipación mínima
         scheduleValidator.validateMinimumAdvanceTime(session.getScheduledDatetime());
 
-        // *** CRITERIO 1: Validar conflictos de horario del instructor
+        // Validar conflictos de horario del instructor
         scheduleValidator.validateNoScheduleConflicts(
                 instructor.getId(),
                 session.getScheduledDatetime(),
@@ -185,7 +185,7 @@ public class LearningSessionService {
 
         LearningSession createdSession = learningSessionRepository.save(session);
 
-        /// *** CRITERIO 5: Validar y loguear guardado en BD interna
+        /// Validar y loguear guardado en BD interna
         persistenceValidator.validateSessionSavedCorrectly(createdSession);
         integrationLogger.logSessionCreatedAsDraft(createdSession);
 
@@ -211,21 +211,21 @@ public class LearningSessionService {
 
         validateSessionIsComplete(session);
 
-        /// *** CRITERIO 7: Validar que la sesión esté en estado DRAFT
+        /// Validar que la sesión esté en estado DRAFT
         validateSessionStatusIsPublishable(session);
 
         if (minorEdits != null) {
             applyMinorEdits(session, minorEdits);
         }
 
-        // *** CRITERIO 3: Obtener parámetro de integración Google Calendar
+        // Obtener parámetro de integración Google Calendar
         boolean enableGoogleCalendar = false;
         if (minorEdits != null && minorEdits.containsKey("enableGoogleCalendar")) {
             String enableValue = minorEdits.get("enableGoogleCalendar");
             enableGoogleCalendar = "true".equalsIgnoreCase(enableValue);
         }
 
-        // *** CRITERIO 1 & 2: revalidar anticipación y conflictos al publicar
+        //  revalidar anticipación y conflictos al publicar
         scheduleValidator.validateMinimumAdvanceTime(session.getScheduledDatetime());
         scheduleValidator.validateNoScheduleConflicts(
                 session.getInstructor().getId(),
@@ -234,14 +234,14 @@ public class LearningSessionService {
                 sessionId // Excluir esta sesión de la búsqueda de conflictos
         );
 
-        /// *** CRITERIO 4: Determinar nuevo estado (SCHEDULED o ACTIVE)
+        /// Determinar nuevo estado (SCHEDULED o ACTIVE)
         SessionStatus newStatus = determinePublishStatus(session.getScheduledDatetime());
 
-        /// *** CRITERIO 4: Log del cambio de estado
+        /// Log del cambio de estado
         System.out.println(" [LearningSessionService] Cambio de estado: " + session.getStatus() + " → " + newStatus);
         session.setStatus(newStatus);
 
-        // *** CRITERIO 3: Intentar crear evento en Google Calendar
+        // Intentar crear evento en Google Calendar
         if (enableGoogleCalendar) {
             String googleCalendarEventId = googleCalendarService.tryCreateCalendarEvent(
                     session,
@@ -259,7 +259,7 @@ public class LearningSessionService {
 
         LearningSession publishedSession = learningSessionRepository.save(session);
 
-        /// *** CRITERIO 5: Validar y loguear guardado en BD interna
+        /// Validar y loguear guardado en BD interna
         persistenceValidator.validateSessionSavedCorrectly(publishedSession);
 
         if (publishedSession.getGoogleCalendarId() != null) {
@@ -359,7 +359,7 @@ public class LearningSessionService {
             }
         }
 
-        // *** CRITERIO 3: Eliminar evento de Google Calendar si existe
+        // Eliminar evento de Google Calendar si existe
         if (cancelledSession.getGoogleCalendarId() != null) {
             googleCalendarService.tryDeleteCalendarEvent(
                     cancelledSession.getGoogleCalendarId(),
@@ -579,7 +579,7 @@ public class LearningSessionService {
         }
     }
 
-    /// *** CRITERIO 7: Validar que la sesión esté en estado DRAFT
+    /// Validar que la sesión esté en estado DRAFT
     /**
      * Valida que la sesión esté en estado DRAFT y sea programable
      * Solo se pueden publicar sesiones que aún no han sido programadas
@@ -592,7 +592,7 @@ public class LearningSessionService {
             throw new IllegalArgumentException("La sesión no tiene estado definido");
         }
 
-        // *** CRITERIO 7: Solo se permite programar sesiones en estado DRAFT
+        // Solo se permite programar sesiones en estado DRAFT
         if (session.getStatus() != SessionStatus.DRAFT) {
             String errorMessage = switch (session.getStatus()) {
                 case SCHEDULED -> "Esta sesión ya está programada. No puedes reprogramarla.";

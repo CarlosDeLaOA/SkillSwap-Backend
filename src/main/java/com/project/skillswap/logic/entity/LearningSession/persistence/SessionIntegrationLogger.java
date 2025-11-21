@@ -9,7 +9,7 @@ import java.util.Locale;
 /**
  * Componente responsable de logging detallado sobre integraciones
  * Proporciona información clara sobre qué sistemas están integrados
- * CRITERIO 5: Logging de guardado en BD interna
+ * Logging de guardado en BD interna
  */
 @Component
 public class SessionIntegrationLogger {
@@ -88,7 +88,7 @@ public class SessionIntegrationLogger {
     public String getIntegrationsSummary(LearningSession session) {
         StringBuilder summary = new StringBuilder();
 
-        // *** CRITERIO 5: Siempre está en BD interna
+        // Siempre está en BD interna
         summary.append("BD Interna (✅)");
 
         // Google Calendar
@@ -113,7 +113,7 @@ public class SessionIntegrationLogger {
     public String getStorageDetails(LearningSession session) {
         StringBuilder details = new StringBuilder();
 
-        /// *** CRITERIO 5: BD interna siempre
+        /// BD interna siempre
         details.append("✅ Base de datos interna SkillSwap");
 
         if (session.getGoogleCalendarId() != null) {

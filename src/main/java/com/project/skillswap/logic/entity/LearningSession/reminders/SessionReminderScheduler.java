@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 /**
  * Componente scheduler para enviar recordatorios de sesiones
  * Ejecuta automáticamente cada hora para verificar sesiones próximas
- * CRITERIO 6: Recordatorio automático 24 horas antes vía email
+ * Recordatorio automático 24 horas antes vía email
  */
 @Component
 public class SessionReminderScheduler {
@@ -33,7 +33,7 @@ public class SessionReminderScheduler {
         System.out.println("=============================================================");
 
         try {
-            /// *** CRITERIO 6: Obtener sesiones próximas a 24 horas
+            /// *** Obtener sesiones próximas a 24 horas
             int remindersCount = reminderService.sendRemindersForSessionsInNextDay();
 
             System.out.println(" [SessionReminderScheduler] ✅ Ejecución completada");

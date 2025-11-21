@@ -9,7 +9,7 @@ import java.util.Locale;
 /**
  * Constructor de emails de recordatorio para sesiones
  * Genera HTML para emails de recordatorio 24 horas antes
- * CRITERIO 6: Email de recordatorio automático
+ * Email de recordatorio automático
  *
  * Usa el mismo formato y diseño que SmtpMailService para consistencia visual
  */

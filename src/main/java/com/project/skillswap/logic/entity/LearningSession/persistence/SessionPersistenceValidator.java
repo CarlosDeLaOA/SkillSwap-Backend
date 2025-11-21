@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 /**
  * Componente responsable de validar la persistencia de sesiones en BD
  * Verifica que el guardado fue exitoso y completo
- * CRITERIO 5: Validar guardado en base de datos interna
+ * Validar guardado en base de datos interna
  */
 @Component
 public class SessionPersistenceValidator {

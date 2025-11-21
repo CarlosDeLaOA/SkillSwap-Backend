@@ -16,7 +16,7 @@ import java.util.*;
 /**
  * Servicio para gestionar recordatorios de sesiones
  * Encuentra sesiones que comienzan en 24 horas y envía emails de recordatorio
- * CRITERIO 6: Recordatorio automático 24 horas antes vía email
+ * Recordatorio automático 24 horas antes vía email
  */
 @Service
 public class SessionReminderService {
@@ -47,7 +47,7 @@ public class SessionReminderService {
     private static final long HOURS_BEFORE_SESSION = 24;     // Recordatorio 24 horas antes
     //#endregion
 
-    //#region Public Methods - CRITERIO 6
+    //#region Public Methods
     /**
      * Busca sesiones que comienzan en ~24 horas y envía recordatorios
      * Retorna cantidad de recordatorios enviados
@@ -57,7 +57,7 @@ public class SessionReminderService {
     public int sendRemindersForSessionsInNextDay() {
         int remindersCount = 0;
 
-        /// *** CRITERIO 6: Calcular rango de búsqueda (24h ± 60 minutos)
+        /// Calcular rango de búsqueda (24h ± 60 minutos)
         Date now = new Date();
         Date reminderTime = calculateReminderTime(now);
         Date windowStart = new Date(reminderTime.getTime() - (REMINDER_WINDOW_MINUTES * 60 * 1000));
@@ -68,13 +68,13 @@ public class SessionReminderService {
         System.out.println("   - Hasta: " + formatDate(windowEnd));
 
         try {
-            /// *** CRITERIO 6: Obtener sesiones programadas en el rango
+            ///  Obtener sesiones programadas en el rango
             List<LearningSession> upcomingSessions = learningSessionRepository
                     .findScheduledSessionsInDateRange(windowStart, windowEnd);
 
             System.out.println(" [SessionReminderService] Sesiones encontradas: " + upcomingSessions.size());
 
-            /// *** CRITERIO 6: Procesar cada sesión
+            /// Procesar cada sesión
             for (LearningSession session : upcomingSessions) {
                 if (shouldSendReminder(session)) {
                     boolean sent = sendReminderEmail(session);
@@ -112,7 +112,7 @@ public class SessionReminderService {
             return false;  // Solo recordar sesiones programadas o activas
         }
 
-        /// *** CRITERIO 6: Verificar si ya se envió recordatorio
+        /// Verificar si ya se envió recordatorio
         long count = notificationRepository.countByPersonAndTypeAndSendDateAfter(
                 session.getInstructor().getPerson(),
                 NotificationType.REMINDER,

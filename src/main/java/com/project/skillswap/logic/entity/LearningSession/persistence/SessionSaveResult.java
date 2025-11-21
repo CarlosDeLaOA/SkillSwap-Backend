@@ -5,7 +5,7 @@ import com.project.skillswap.logic.entity.LearningSession.SessionStatus;
 /**
  * Clase para encapsular resultado del guardado de una sesión
  * Proporciona información clara sobre qué se guardó y dónde
- * CRITERIO 5: Información del guardado en BD interna
+ * Información del guardado en BD interna
  */
 public class SessionSaveResult {
 
