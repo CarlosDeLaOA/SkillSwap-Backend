@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Credential;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Skill.Skill;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
@@ -26,22 +27,22 @@ public class Credential {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learner_id", referencedColumnName = "id", nullable = false)
-    @JsonBackReference("learner-credentials")
+    @JsonIgnoreProperties({"credentials", "hibernateLazyInitializer", "handler"}) // ← CAMBIAR
     private Learner learner;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "skill_id", referencedColumnName = "id", nullable = false)
-    @JsonBackReference("skill-credentials")
+    @JsonIgnoreProperties({"credentials", "hibernateLazyInitializer", "handler"}) // ← CAMBIAR
     private Skill skill;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learning_session_id", referencedColumnName = "id", nullable = false)
-    @JsonBackReference("session-credentials") 
+    @JsonIgnoreProperties({"credentials", "bookings", "hibernateLazyInitializer", "handler"}) // ← CAMBIAR
     private LearningSession learningSession;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", referencedColumnName = "id", nullable = false)
-    @JsonBackReference("quiz-credential")
+    @JsonIgnoreProperties({"credential", "questions", "hibernateLazyInitializer", "handler"}) // ← CAMBIAR
     private Quiz quiz;
 
     @Column(name = "percentage_achieved", nullable = false, precision = 5, scale = 2)

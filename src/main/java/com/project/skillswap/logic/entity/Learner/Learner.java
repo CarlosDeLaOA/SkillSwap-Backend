@@ -28,8 +28,8 @@ public class Learner {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false, unique = true)
-    @JsonIgnore
+    @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "email", "passwordHash", "profilePhotoUrl", "preferredLanguage", "googleOauthId", "emailVerified", "active", "registrationDate", "lastConnection"}) // ← Solo mostrar fullName
     private Person person;
 
     @Column(name = "skillcoins_balance", precision = 10, scale = 2)
@@ -46,7 +46,7 @@ public class Learner {
     private List<Booking> bookings;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonManagedReference("learner-credentials")
+    @JsonIgnore
     private List<Credential> credentials;
 
     @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
