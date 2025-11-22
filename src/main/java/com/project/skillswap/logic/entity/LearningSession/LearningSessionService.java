@@ -6,10 +6,13 @@ import com.project.skillswap.logic.entity.Skill.Skill;
 import com.project.skillswap.logic.entity.Skill.SkillRepository;
 import com.project.skillswap.logic.entity.UserSkill.UserSkill;
 import com.project.skillswap.logic.entity.UserSkill.UserSkillRepository;
+import com.project.skillswap.logic.entity.LearningSession.persistence.SessionIntegrationLogger;
+import com.project.skillswap.logic.entity.LearningSession.persistence.SessionPersistenceValidator;
+import com.project.skillswap.logic.entity.LearningSession.scheduling.SessionGoogleCalendarService;
+import com.project.skillswap.logic.entity.LearningSession.scheduling.SessionScheduleValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
 
@@ -17,6 +20,7 @@ import java.util.*;
 public class LearningSessionService {
 
     //#region Dependencies
+
     @Autowired
     private LearningSessionRepository learningSessionRepository;
 
@@ -32,8 +36,21 @@ public class LearningSessionService {
     @Autowired
     private SessionEmailService sessionEmailService;
 
-    @Value("${app.frontend.url}")
-    private String frontendBaseUrl;
+    // Servicio de Google Calendar
+    @Autowired
+    private SessionGoogleCalendarService googleCalendarService;
+
+    // Validator para agendar la sesion
+    @Autowired
+    private SessionScheduleValidator scheduleValidator;
+
+    //  Validador de persistencia en BD
+    @Autowired
+    private SessionPersistenceValidator persistenceValidator;
+
+    //  Logger de integraciones
+    @Autowired
+    private SessionIntegrationLogger integrationLogger;
     //#endregion
 
     //#region Constants
@@ -124,11 +141,11 @@ public class LearningSessionService {
 
     //#region Public Methods - Create
     /**
-     * Crea una nueva sesión y genera el videoCallLink inmediatamente
+     * Crea una nueva sesión de aprendizaje con validaciones completas
      *
      * @param session Sesión a crear con todos los datos
      * @param authenticatedPerson Persona autenticada que crea la sesión
-     * @return Sesión creada y guardada con videoCallLink
+     * @return Sesión creada y guardada
      * @throws IllegalArgumentException Si las validaciones fallan
      * @throws IllegalStateException Si el usuario no es instructor
      */
@@ -144,6 +161,17 @@ public class LearningSessionService {
         validateCapacity(session.getMaxCapacity());
         validateScheduledDatetime(session.getScheduledDatetime());
 
+        // Validar anticipación mínima
+        scheduleValidator.validateMinimumAdvanceTime(session.getScheduledDatetime());
+
+        // Validar conflictos de horario del instructor
+        scheduleValidator.validateNoScheduleConflicts(
+                instructor.getId(),
+                session.getScheduledDatetime(),
+                session.getDurationMinutes(),
+                null // No hay ID de sesión a excluir porque es nueva
+        );
+
         String language = validateAndNormalizeLanguage(session.getLanguage());
         session.setLanguage(language);
 
@@ -155,21 +183,13 @@ public class LearningSessionService {
         session.setType(SessionType.SCHEDULED);
         session.setStatus(SessionStatus.DRAFT);
 
+        LearningSession createdSession = learningSessionRepository.save(session);
 
-        LearningSession savedSession = learningSessionRepository.save(session);
+        /// Validar y loguear guardado en BD interna
+        persistenceValidator.validateSessionSavedCorrectly(createdSession);
+        integrationLogger.logSessionCreatedAsDraft(createdSession);
 
-        System.out.println("📝 [LearningSessionService] Session created with ID: " + savedSession.getId());
-
-
-        String videoCallLink = frontendBaseUrl + "/app/video-call/" + savedSession.getId();
-        savedSession.setVideoCallLink(videoCallLink);
-
-
-        savedSession = learningSessionRepository.save(savedSession);
-
-        System.out.println("🔗 [LearningSessionService] Video call link assigned: " + videoCallLink);
-
-        return savedSession;
+        return createdSession;
     }
     //#endregion
 
@@ -191,27 +211,66 @@ public class LearningSessionService {
 
         validateSessionIsComplete(session);
 
+        /// Validar que la sesión esté en estado DRAFT
+        validateSessionStatusIsPublishable(session);
+
         if (minorEdits != null) {
             applyMinorEdits(session, minorEdits);
         }
 
+        // Obtener parámetro de integración Google Calendar
+        boolean enableGoogleCalendar = false;
+        if (minorEdits != null && minorEdits.containsKey("enableGoogleCalendar")) {
+            String enableValue = minorEdits.get("enableGoogleCalendar");
+            enableGoogleCalendar = "true".equalsIgnoreCase(enableValue);
+        }
+
+        //  revalidar anticipación y conflictos al publicar
+        scheduleValidator.validateMinimumAdvanceTime(session.getScheduledDatetime());
+        scheduleValidator.validateNoScheduleConflicts(
+                session.getInstructor().getId(),
+                session.getScheduledDatetime(),
+                session.getDurationMinutes(),
+                sessionId // Excluir esta sesión de la búsqueda de conflictos
+        );
+
+        /// Determinar nuevo estado (SCHEDULED o ACTIVE)
         SessionStatus newStatus = determinePublishStatus(session.getScheduledDatetime());
+
+        /// Log del cambio de estado
+        System.out.println(" [LearningSessionService] Cambio de estado: " + session.getStatus() + " → " + newStatus);
         session.setStatus(newStatus);
+
+        // Intentar crear evento en Google Calendar
+        if (enableGoogleCalendar) {
+            String googleCalendarEventId = googleCalendarService.tryCreateCalendarEvent(
+                    session,
+                    authenticatedPerson,
+                    true
+            );
+
+            if (googleCalendarEventId != null) {
+                session.setGoogleCalendarId(googleCalendarEventId);
+                System.out.println(" [LearningSessionService] Google Calendar ID asignado: " + googleCalendarEventId);
+            } else {
+                System.out.println("⚠️ [LearningSessionService] Sesión creada sin integración con Google Calendar");
+            }
+        }
 
         LearningSession publishedSession = learningSessionRepository.save(session);
 
-        //  Si  no tiene link, generarlo
-        if (publishedSession.getVideoCallLink() == null ||
-                publishedSession.getVideoCallLink().trim().isEmpty()) {
+        /// Validar y loguear guardado en BD interna
+        persistenceValidator.validateSessionSavedCorrectly(publishedSession);
 
-            String videoCallLink = frontendBaseUrl + "/app/video-call/" + publishedSession.getId();
-            publishedSession.setVideoCallLink(videoCallLink);
-            publishedSession = learningSessionRepository.save(publishedSession);
-
-            System.out.println(" [LearningSessionService] Video call link was missing, assigned: " + videoCallLink);
+        if (publishedSession.getGoogleCalendarId() != null) {
+            integrationLogger.logSessionSavedWithIntegration(
+                    publishedSession,
+                    publishedSession.getGoogleCalendarId()
+            );
+        } else {
+            integrationLogger.logSessionSavedWithoutIntegration(publishedSession);
         }
 
-        // Enviar email de confirmación
         try {
             boolean emailSent = sessionEmailService.sendSessionCreationEmail(
                     publishedSession,
@@ -221,7 +280,7 @@ public class LearningSessionService {
             if (emailSent) {
                 System.out.println(" [LearningSessionService] Email de confirmación enviado");
             } else {
-                System.out.println(" [LearningSessionService] Email no enviado (validación fallida)");
+                System.out.println("⚠ [LearningSessionService] Email no enviado (validación fallida)");
             }
         } catch (Exception e) {
             System.err.println(" [LearningSessionService] Error enviando email: " + e.getMessage());
@@ -248,13 +307,18 @@ public class LearningSessionService {
 
         LearningSession session = getSessionById(sessionId, authenticatedPerson);
 
+        // Validar que la sesión no esté ya cancelada o finalizada
         validateSessionCanBeCancelled(session);
+
+        // Validar que sea el creador
         validateIsSessionOwner(session, authenticatedPerson);
 
+        // Validar si la sesión está activa (requiere confirmación adicional)
         if (session.getStatus() == SessionStatus.ACTIVE) {
-            System.out.println("️ [WARNING] Cancelling ACTIVE session - requires additional confirmation");
+            System.out.println(" [WARNING] Cancelling ACTIVE session - requires additional confirmation");
         }
 
+        // Obtener emails de participantes ANTES de cancelar
         List<String> participantEmails = session.getBookings().stream()
                 .map(booking -> booking.getLearner().getPerson().getEmail())
                 .filter(email -> email != null && !email.isEmpty())
@@ -262,6 +326,7 @@ public class LearningSessionService {
 
         int participantsCount = participantEmails.size();
 
+        // Actualizar estado y metadata
         session.setStatus(SessionStatus.CANCELLED);
         session.setCancellationReason(reason != null ? reason.trim() : "Sin razón especificada");
         session.setCancellationDate(new Date());
@@ -276,6 +341,7 @@ public class LearningSessionService {
                 participantsCount
         ));
 
+        // Enviar notificaciones por email a participantes
         if (!participantEmails.isEmpty()) {
             try {
                 int emailsSent = sessionNotificationService.sendCancellationNotifications(
@@ -283,13 +349,22 @@ public class LearningSessionService {
                         participantEmails
                 );
                 System.out.println(String.format(
-                        "📧 [EMAIL] Sent %d/%d cancellation notifications",
+                        " [EMAIL] Sent %d/%d cancellation notifications",
                         emailsSent,
                         participantsCount
                 ));
             } catch (Exception e) {
                 System.err.println(" [ERROR] Failed to send some notification emails: " + e.getMessage());
+                // No lanzamos excepción porque la sesión ya fue cancelada exitosamente
             }
+        }
+
+        // Eliminar evento de Google Calendar si existe
+        if (cancelledSession.getGoogleCalendarId() != null) {
+            googleCalendarService.tryDeleteCalendarEvent(
+                    cancelledSession.getGoogleCalendarId(),
+                    authenticatedPerson.getEmail()
+            );
         }
 
         return cancelledSession;
@@ -501,6 +576,32 @@ public class LearningSessionService {
             throw new IllegalArgumentException(
                     "La sesión está incompleta. Campos pendientes: " + String.join(", ", missingFields)
             );
+        }
+    }
+
+    /// Validar que la sesión esté en estado DRAFT
+    /**
+     * Valida que la sesión esté en estado DRAFT y sea programable
+     * Solo se pueden publicar sesiones que aún no han sido programadas
+     *
+     * @param session Sesión a validar
+     * @throws IllegalArgumentException Si la sesión no puede ser programada
+     */
+    private void validateSessionStatusIsPublishable(LearningSession session) {
+        if (session.getStatus() == null) {
+            throw new IllegalArgumentException("La sesión no tiene estado definido");
+        }
+
+        // Solo se permite programar sesiones en estado DRAFT
+        if (session.getStatus() != SessionStatus.DRAFT) {
+            String errorMessage = switch (session.getStatus()) {
+                case SCHEDULED -> "Esta sesión ya está programada. No puedes reprogramarla.";
+                case ACTIVE -> "Esta sesión ya está activa. No puedes cambiarla.";
+                case FINISHED -> "Esta sesión ya ha finalizado. No puedes modificarla.";
+                case CANCELLED -> "Esta sesión ha sido cancelada. No puedes modificarla.";
+                default -> "Esta sesión no puede ser programada en su estado actual.";
+            };
+            throw new IllegalArgumentException(errorMessage);
         }
     }
     //#endregion

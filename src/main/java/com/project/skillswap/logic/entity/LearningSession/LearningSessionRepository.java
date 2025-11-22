@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface LearningSessionRepository extends JpaRepository<LearningSession, Long> {
 
     //<editor-fold desc="Available Sessions Queries">
+
     /**
      * Obtiene todas las sesiones que están programadas (SCHEDULED)
      * o que están activas y comenzaron hace menos de 5 minutos
@@ -36,6 +37,7 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     //</editor-fold>
 
     //<editor-fold desc="Filtered Sessions Queries">
+
     /**
      * Filtra sesiones disponibles por categoría (KnowledgeArea)
      */
@@ -96,13 +98,70 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     );
     //</editor-fold>
 
+    //<editor-fold desc="Schedule Conflict Queries">
+    /// Queries para detectar conflictos y sugerir horarios
+    /**
+     * Busca todas las sesiones de un instructor en un rango de tiempo específico
+     * Utilizado para detectar conflictos de horario
+     * Validar disponibilidad del SkillSwapper
+     * NOTA: Usa SQL nativo porque DATE_ADD no está soportado en HQL
+     */
+    @Query(value = "SELECT * FROM learning_session ls " +
+            "WHERE ls.instructor_id = :instructorId " +
+            "AND ls.status IN ('SCHEDULED', 'ACTIVE') " +
+            "AND ls.scheduled_datetime < :endTime " +
+            "AND DATE_ADD(ls.scheduled_datetime, INTERVAL ls.duration_minutes MINUTE) > :startTime",
+            nativeQuery = true)
+    List<LearningSession> findConflictingSessions(
+            @Param("instructorId") Long instructorId,
+            @Param("startTime") Date startTime,
+            @Param("endTime") Date endTime
+    );
+
+    /**
+     * Busca todas las sesiones ocupadas de un instructor en un rango de fechas
+     * Utilizado para sugerir horarios alternativos
+     * Sugerir horarios alternos
+     */
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.instructor.id = :instructorId " +
+            "AND ls.status IN ('SCHEDULED', 'ACTIVE') " +
+            "AND ls.scheduledDatetime >= :startDate " +
+            "AND ls.scheduledDatetime <= :endDate " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findInstructorScheduledSessions(
+            @Param("instructorId") Long instructorId,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
+    );
+    //</editor-fold>
+
+    //<editor-fold desc="Reminder Queries">
+    /// Queries para recordatorios automáticos
+    /**
+     * Busca sesiones programadas dentro de un rango de fechas
+     * Utilizado para encontrar sesiones próximas a 24 horas
+     * Recordatorio automático 24 horas antes vía email
+     */
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.status IN ('SCHEDULED', 'ACTIVE') " +
+            "AND ls.scheduledDatetime >= :startDate " +
+            "AND ls.scheduledDatetime <= :endDate " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findScheduledSessionsInDateRange(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
+    );
+    //</editor-fold>
+
     //<editor-fold desc="Instructor Session Management">
+
     /**
      * Lista todas las sesiones de un instructor con filtro por estado
      *
      * @param instructorId ID del instructor
-     * @param status Estado de la sesión (null para traer todos)
-     * @param pageable Configuración de paginación
+     * @param status       Estado de la sesión (null para traer todos)
+     * @param pageable     Configuración de paginación
      * @return Página de sesiones
      */
     @Query("""
@@ -140,7 +199,7 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     /**
      * Busca una sesión por ID y verifica que pertenezca al instructor
      *
-     * @param sessionId ID de la sesión
+     * @param sessionId    ID de la sesión
      * @param instructorId ID del instructor
      * @return Optional con la sesión si existe y pertenece al instructor
      */
@@ -154,4 +213,22 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             @Param("instructorId") Long instructorId
     );
     //</editor-fold>
+
+    //#region Suggestion Queries
+    /**
+     * Encuentra todas las sesiones por estado
+     */
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.status IN :statuses " +
+            "AND ls.scheduledDatetime > CURRENT_TIMESTAMP " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findByStatusIn(@Param("statuses") List<SessionStatus> statuses);
+
+    /**
+     * Encuentra todas las sesiones de un instructor
+     */
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.instructor.id = :instructorId")
+    List<LearningSession> findByInstructorId(@Param("instructorId") Long instructorId);
+    //#endregion
 }

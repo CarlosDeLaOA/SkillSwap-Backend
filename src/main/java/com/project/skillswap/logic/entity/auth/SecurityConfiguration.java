@@ -59,6 +59,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/user-skills/**").permitAll()
                         .requestMatchers("/verification/**").permitAll()
                         .requestMatchers("/videocall/**").authenticated()
+                        .requestMatchers("/api/suggestions/**").authenticated()
                         .anyRequest().authenticated()
                 )
 
