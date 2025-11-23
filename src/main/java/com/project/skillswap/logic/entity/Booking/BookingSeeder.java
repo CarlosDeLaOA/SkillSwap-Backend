@@ -65,7 +65,7 @@ public class BookingSeeder implements ApplicationListener<ContextRefreshedEvent>
 
         for (BookingData bookingData : bookingsToCreate) {
             Optional<LearningSession> session = learningSessionRepository.findById(bookingData.learningSessionId);
-            Optional<Learner> learner = learnerRepository.findById(bookingData.learnerId.intValue());
+            Optional<Learner> learner = learnerRepository.findById(bookingData.learnerId);
 
             if (session.isEmpty() || learner.isEmpty()) {
                 continue;

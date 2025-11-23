@@ -50,7 +50,7 @@ public class FeedbackSeeder implements ApplicationListener<ContextRefreshedEvent
 
         for (FeedbackData feedbackData : feedbacksToCreate) {
             Optional<LearningSession> session = learningSessionRepository.findById(feedbackData.learningSessionId);
-            Optional<Learner> learner = learnerRepository.findById(feedbackData.learnerId.intValue());
+            Optional<Learner> learner = learnerRepository.findById(feedbackData.learnerId);
 
             if (session.isEmpty() || learner.isEmpty()) {
                 continue;
