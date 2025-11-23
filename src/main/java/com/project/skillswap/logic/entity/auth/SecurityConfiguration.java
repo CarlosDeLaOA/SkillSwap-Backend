@@ -59,6 +59,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/user-skills/**").permitAll()
                         .requestMatchers("/verification/**").permitAll()
                         .requestMatchers("/videocall/**").authenticated()
+                        .requestMatchers("/ws-documents/**").permitAll()
+                        .requestMatchers("/api/collaborative-documents/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
