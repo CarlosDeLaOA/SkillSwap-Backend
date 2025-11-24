@@ -51,4 +51,7 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
             "WHERE cm.learner.id = :learnerId AND cm.active = true")
     boolean existsByLearnerIdAndActiveTrue(@Param("learnerId") Long learnerId);
 
+    @Query("SELECT cm FROM CommunityMember cm WHERE cm.learner.person.id = :personId AND cm.active = true")
+    List<CommunityMember> findActiveMembersByPersonId(@Param("personId") Long personId);
+
 }

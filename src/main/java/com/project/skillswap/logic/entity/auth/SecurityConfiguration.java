@@ -48,9 +48,13 @@ public class SecurityConfiguration {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
+
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/ws-chat/**").permitAll()
+
                         .requestMatchers("/register/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
                         .requestMatchers("/skills/**").permitAll()
@@ -63,6 +67,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/collaborative-documents/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/communities/create").authenticated()
                         .requestMatchers(HttpMethod.GET, "/communities/accept-invitation").authenticated()
+                        .requestMatchers("/communities/my-communities").authenticated()
                         .requestMatchers("/communities/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -75,5 +80,6 @@ public class SecurityConfiguration {
 
         return http.build();
     }
+
     //#endregion
 }

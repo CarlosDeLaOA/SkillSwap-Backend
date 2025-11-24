@@ -56,4 +56,7 @@ public interface LearningCommunityRepository extends JpaRepository<LearningCommu
      * Busca todas las comunidades activas.
      */
     List<LearningCommunity> findByActiveTrue();
+
+    List<LearningCommunity> findByCreator_Person_Id(Long personId);
+
 }

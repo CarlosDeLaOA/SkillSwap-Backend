@@ -18,6 +18,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+
         registry.addEndpoint("/ws-documents")
                 .setAllowedOrigins("http://localhost:4200", "http://localhost:8080")
                 .withSockJS();
@@ -25,9 +26,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws-documents")
                 .setAllowedOrigins("http://localhost:4200", "http://localhost:8080");
 
+        registry.addEndpoint("/ws-chat")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+
         System.out.println("========================================");
         System.out.println("   WebSocket endpoints registrados");
-        System.out.println("   Allowed origins: localhost:4200, localhost:8080");
+        System.out.println("   - /ws-documents");
+        System.out.println("   - /ws-chat");
+        System.out.println("   Allowed origins: localhost:4200, localhost:8080 (documents)");
+        System.out.println("   Allowed origins: * (chat)");
         System.out.println("========================================");
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Servicio que gestiona la lógica de invitaciones a comunidades de aprendizaje.
@@ -339,6 +340,77 @@ public class CommunityInvitationService {
 
         return code;
     }
+
+    @Transactional
+    public InvitationsSummary sendInvitationsToExistingCommunity(Long communityId, List<String> memberEmails) {
+
+        // 1. Validar que la comunidad exista
+        Optional<LearningCommunity> optionalCommunity = communityRepository.findById(communityId);
+        if (optionalCommunity.isEmpty()) {
+            return new InvitationsSummary(
+                    Collections.emptyList(),
+                    List.of("La comunidad no existe")
+            );
+        }
+
+        LearningCommunity community = optionalCommunity.get();
+
+        // 2. Validar lista de correos
+        if (memberEmails == null || memberEmails.isEmpty()) {
+            return new InvitationsSummary(
+                    Collections.emptyList(),
+                    List.of("Debes proporcionar al menos un email")
+            );
+        }
+
+        // Evitar duplicados
+        Set<String> uniqueEmails = new HashSet<>(memberEmails);
+
+        List<String> successfulInvitations = new ArrayList<>();
+        List<String> failedInvitations = new ArrayList<>();
+
+        // 3. Obtener el nombre del creador para el email
+        String creatorName = (community.getCreator() != null)
+                ? community.getCreator().getPerson().getFullName()
+                : "Administrador";
+
+        // 4. Validar límite de miembros
+        long currentMembers = memberRepository.countActiveMembersByCommunityId(communityId);
+        int remainingSlots = community.getMaxMembers() - (int) currentMembers;
+
+        if (remainingSlots <= 0) {
+            return new InvitationsSummary(
+                    Collections.emptyList(),
+                    List.of("La comunidad ya alcanzó el máximo de miembros")
+            );
+        }
+
+        // Limitar si se excede el máximo
+        if (uniqueEmails.size() > remainingSlots) {
+            failedInvitations.add("Excedes el número disponible de invitaciones: puedes invitar solo " + remainingSlots);
+            // Recortamos a los correos permitidos
+            uniqueEmails = uniqueEmails.stream().limit(remainingSlots).collect(Collectors.toSet());
+        }
+
+        // 5. Enviar cada invitación usando la lógica existente
+        for (String email : uniqueEmails) {
+            try {
+                InvitationResult result = createAndSendInvitation(community, email, creatorName);
+
+                if (result.isSuccess()) {
+                    successfulInvitations.add(email);
+                } else {
+                    failedInvitations.add(email + " (" + result.getMessage() + ")");
+                }
+
+            } catch (Exception e) {
+                failedInvitations.add(email + " (Error al enviar)");
+            }
+        }
+
+        return new InvitationsSummary(successfulInvitations, failedInvitations);
+    }
+
     //#endregion
 
     //#region Inner Classes

@@ -3,6 +3,10 @@ package com.project.skillswap.rest.community;
 import com.project.skillswap.logic.entity.CommunityInvitation.CommunityInvitationService;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
+import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunityRepository;
+import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunity;
+import com.project.skillswap.logic.entity.CommunityMember.CommunityMemberRepository;
+import com.project.skillswap.logic.entity.CommunityMember.CommunityMember;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -11,10 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Controlador REST para gestionar comunidades de aprendizaje.
@@ -28,11 +29,17 @@ public class CommunityRestController {
     private static final Logger logger = LoggerFactory.getLogger(CommunityRestController.class);
     private final CommunityInvitationService invitationService;
     private final PersonRepository personRepository;
+    private final LearningCommunityRepository communityRepository;
+    private final CommunityMemberRepository memberRepository;
 
     public CommunityRestController(CommunityInvitationService invitationService,
-                                   PersonRepository personRepository) {
+                                   PersonRepository personRepository,
+                                   LearningCommunityRepository communityRepository,
+                                   CommunityMemberRepository memberRepository) {
         this.invitationService = invitationService;
         this.personRepository = personRepository;
+        this.communityRepository = communityRepository;
+        this.memberRepository = memberRepository;
     }
     //#endregion
 
@@ -110,7 +117,92 @@ public class CommunityRestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
+    /**
+     * Invita nuevos miembros a una comunidad existente.
+     *
+     * @param communityId ID de la comunidad
+     * @param request emails de los nuevos miembros
+     * @param userDetails usuario autenticado
+     * @return respuesta con el resultado
+     */
+    @PostMapping("/{communityId}/invite")
+    public ResponseEntity<?> inviteNewMembers(@PathVariable Long communityId,
+                                              @RequestBody InviteNewMembersRequest request,
+                                              @AuthenticationPrincipal UserDetails userDetails) {
+        logger.info(">>> inviteNewMembers called. communityId={}, user={}",
+                communityId, userDetails != null ? userDetails.getUsername() : "anonymous");
 
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(createErrorResponse("Debes iniciar sesión"));
+        }
+
+        if (request.getMemberEmails() == null || request.getMemberEmails().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Debes proporcionar al menos un email"));
+        }
+
+        if (request.getMemberEmails().size() > 9) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Máximo 9 invitaciones permitidas"));
+        }
+
+        for (String email : request.getMemberEmails()) {
+            if (!isValidEmail(email)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Email inválido: " + email));
+            }
+        }
+
+        try {
+            Long personId = extractPersonId(userDetails);
+            if (personId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("No se pudo identificar tu usuario"));
+            }
+
+            // Verificar que la comunidad existe
+            Optional<LearningCommunity> communityOpt = communityRepository.findById(communityId);
+            if (communityOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(createErrorResponse("Comunidad no encontrada"));
+            }
+
+            LearningCommunity community = communityOpt.get();
+
+            // Verificar que el usuario es el creador
+            if (!community.getCreator().getPerson().getId().equals(personId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Solo el creador puede invitar nuevos miembros"));
+            }
+
+            // Enviar las invitaciones usando el servicio existente
+            CommunityInvitationService.InvitationsSummary summary =
+                    invitationService.sendInvitationsToExistingCommunity(
+                            communityId,
+                            request.getMemberEmails()
+                    );
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Invitaciones enviadas exitosamente");
+
+            if (summary != null) {
+                Map<String, Object> summaryMap = new HashMap<>();
+                summaryMap.put("successfulInvitations", summary.getSuccessfulInvitations());
+                summaryMap.put("failedInvitations", summary.getFailedInvitations());
+                response.put("invitationsSummary", summaryMap);
+            }
+
+            logger.info("Invitations sent successfully for community: {}", communityId);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error inviting new members", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error al enviar las invitaciones: " + e.getMessage()));
+        }
+    }
     /**
      * Acepta una invitación a una comunidad.
      *
@@ -130,7 +222,6 @@ public class CommunityRestController {
                     .body(createErrorResponse("El token es requerido"));
         }
 
-        // Verificar que el usuario esté autenticado
         if (userDetails == null) {
             logger.error("UserDetails is null - user not authenticated");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -138,7 +229,6 @@ public class CommunityRestController {
         }
 
         try {
-            // Extraer el ID de la persona del usuario autenticado
             Long personId = extractPersonId(userDetails);
             logger.info("Extracted personId: {}", personId);
 
@@ -148,7 +238,6 @@ public class CommunityRestController {
                         .body(createErrorResponse("No se pudo identificar tu usuario"));
             }
 
-            // Procesar la invitación
             CommunityInvitationService.AcceptInvitationResult result =
                     invitationService.acceptInvitation(token, personId);
 
@@ -170,6 +259,64 @@ public class CommunityRestController {
             logger.error("Error accepting invitation", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error interno al procesar la invitación: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Obtiene los participantes activos de una comunidad.
+     *
+     * @param communityId ID de la comunidad
+     * @param userDetails usuario autenticado
+     * @return lista de participantes con sus roles
+     */
+    @GetMapping("/{communityId}/participants")
+    public ResponseEntity<?> getCommunityParticipants(@PathVariable Long communityId,
+                                                      @AuthenticationPrincipal UserDetails userDetails) {
+        logger.info("Getting participants for community: {}", communityId);
+
+        try {
+            Optional<LearningCommunity> communityOpt = communityRepository.findById(communityId);
+
+            if (communityOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(createErrorResponse("Comunidad no encontrada"));
+            }
+
+            LearningCommunity community = communityOpt.get();
+            List<CommunityMember> members = memberRepository.findActiveMembersByCommunityId(communityId);
+
+            List<Map<String, Object>> participants = new ArrayList<>();
+
+            Map<String, Object> creatorData = new HashMap<>();
+            creatorData.put("id", community.getCreator().getPerson().getId());
+            creatorData.put("fullName", community.getCreator().getPerson().getFullName());
+            creatorData.put("profilePhotoUrl", community.getCreator().getPerson().getProfilePhotoUrl());
+            creatorData.put("email", community.getCreator().getPerson().getEmail());
+            creatorData.put("role", "CREATOR");
+            participants.add(creatorData);
+
+            for (CommunityMember member : members) {
+                if (!member.getLearner().getPerson().getId().equals(community.getCreator().getPerson().getId())) {
+                    Map<String, Object> memberData = new HashMap<>();
+                    memberData.put("id", member.getLearner().getPerson().getId());
+                    memberData.put("fullName", member.getLearner().getPerson().getFullName());
+                    memberData.put("profilePhotoUrl", member.getLearner().getPerson().getProfilePhotoUrl());
+                    memberData.put("email", member.getLearner().getPerson().getEmail());
+                    memberData.put("role", member.getRole().name());
+                    participants.add(memberData);
+                }
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", participants);
+            response.put("count", participants.size());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error getting participants", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error al obtener los participantes"));
         }
     }
     //#endregion
@@ -219,7 +366,6 @@ public class CommunityRestController {
 
     /**
      * Extrae el ID de la persona del UserDetails.
-     * El UserDetails contiene el email del usuario, así que buscamos la persona por email.
      *
      * @param userDetails usuario autenticado
      * @return ID de la persona o null si no se encuentra
@@ -288,5 +434,85 @@ public class CommunityRestController {
             this.memberEmails = memberEmails;
         }
     }
+
+    /**
+     * Clase para el request de invitar nuevos miembros.
+     */
+    public static class InviteNewMembersRequest {
+        private List<String> memberEmails;
+
+        public List<String> getMemberEmails() {
+            return memberEmails;
+        }
+
+        public void setMemberEmails(List<String> memberEmails) {
+            this.memberEmails = memberEmails;
+        }
+    }
+
+    @GetMapping("/my-communities")
+    public ResponseEntity<?> getMyCommunities(@AuthenticationPrincipal UserDetails userDetails) {
+        logger.info(">>> getMyCommunities called. user={}",
+                userDetails != null ? userDetails.getUsername() : "anonymous");
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(createErrorResponse("Debes iniciar sesión para ver tus comunidades"));
+        }
+
+        try {
+            Long personId = extractPersonId(userDetails);
+            logger.info("Extracted personId: {}", personId);
+
+            if (personId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("No se pudo identificar tu usuario"));
+            }
+
+            List<Map<String, Object>> communitiesList = new ArrayList<>();
+
+            // ➤ Comunidades donde el usuario es creador
+            List<LearningCommunity> createdCommunities =
+                    communityRepository.findByCreator_Person_Id(personId);
+
+            for (LearningCommunity community : createdCommunities) {
+                Map<String, Object> data = new HashMap<>();
+                data.put("id", community.getId());
+                data.put("name", community.getName());
+                data.put("description", community.getDescription());
+                data.put("role", "CREATOR");
+                communitiesList.add(data);
+            }
+
+            // ➤ Comunidades donde el usuario es miembro activo
+            List<CommunityMember> memberships =
+                    memberRepository.findActiveMembersByPersonId(personId);
+
+            for (CommunityMember member : memberships) {
+                LearningCommunity community = member.getLearningCommunity();
+
+                Map<String, Object> data = new HashMap<>();
+                data.put("id", community.getId());
+                data.put("name", community.getName());
+                data.put("description", community.getDescription());
+                data.put("role", member.getRole().name());
+
+                communitiesList.add(data);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", communitiesList);
+            response.put("count", communitiesList.size());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error getting my communities", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error al obtener tus comunidades"));
+        }
+    }
+
     //#endregion
 }
