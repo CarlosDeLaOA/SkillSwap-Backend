@@ -160,6 +160,11 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
                 false, new BigDecimal("250.00"), 15, 5
         ));
         users.add(new PersonData(
+                "cmoralesso@ucenfotec.ac.cr", "Password123!", "Camila Morales",
+                "https://i.pravatar.cc/150?img=2", "en", null, true, true,
+                false, new BigDecimal("250.00"), 15, 5
+        ));
+        users.add(new PersonData(
                 "sophie.chen@skillswap.com", "Password123!", "Sophie Chen",
                 "https://i.pravatar.cc/150?img=3", "en", null, true, true,
                 true, "sophie.paypal@example.com", new BigDecimal("380.00"),

@@ -83,7 +83,7 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
         List<CredentialData> credentialsToCreate = createCredentialDataList();
 
         for (CredentialData credentialData : credentialsToCreate) {
-            Optional<Learner> learner = learnerRepository.findById(credentialData.learnerId.intValue());
+            Optional<Learner> learner = learnerRepository.findById(credentialData.learnerId);
             Optional<Skill> skill = skillRepository.findById(credentialData.skillId);
             Optional<LearningSession> session = learningSessionRepository.findById(credentialData.learningSessionId);
             Optional<Transcription> transcription = transcriptionRepository.findByLearningSession(session.orElse(null));
