@@ -242,9 +242,11 @@ public class SessionEmailService {
 
     /**
      * Template HTML para email de transcripción lista
+     * Diseño oscuro SkillSwap con texto profesional
      */
     private String buildTranscriptionReadyTemplate(LearningSession session, Person instructor) {
-        String sessionLink = frontendUrl + "/app/video-call/" + session.getId();
+
+        String downloadLink = "http://localhost:8080/videocall/transcription/" + session.getId() + "/download";
 
         // Calcular estadísticas
         int wordCount = session.getFullText() != null ? session.getFullText().split("\\s+").length : 0;
@@ -335,7 +337,7 @@ public class SessionEmailService {
                                 <tr>
                                     <td align='center'>
                                         <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #141414; text-decoration: none; padding: 15px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4);'>
-                                            Acceder a la Transcripción
+                                            Descargar Transcripción
                                         </a>
                                     </td>
                                 </tr>
@@ -380,7 +382,7 @@ public class SessionEmailService {
                 wordCount,
                 charCount,
                 preview != null ? preview : "",
-                sessionLink
+                downloadLink
         );
     }
 
