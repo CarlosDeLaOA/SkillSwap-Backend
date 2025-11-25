@@ -1,4 +1,4 @@
-package com.project.skillswap.logic.entity.passreset;
+package com.project.skillswap.logic.entity.PassReset;
 
 import com.project.skillswap.logic.entity.auth.PasswordResetToken;
 import com.project.skillswap.logic.entity.Person.Person;
