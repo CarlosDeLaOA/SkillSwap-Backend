@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * REST Controller for Learning Session operations
- * Provides endpoints to retrieve, create and publish learning sessions
+ * Provides endpoints to retrieve, create, publish and cancel learning sessions
  */
 @RestController
 @RequestMapping("/learning-sessions")
@@ -245,13 +245,17 @@ public class LearningSessionRestController {
     //#region PUT Endpoints
     /**
      * PUT /learning-sessions/{id}/publish
-     * Publica una sesión, cambiando su estado y haciéndola visible
+     * Publica una sesión, cambiando su estado y haciéndola visible.
+     * Opcionalmente sincroniza con Google Calendar si enableIntegration es true.
      *
      * Requires: Valid JWT token in Authorization header
      * Requires: User must be the session owner (instructor)
      *
+     * Query param enableIntegration (optional): si true intenta sincronizar con Google Calendar (estricto)
+     *
      * @param id ID de la sesión a publicar
      * @param minorEditsRequest Ediciones menores opcionales
+     * @param enableIntegration Query param boolean (opcional) - si true intenta sincronizar con Google Calendar (estricto)
      * @param request HttpServletRequest for metadata
      * @return ResponseEntity with published session
      */
@@ -260,17 +264,19 @@ public class LearningSessionRestController {
     public ResponseEntity<?> publishSession(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> minorEditsRequest,
+            @RequestParam(name = "enableIntegration", required = false, defaultValue = "false") boolean enableIntegration,
             HttpServletRequest request) {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println(" [LearningSessionController] Publishing session: " + id);
+            System.out.println(" [LearningSessionController] Publishing session: " + id + " enableIntegration=" + enableIntegration);
 
             LearningSession publishedSession = learningSessionService.publishSession(
                     id,
                     authenticatedPerson,
-                    minorEditsRequest
+                    minorEditsRequest,
+                    enableIntegration
             );
 
             System.out.println(" [LearningSessionController] Session published: " +
@@ -284,9 +290,9 @@ public class LearningSessionRestController {
             );
 
         } catch (IllegalStateException e) {
-            System.err.println(" Error: Unauthorized: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(createErrorResponse("No autorizado", e.getMessage()));
+            System.err.println(" Error: Unauthorized/Integration error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(createErrorResponse("No autorizado o fallo de integración", e.getMessage()));
 
         } catch (IllegalArgumentException e) {
             System.err.println(" Error: Validation failed: " + e.getMessage());
@@ -340,7 +346,6 @@ public class LearningSessionRestController {
                     reason
             );
 
-            // Crear respuesta con información de participantes notificados
             CancelSessionResponse response = new CancelSessionResponse(
                     cancelledSession.getId(),
                     cancelledSession.getTitle(),

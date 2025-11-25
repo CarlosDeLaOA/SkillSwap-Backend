@@ -33,6 +33,69 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             @Param("currentDate") Date currentDate,
             @Param("fiveMinutesAgo") Date fiveMinutesAgo
     );
+
+    /**
+     * Busca sesiones programadas en un rango de fechas.
+     * Incluye fetch de instructor, person, skill, knowledgeArea y bookings.
+     *
+     * Usado por SessionReminderService para encontrar sesiones que comienzan
+     * dentro de una ventana determinada (por ejemplo 24 horas ± ventana).
+     */
+    @Query("SELECT DISTINCT ls FROM LearningSession ls " +
+            "LEFT JOIN FETCH ls.instructor i " +
+            "LEFT JOIN FETCH i.person p " +
+            "LEFT JOIN FETCH ls.skill s " +
+            "LEFT JOIN FETCH s.knowledgeArea ka " +
+            "LEFT JOIN FETCH ls.bookings b " +
+            "WHERE (ls.status = 'SCHEDULED' OR ls.status = 'ACTIVE') " +
+            "AND ls.scheduledDatetime BETWEEN :start AND :end " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findScheduledSessionsInDateRange(
+            @Param("start") Date start,
+            @Param("end") Date end
+    );
+    //</editor-fold>
+
+    //<editor-fold desc="Conflict detection & Instructor sessions">
+    /**
+     * Busca sesiones del instructor que conflijan/solapen con el intervalo [start, end].
+     *
+     * Nota: esta consulta está escrita como nativeQuery usando la sintaxis de MySQL:
+     *   (scheduled_datetime + INTERVAL duration_minutes MINUTE)
+     *
+     * Si usas PostgreSQL, H2 u otra BD, reemplaza la expresión por la sintaxis adecuada
+     * (ej. en Postgres: scheduled_datetime + (duration_minutes || ' minutes')::interval).
+     */
+    @Query(value = "SELECT * FROM learning_session ls " +
+            "WHERE ls.instructor_id = :instructorId " +
+            "AND ls.status IN ('SCHEDULED','ACTIVE') " +
+            "AND ls.scheduled_datetime < :end " +
+            "AND (ls.scheduled_datetime + INTERVAL ls.duration_minutes MINUTE) > :start",
+            nativeQuery = true)
+    List<LearningSession> findConflictingSessions(
+            @Param("instructorId") Long instructorId,
+            @Param("start") Date start,
+            @Param("end") Date end
+    );
+
+    /**
+     * Obtiene todas las sesiones de un instructor dentro de un rango (fetch para evitar lazy loading).
+     * Usado por el generador de sugerencias.
+     */
+    @Query("SELECT DISTINCT ls FROM LearningSession ls " +
+            "LEFT JOIN FETCH ls.instructor i " +
+            "LEFT JOIN FETCH i.person p " +
+            "LEFT JOIN FETCH ls.skill s " +
+            "LEFT JOIN FETCH s.knowledgeArea ka " +
+            "LEFT JOIN FETCH ls.bookings b " +
+            "WHERE i.id = :instructorId " +
+            "AND ls.scheduledDatetime BETWEEN :start AND :end " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findInstructorScheduledSessions(
+            @Param("instructorId") Long instructorId,
+            @Param("start") Date start,
+            @Param("end") Date end
+    );
     //</editor-fold>
 
     //<editor-fold desc="Filtered Sessions Queries">
@@ -153,5 +216,34 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             @Param("sessionId") Long sessionId,
             @Param("instructorId") Long instructorId
     );
+    //</editor-fold>
+
+    //<editor-fold desc="Added for SessionSuggestionService compatibility">
+    /**
+     * Busca sesiones por una lista de estados e incluye fetch para evitar lazy loading.
+     * Añadido para compatibilidad con SessionSuggestionService. ***
+     */
+    @Query("SELECT DISTINCT ls FROM LearningSession ls " +
+            "LEFT JOIN FETCH ls.instructor i " +
+            "LEFT JOIN FETCH i.person p " +
+            "LEFT JOIN FETCH ls.skill s " +
+            "LEFT JOIN FETCH s.knowledgeArea ka " +
+            "LEFT JOIN FETCH ls.bookings b " +
+            "WHERE ls.status IN :statuses " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findByStatusIn(@Param("statuses") List<SessionStatus> statuses); // ***
+
+    /**
+     * Obtiene sesiones por instructorId (sin range). Añadido para compatibilidad con SessionSuggestionService. ***
+     */
+    @Query("SELECT DISTINCT ls FROM LearningSession ls " +
+            "LEFT JOIN FETCH ls.instructor i " +
+            "LEFT JOIN FETCH i.person p " +
+            "LEFT JOIN FETCH ls.skill s " +
+            "LEFT JOIN FETCH s.knowledgeArea ka " +
+            "LEFT JOIN FETCH ls.bookings b " +
+            "WHERE i.id = :instructorId " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findByInstructorId(@Param("instructorId") Long instructorId); // ***
     //</editor-fold>
 }

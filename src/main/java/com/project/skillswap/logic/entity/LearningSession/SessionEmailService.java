@@ -11,11 +11,14 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
  * Servicio para el envío de correos electrónicos relacionados con sesiones de aprendizaje.
+ * Incluye botón "Añadir a Google Calendar" en el email de creación de sesión.
  */
 @Service
 public class SessionEmailService {
@@ -49,7 +52,7 @@ public class SessionEmailService {
 
             helper.setFrom(from);
             helper.setTo(instructor.getEmail());
-            helper.setSubject(" Sesión Publicada - " + session.getTitle());
+            helper.setSubject("Sesión Publicada - " + session.getTitle());
 
             String htmlContent = buildSessionCreationTemplate(session, instructor);
             helper.setText(htmlContent, true);
@@ -79,7 +82,6 @@ public class SessionEmailService {
             System.out.println("   Instructor: " + instructor.getEmail());
             System.out.println("========================================");
 
-            // Validar que hay transcripción
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
                 System.err.println(" No hay texto de transcripción para enviar");
                 return false;
@@ -118,12 +120,26 @@ public class SessionEmailService {
 
     /**
      * Construye el template HTML para el correo de creación de sesión.
+     * Incluye botones de acción: Añadir a Google Calendar, Ver Sesión, Unirse a Videollamada.
      */
     private String buildSessionCreationTemplate(LearningSession session, Person instructor) {
         String formattedDate = formatDate(session.getScheduledDatetime());
         String formattedTime = formatTime(session.getScheduledDatetime());
-        String editLink = frontendUrl + "/app/sessions/" + session.getId() + "/edit";
         String sessionLink = frontendUrl + "/app/sessions/" + session.getId();
+
+        String skillName = session.getSkill() != null ? session.getSkill().getName() : "";
+        String categoryName = (session.getSkill() != null && session.getSkill().getKnowledgeArea() != null)
+                ? session.getSkill().getKnowledgeArea().getName() : "";
+        String languageName = getLanguageName(session.getLanguage());
+
+        // Google Calendar URL
+        String googleCalendarUrl = buildGoogleCalendarUrl(
+                session.getTitle(),
+                session.getDescription(),
+                session.getScheduledDatetime(),
+                calculateEndTime(session.getScheduledDatetime(), session.getDurationMinutes()),
+                session.getVideoCallLink() != null ? session.getVideoCallLink() : sessionLink
+        );
 
         return """
 <!DOCTYPE html>
@@ -155,7 +171,7 @@ public class SessionEmailService {
                             <div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #aae16b;'>
                                 <h3 style='color: #aae16b; margin-top: 0; font-size: 20px;'>%s</h3>
                                 <p style='font-size: 14px; color: #b0b0b0; margin: 10px 0;'>%s</p>
-                                <hr style='border: none; border-top: 1px solid #504ab7; margin: 20px 0;'>
+                                <hr style='border: none; border-top: 1px solid #504ab7; margin: 20px 0;'/>
                                 <table width='100%%' cellpadding='5' cellspacing='0' style='font-size: 14px;'>
                                     <tr>
                                         <td style='color: #aae16b; width: 40%%;'><strong>ID de Sesión:</strong></td>
@@ -191,14 +207,27 @@ public class SessionEmailService {
                                     </tr>
                                 </table>
                             </div>
-                            <table width='100%%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>
-                                <tr>
-                                    <td align='center'>
-                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; margin-right: 10px;'>Ver Sesión</a>
-                                        <a href='%s' style='display: inline-block; background-color: #39434b; color: #aae16b; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; border: 2px solid #aae16b;'>Unirse a Videollamada</a>
-                                    </td>
-                                </tr>
-                            </table>
+                            <div style='margin: 30px 0;'>
+                                <table width='100%%' cellpadding='0' cellspacing='0'>
+                                    <tr>
+                                        <td align='center' style='padding: 0;'>
+                                            <table cellpadding='0' cellspacing='8' style='display: inline-block;'>
+                                                <tr>
+                                                    <td align='center'>
+                                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 5px; font-size: 14px; font-weight: bold; white-space: nowrap;' target='_blank' rel='noopener noreferrer'>Añadir a Google Calendar</a>
+                                                    </td>
+                                                    <td align='center'>
+                                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 5px; font-size: 14px; font-weight: bold; white-space: nowrap;' target='_blank' rel='noopener noreferrer'>Ver Sesión</a>
+                                                    </td>
+                                                    <td align='center'>
+                                                        <a href='%s' style='display: inline-block; background-color: #39434b; color: #aae16b; text-decoration: none; padding: 14px 28px; border-radius: 5px; font-size: 14px; font-weight: bold; border: 2px solid #aae16b; white-space: nowrap;' target='_blank' rel='noopener noreferrer'>Unirse a Videollamada</a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
                             <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #504ab7;'>
                                 <h4 style='color: #aae16b; margin-top: 0; font-size: 16px;'>Consejos para tu sesión:</h4>
                                 <ul style='color: #ffffff; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 10px 0;'>
@@ -231,12 +260,13 @@ public class SessionEmailService {
                 formattedDate,
                 formattedTime,
                 session.getDurationMinutes(),
-                session.getSkill().getName(),
-                session.getSkill().getKnowledgeArea().getName(),
-                getLanguageName(session.getLanguage()),
+                skillName,
+                categoryName,
+                languageName,
                 session.getMaxCapacity(),
+                googleCalendarUrl,
                 sessionLink,
-                session.getVideoCallLink()
+                session.getVideoCallLink() == null ? "" : session.getVideoCallLink()
         );
     }
 
@@ -246,12 +276,10 @@ public class SessionEmailService {
     private String buildTranscriptionReadyTemplate(LearningSession session, Person instructor) {
         String sessionLink = frontendUrl + "/app/video-call/" + session.getId();
 
-        // Calcular estadísticas
         int wordCount = session.getFullText() != null ? session.getFullText().split("\\s+").length : 0;
         int charCount = session.getFullText() != null ? session.getFullText().length() : 0;
         int durationMinutes = session.getDurationSeconds() != null ? session.getDurationSeconds() / 60 : 0;
 
-        // Preview de las primeras 300 caracteres
         String preview = "";
         if (session.getFullText() != null) {
             preview = session.getFullText().length() > 300
@@ -273,35 +301,28 @@ public class SessionEmailService {
             <td align='center'>
                 <table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
                     
-                    <!-- Header -->
                     <tr>
                         <td style='background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); padding: 40px 20px; text-align: center;'>
                             <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1>
                         </td>
                     </tr>
                     
-                    <!-- Contenido -->
                     <tr>
                         <td style='padding: 40px 30px; color: #ffffff;'>
                             
-                            <!-- Título -->
                             <h2 style='color: #aae16b; margin-top: 0; font-size: 24px; text-align: center;'>Transcripción Disponible</h2>
                             
-                            <!-- Saludo -->
                             <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0; text-align: center;'>
                                 Estimado/a <strong style='color: #aae16b;'>%s</strong>
                             </p>
                             
-                            <!-- Mensaje principal -->
                             <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0; text-align: center;'>
                                 La transcripción automática de su sesión ha sido procesada exitosamente<br>y está disponible para su revisión y descarga.
                             </p>
                             
-                            <!-- Información de la sesión -->
                             <div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #aae16b;'>
                                 <h3 style='color: #aae16b; margin-top: 0; font-size: 18px; text-align: center;'>%s</h3>
                                 
-                                <!-- Estadísticas -->
                                 <table width='100%%' cellpadding='8' cellspacing='0' style='font-size: 14px; margin-top: 15px;'>
                                     <tr>
                                         <td style='color: #aae16b; width: 40%%; font-weight: 600;'>Estadísticas:</td>
@@ -322,7 +343,6 @@ public class SessionEmailService {
                                 </table>
                             </div>
                             
-                            <!-- Vista previa -->
                             <div style='background-color: #1e1e1e; padding: 20px; border-radius: 8px; margin: 25px 0; border: 1px solid #504ab7;'>
                                 <h4 style='color: #aae16b; margin-top: 0; font-size: 14px; font-weight: 600;'>Vista Previa del Contenido:</h4>
                                 <p style='color: #b0b0b0; font-size: 13px; line-height: 1.6; font-style: italic; margin: 10px 0;'>
@@ -330,7 +350,6 @@ public class SessionEmailService {
                                 </p>
                             </div>
                             
-                            <!-- Botón de acción -->
                             <table width='100%%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>
                                 <tr>
                                     <td align='center'>
@@ -341,7 +360,6 @@ public class SessionEmailService {
                                 </tr>
                             </table>
                             
-                            <!-- Información adicional -->
                             <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #504ab7;'>
                                 <h4 style='color: #aae16b; margin-top: 0; font-size: 16px; font-weight: 600;'>Usos Recomendados</h4>
                                 <ul style='color: #ffffff; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 10px 0;'>
@@ -355,7 +373,6 @@ public class SessionEmailService {
                         </td>
                     </tr>
                     
-                    <!-- Footer -->
                     <tr>
                         <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>
                             <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>
@@ -428,5 +445,36 @@ public class SessionEmailService {
             case "en" -> "English";
             default -> code;
         };
+    }
+
+    // Helpers for Google Calendar link generation
+
+    private Date calculateEndTime(Date start, Integer durationMinutes) {
+        if (start == null || durationMinutes == null) return null;
+        return new Date(start.getTime() + (durationMinutes * 60L * 1000L));
+    }
+
+    private String buildGoogleCalendarUrl(String title, String description, Date start, Date end, String location) {
+        try {
+            String startUtc = formatDateForGoogle(start);
+            String endUtc = formatDateForGoogle(end);
+
+            StringBuilder url = new StringBuilder("https://www.google.com/calendar/render?action=TEMPLATE");
+            if (title != null && !title.isEmpty()) url.append("&text=").append(URLEncoder.encode(title, StandardCharsets.UTF_8.toString()));
+            if (description != null && !description.isEmpty()) url.append("&details=").append(URLEncoder.encode(description, StandardCharsets.UTF_8.toString()));
+            if (startUtc != null && endUtc != null) url.append("&dates=").append(URLEncoder.encode(startUtc + "/" + endUtc, StandardCharsets.UTF_8.toString()));
+            if (location != null && !location.isEmpty()) url.append("&location=").append(URLEncoder.encode(location, StandardCharsets.UTF_8.toString()));
+            url.append("&trp=true");
+            return url.toString();
+        } catch (Exception e) {
+            return "https://www.google.com/calendar";
+        }
+    }
+
+    private String formatDateForGoogle(Date date) {
+        if (date == null) return null;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(date);
     }
 }
