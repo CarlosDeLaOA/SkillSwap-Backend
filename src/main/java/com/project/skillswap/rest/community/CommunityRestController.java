@@ -1,14 +1,17 @@
 package com.project.skillswap.rest.community;
 
 import com.project.skillswap.logic.entity.CommunityInvitation.CommunityInvitationService;
+import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
 import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunityRepository;
 import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunity;
 import com.project.skillswap.logic.entity.CommunityMember.CommunityMemberRepository;
 import com.project.skillswap.logic.entity.CommunityMember.CommunityMember;
+import com.project.skillswap.logic.entity.auth.JwtService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,10 +28,18 @@ import java.util.*;
 @CrossOrigin(origins = "*")
 public class CommunityRestController {
 
+    @Autowired
+    private LearningCommunityRepository learningCommunityRepository;
+
+    @Autowired
+    private PersonRepository personRepository;
+
+    @Autowired
+    private JwtService jwtService;
+
     //#region Dependencies
     private static final Logger logger = LoggerFactory.getLogger(CommunityRestController.class);
     private final CommunityInvitationService invitationService;
-    private final PersonRepository personRepository;
     private final LearningCommunityRepository communityRepository;
     private final CommunityMemberRepository memberRepository;
 
@@ -451,79 +462,54 @@ public class CommunityRestController {
     }
 
     @GetMapping("/my-communities")
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    public ResponseEntity<?> getMyCommunities(@AuthenticationPrincipal UserDetails userDetails) {
-        logger.info(">>> getMyCommunities called. user={}",
-                userDetails != null ? userDetails.getUsername() : "anonymous");
-
-        if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse("Debes iniciar sesión para ver tus comunidades"));
-        }
-
+    public ResponseEntity<Map<String, Object>> getMyCommunities(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam(required = false) Integer maxMembers) {
         try {
-            Long personId = extractPersonId(userDetails);
-            logger.info("Extracted personId: {}", personId);
+            System.out.println("[COMMUNITIES] GET /api/communities/my-communities");
 
-            if (personId == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(createErrorResponse("No se pudo identificar tu usuario"));
+            String token = authHeader.replace("Bearer ", "");
+            String userEmail = jwtService.extractUsername(token);
+
+            System.out.println("[COMMUNITIES] Usuario autenticado: " + userEmail);
+
+            // Buscar persona por email
+            Person person = personRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado con email: " + userEmail));
+
+            Learner learner = person.getLearner();
+            if (learner == null) {
+                throw new RuntimeException("El usuario no tiene un perfil de estudiante");
             }
 
-            List<Map<String, Object>> communitiesList = new ArrayList<>();
-
-            // ➤ Comunidades donde el usuario es creador
-            List<LearningCommunity> createdCommunities =
-                    communityRepository.findByCreator_Person_Id(personId);
-
-            for (LearningCommunity community : createdCommunities) {
-                // Forzar carga de miembros
-                int memberCount = community.getMembers() != null ? community.getMembers().size() : 0;
-                logger.info("Community '{}' has {} members", community.getName(), memberCount);
-
-                Map<String, Object> data = new HashMap<>();
-                data.put("id", community.getId());
-                data.put("name", community.getName());
-                data.put("description", community.getDescription());
-                data.put("role", "CREATOR");
-                data.put("members", community.getMembers());
-                data.put("memberCount", memberCount);
-                communitiesList.add(data);
-            }
-
-            // ➤ Comunidades donde el usuario es miembro activo
-            List<CommunityMember> memberships =
-                    memberRepository.findActiveMembersByPersonId(personId);
-
-            for (CommunityMember member : memberships) {
-                LearningCommunity community = member.getLearningCommunity();
-
-                // Forzar carga de miembros
-                int memberCount = community.getMembers() != null ? community.getMembers().size() : 0;
-                logger.info("Community '{}' has {} members", community.getName(), memberCount);
-
-                Map<String, Object> data = new HashMap<>();
-                data.put("id", community.getId());
-                data.put("name", community.getName());
-                data.put("description", community.getDescription());
-                data.put("role", member.getRole().name());
-                data.put("members", community.getMembers());
-                data.put("memberCount", memberCount);
-
-                communitiesList.add(data);
+            // Obtener comunidades
+            List<LearningCommunity> communities;
+            if (maxMembers != null) {
+                communities = learningCommunityRepository.findCommunitiesByLearnerIdWithMaxMembers(
+                        learner.getId(),
+                        maxMembers
+                );
+                System.out.println("[COMMUNITIES] Comunidades con máximo " + maxMembers + " miembros: " + communities.size());
+            } else {
+                communities = learningCommunityRepository.findCommunitiesByLearnerId(learner.getId());
+                System.out.println("[COMMUNITIES] Total de comunidades: " + communities.size());
             }
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("data", communitiesList);
-            response.put("count", communitiesList.size());
+            response.put("data", communities);
+            response.put("count", communities.size());
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            logger.error("Error getting my communities", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Error al obtener tus comunidades"));
+            System.err.println("[COMMUNITIES] Error: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }
 
