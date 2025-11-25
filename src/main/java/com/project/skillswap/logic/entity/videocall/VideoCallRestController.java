@@ -814,101 +814,810 @@ public class VideoCallRestController {
         }
     }
 
+
     /**
-     * 📥 Descarga transcripción como archivo TXT (para link de email)
+     * 📥 Popup de selección de formato (página intermedia)
      */
     @GetMapping("/transcription/{sessionId}/download")
-    public ResponseEntity<?> downloadTranscriptionFile(@PathVariable Long sessionId) {
+    public ResponseEntity<String> downloadTranscriptionPage(@PathVariable Long sessionId) {
         try {
             System.out.println("========================================");
-            System.out.println(" DESCARGA DE TRANSCRIPCIÓN");
+            System.out.println("📥 POPUP DE SELECCIÓN DE FORMATO");
             System.out.println("   Session ID: " + sessionId);
             System.out.println("========================================");
 
-
+            // Validar que existe la sesión y tiene transcripción
             LearningSession session = sessionRepository.findById(sessionId)
                     .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
-                System.out.println(" No hay transcripción disponible");
+                String errorHtml = """
+                <!DOCTYPE html>
+                <html lang='es'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>Transcripción no disponible</title>
+                    <style>
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+                            background: #1a1a1a;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            height: 100vh;
+                            margin: 0;
+                        }
+                        .container {
+                            background: #2a2a2a;
+                            padding: 40px;
+                            border-radius: 15px;
+                            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                            text-align: center;
+                            max-width: 500px;
+                            border: 1px solid #3a3a3a;
+                        }
+                        .error-icon { font-size: 64px; margin-bottom: 20px; }
+                        h1 { color: #e74c3c; margin: 0 0 15px 0; }
+                        p { color: #999; line-height: 1.6; }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='error-icon'>⚠️</div>
+                        <h1>Transcripción no disponible</h1>
+                        <p>No hay transcripción disponible para esta sesión.</p>
+                    </div>
+                </body>
+                </html>
+                """;
+
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of(
-                                "success", false,
-                                "message", "No hay transcripción disponible para esta sesión"
-                        ));
+                        .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                        .body(errorHtml);
             }
 
-
-            String fullText = session.getFullText();
-            int wordCount = fullText.split("\\s+").length;
+            // Calcular estadísticas
+            int wordCount = session.getFullText().split("\\s+").length;
             int durationSeconds = session.getDurationSeconds() != null ? session.getDurationSeconds() : 0;
 
+            // Página con popup modal
+            String html = """
+            <!DOCTYPE html>
+            <html lang='es'>
+            <head>
+                <meta charset='UTF-8'>
+                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                <title>Descargar Transcripción - SkillSwap</title>
+                <style>
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                        background: linear-gradient(135deg, #1a1a1a 0%%, #2d2d2d 100%%);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        min-height: 100vh;
+                        padding: 20px;
+                    }
+                    
+                    .modal {
+                        background: #2a2a2a;
+                        padding: 0;
+                        border-radius: 20px;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                        max-width: 500px;
+                        width: 100%%;
+                        animation: modalFadeIn 0.4s ease-in-out;
+                        border: 1px solid #3a3a3a;
+                        overflow: hidden;
+                    }
+                    
+                    @keyframes modalFadeIn {
+                        from {
+                            opacity: 0;
+                            transform: scale(0.9) translateY(-20px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: scale(1) translateY(0);
+                        }
+                    }
+                    
+                    .modal-header {
+                        background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%);
+                        padding: 30px;
+                        text-align: center;
+                    }
+                    
+                    .modal-header h1 {
+                        color: white;
+                        font-size: 24px;
+                        margin-bottom: 5px;
+                        font-weight: 600;
+                    }
+                    
+                    .modal-header p {
+                        color: rgba(255,255,255,0.9);
+                        font-size: 14px;
+                    }
+                    
+                    .modal-body {
+                        padding: 30px;
+                    }
+                    
+                    .session-title {
+                        text-align: center;
+                        margin-bottom: 25px;
+                    }
+                    
+                    .session-title h2 {
+                        color: #aae16b;
+                        font-size: 20px;
+                        margin-bottom: 15px;
+                    }
+                    
+                    .stats {
+                        display: flex;
+                        justify-content: space-around;
+                        margin-bottom: 30px;
+                    }
+                    
+                    .stat-item {
+                        text-align: center;
+                    }
+                    
+                    .stat-value {
+                        color: #aae16b;
+                        font-size: 24px;
+                        font-weight: 700;
+                        display: block;
+                        margin-bottom: 5px;
+                    }
+                    
+                    .stat-label {
+                        color: #888;
+                        font-size: 12px;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }
+                    
+                    .divider {
+                        height: 1px;
+                        background: linear-gradient(90deg, transparent, #3a3a3a, transparent);
+                        margin: 25px 0;
+                    }
+                    
+                    .format-selector h3 {
+                        color: #ccc;
+                        font-size: 16px;
+                        text-align: center;
+                        margin-bottom: 20px;
+                        font-weight: 500;
+                    }
+                    
+                    .button-group {
+                        display: flex;
+                        gap: 15px;
+                    }
+                    
+                    .download-btn {
+                        flex: 1;
+                        padding: 16px 20px;
+                        border: none;
+                        border-radius: 12px;
+                        font-size: 15px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        text-decoration: none;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                    }
+                    
+                    .download-btn:hover {
+                        transform: translateY(-3px);
+                        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+                    }
+                    
+                    .download-btn:active {
+                        transform: translateY(-1px);
+                    }
+                    
+                    .btn-txt {
+                        background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%);
+                        color: #1a1a1a;
+                    }
+                    
+                    .btn-txt:hover {
+                        background: linear-gradient(135deg, #b8ed7a 0%%, #9dd665 100%%);
+                    }
+                    
+                    .btn-pdf {
+                        background: linear-gradient(135deg, #504ab7 0%%, #6b63d8 100%%);
+                        color: white;
+                    }
+                    
+                    .btn-pdf:hover {
+                        background: linear-gradient(135deg, #6159c9 0%%, #7c74ea 100%%);
+                    }
+                    
+                    .icon {
+                        font-size: 32px;
+                    }
+                    
+                    .format-label {
+                        font-size: 14px;
+                    }
+                    
+                    .format-desc {
+                        font-size: 11px;
+                        opacity: 0.8;
+                    }
+                    
+                    @media (max-width: 600px) {
+                        .modal {
+                            margin: 20px;
+                        }
+                        
+                        .modal-body {
+                            padding: 25px 20px;
+                        }
+                        
+                        .button-group {
+                            flex-direction: column;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='modal'>
+                    <div class='modal-header'>
+                        <h1>📥 Transcripción Disponible</h1>
+                        <p>Seleccione el formato de descarga</p>
+                    </div>
+                    
+                    <div class='modal-body'>
+                        <div class='session-title'>
+                            <h2>%s</h2>
+                        </div>
+                        
+                        <div class='stats'>
+                            <div class='stat-item'>
+                                <span class='stat-value'>%d</span>
+                                <span class='stat-label'>Minutos</span>
+                            </div>
+                            <div class='stat-item'>
+                                <span class='stat-value'>%d</span>
+                                <span class='stat-label'>Palabras</span>
+                            </div>
+                            <div class='stat-item'>
+                                <span class='stat-value'>#%d</span>
+                                <span class='stat-label'>Sesión</span>
+                            </div>
+                        </div>
+                        
+                        <div class='divider'></div>
+                        
+                        <div class='format-selector'>
+                            <h3>Seleccione formato:</h3>
+                        </div>
+                        
+                        <div class='button-group'>
+                            <a href='/videocall/transcription/%d/download-txt' class='download-btn btn-txt'>
+                                <span class='icon'>📝</span>
+                                <span class='format-label'>Texto Plano</span>
+                                <span class='format-desc'>Archivo .TXT</span>
+                            </a>
+                            
+                            <a href='/videocall/transcription/%d/download-pdf' class='download-btn btn-pdf'>
+                                <span class='icon'>📄</span>
+                                <span class='format-label'>Documento</span>
+                                <span class='format-desc'>Archivo .PDF</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(
+                    session.getTitle(),
+                    durationSeconds / 60,
+                    wordCount,
+                    session.getId(),
+                    session.getId(),
+                    session.getId()
+            );
 
+            return ResponseEntity.ok()
+                    .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                    .body(html);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error en popup de selección: " + e.getMessage());
+            e.printStackTrace();
+
+            String errorHtml = """
+            <!DOCTYPE html>
+            <html>
+            <body style='font-family: Arial; background: #1a1a1a; color: #fff; text-align: center; padding: 50px;'>
+                <h2>❌ Error</h2>
+                <p>%s</p>
+            </body>
+            </html>
+            """.formatted(e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                    .body(errorHtml);
+        }
+    }
+
+    /**
+     * 📝 Página de descarga TXT (idéntica a PDF pero descarga TXT)
+     */
+    @GetMapping("/transcription/{sessionId}/download-txt")
+    public ResponseEntity<String> downloadTranscriptionTxtPage(@PathVariable Long sessionId) {
+        try {
+            System.out.println("========================================");
+            System.out.println("📝 PÁGINA DE DESCARGA TXT");
+            System.out.println("   Session ID: " + sessionId);
+            System.out.println("========================================");
+
+            // Validar sesión
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+            if (session.getFullText() == null || session.getFullText().isEmpty()) {
+                String errorHtml = """
+                <!DOCTYPE html>
+                <html lang='es'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>Transcripción no disponible</title>
+                    <style>
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            height: 100vh;
+                            margin: 0;
+                        }
+                        .container {
+                            background: white;
+                            padding: 40px;
+                            border-radius: 15px;
+                            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                            text-align: center;
+                            max-width: 500px;
+                        }
+                        .error-icon { font-size: 64px; margin-bottom: 20px; }
+                        h1 { color: #e74c3c; margin: 0 0 15px 0; }
+                        p { color: #555; line-height: 1.6; }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='error-icon'>⚠️</div>
+                        <h1>Transcripción no disponible</h1>
+                        <p>No hay transcripción disponible para esta sesión.</p>
+                    </div>
+                </body>
+                </html>
+                """;
+
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                        .body(errorHtml);
+            }
+
+            // Calcular estadísticas
+            int wordCount = session.getFullText().split("\\s+").length;
+            int durationSeconds = session.getDurationSeconds() != null ? session.getDurationSeconds() : 0;
+
+            // Generar TXT en memoria
             StringBuilder content = new StringBuilder();
-            content.append("===========================================\n");
-            content.append("TRANSCRIPCIÓN DE SESIÓN - SKILLSWAP\n");
-            content.append("===========================================\n");
-            content.append("Sesión: #").append(session.getId()).append("\n");
-            content.append("Título: ").append(session.getTitle()).append("\n");
+            content.append("===========================================\\n");
+            content.append("TRANSCRIPCIÓN DE SESIÓN - SKILLSWAP\\n");
+            content.append("===========================================\\n");
+            content.append("Sesión: #").append(session.getId()).append("\\n");
+            content.append("Título: ").append(session.getTitle()).append("\\n");
 
             if (session.getInstructor() != null && session.getInstructor().getPerson() != null) {
-                content.append("Instructor: ").append(session.getInstructor().getPerson().getFullName()).append("\n");
+                content.append("Instructor: ").append(session.getInstructor().getPerson().getFullName()).append("\\n");
             }
 
             if (session.getSkill() != null) {
-                content.append("Habilidad: ").append(session.getSkill().getName()).append("\n");
+                content.append("Habilidad: ").append(session.getSkill().getName()).append("\\n");
             }
 
-            content.append("Palabras: ").append(wordCount).append("\n");
+            content.append("Palabras: ").append(wordCount).append("\\n");
             content.append("Duración: ").append(durationSeconds / 60).append(" minutos ")
-                    .append(durationSeconds % 60).append(" segundos\n");
+                    .append(durationSeconds % 60).append(" segundos\\n");
             content.append("Fecha: ").append(new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm")
-                    .format(new java.util.Date())).append("\n");
-            content.append("===========================================\n\n");
-            content.append(fullText);
-
+                    .format(new java.util.Date())).append("\\n");
+            content.append("===========================================\\n\\n");
+            content.append(session.getFullText());
 
             String fileName = "transcripcion_sesion_" + session.getId() + "_" +
                     new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date()) + ".txt";
 
-            System.out.println(" Generando archivo: " + fileName);
-            System.out.println("   Palabras: " + wordCount);
-            System.out.println("   Tamaño: " + content.length() + " caracteres");
+            // Convertir a Base64 para JavaScript
+            String base64Content = java.util.Base64.getEncoder()
+                    .encodeToString(content.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
+            // Página HTML idéntica al PDF
+            String html = """
+            <!DOCTYPE html>
+            <html lang='es'>
+            <head>
+                <meta charset='UTF-8'>
+                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                <title>Descargar Transcripción TXT - SkillSwap</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                        background: linear-gradient(135deg, #aae16b 0%%, #504ab7 100%%);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        min-height: 100vh;
+                        padding: 20px;
+                    }
+                    
+                    .container {
+                        background: white;
+                        padding: 50px 40px;
+                        border-radius: 20px;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                        max-width: 600px;
+                        width: 100%%;
+                        animation: fadeIn 0.5s ease-in-out;
+                    }
+                    
+                    @keyframes fadeIn {
+                        from { opacity: 0; transform: translateY(-20px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    
+                    .logo {
+                        text-align: center;
+                        margin-bottom: 30px;
+                    }
+                    
+                    .logo h1 {
+                        font-size: 32px;
+                        background: linear-gradient(135deg, #aae16b 0%%, #504ab7 100%%);
+                        -webkit-background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                        background-clip: text;
+                        margin-bottom: 5px;
+                    }
+                    
+                    .logo p {
+                        color: #666;
+                        font-size: 14px;
+                    }
+                    
+                    .title {
+                        text-align: center;
+                        margin-bottom: 30px;
+                    }
+                    
+                    .title h2 {
+                        color: #333;
+                        font-size: 24px;
+                        margin-bottom: 10px;
+                    }
+                    
+                    .title .format-badge {
+                        display: inline-block;
+                        background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%);
+                        color: #1a1a1a;
+                        padding: 8px 20px;
+                        border-radius: 20px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        margin-top: 10px;
+                    }
+                    
+                    .info-box {
+                        background: #f8f9fa;
+                        border-left: 4px solid #aae16b;
+                        padding: 20px;
+                        margin-bottom: 30px;
+                        border-radius: 8px;
+                    }
+                    
+                    .info-box h3 {
+                        color: #8ec756;
+                        font-size: 18px;
+                        margin-bottom: 15px;
+                    }
+                    
+                    .info-row {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 8px 0;
+                        border-bottom: 1px solid #e0e0e0;
+                    }
+                    
+                    .info-row:last-child {
+                        border-bottom: none;
+                    }
+                    
+                    .info-label {
+                        color: #666;
+                        font-weight: 500;
+                    }
+                    
+                    .info-value {
+                        color: #333;
+                        font-weight: 600;
+                    }
+                    
+                    .download-section {
+                        text-align: center;
+                        margin: 30px 0;
+                    }
+                    
+                    .download-btn {
+                        display: inline-block;
+                        background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%);
+                        color: #1a1a1a;
+                        padding: 18px 40px;
+                        border: none;
+                        border-radius: 12px;
+                        font-size: 18px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        text-decoration: none;
+                        box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4);
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .download-btn:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 20px rgba(170, 225, 107, 0.6);
+                        background: linear-gradient(135deg, #8ec756 0%%, #7ab847 100%%);
+                    }
+                    
+                    .download-btn .icon {
+                        font-size: 24px;
+                        margin-right: 10px;
+                    }
+                    
+                    .status {
+                        text-align: center;
+                        margin-top: 20px;
+                        padding: 15px;
+                        background: #e8f5e9;
+                        border-radius: 8px;
+                        color: #2e7d32;
+                        font-weight: 500;
+                        display: none;
+                    }
+                    
+                    .status.show {
+                        display: block;
+                        animation: slideDown 0.3s ease-in-out;
+                    }
+                    
+                    @keyframes slideDown {
+                        from { opacity: 0; transform: translateY(-10px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    
+                    .footer {
+                        text-align: center;
+                        margin-top: 30px;
+                        padding-top: 20px;
+                        border-top: 1px solid #e0e0e0;
+                    }
+                    
+                    .footer p {
+                        color: #999;
+                        font-size: 12px;
+                    }
+                    
+                    @media (max-width: 600px) {
+                        .container {
+                            padding: 30px 20px;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='logo'>
+                        <h1>SkillSwap</h1>
+                        <p>Plataforma de Intercambio de Conocimiento</p>
+                    </div>
+                    
+                    <div class='title'>
+                        <h2>📝 Descargar Transcripción</h2>
+                        <span class='format-badge'>Formato: TXT</span>
+                    </div>
+                    
+                    <div class='info-box'>
+                        <h3>%s</h3>
+                        <div class='info-row'>
+                            <span class='info-label'>Sesión ID:</span>
+                            <span class='info-value'>#%d</span>
+                        </div>
+                        <div class='info-row'>
+                            <span class='info-label'>Palabras:</span>
+                            <span class='info-value'>%d palabras</span>
+                        </div>
+                        <div class='info-row'>
+                            <span class='info-label'>Duración:</span>
+                            <span class='info-value'>%d minutos %d segundos</span>
+                        </div>
+                    </div>
+                    
+                    <div class='download-section'>
+                        <button class='download-btn' onclick='downloadFile()'>
+                            <span class='icon'>📝</span>
+                            <span>Descargar Archivo TXT</span>
+                        </button>
+                    </div>
+                    
+                    <div class='status' id='status'>
+                        ✅ Descarga iniciada. Revise su carpeta de descargas.
+                    </div>
+                    
+                    <div class='footer'>
+                        <p>© 2025 SkillSwap - Transcripción procesada con IA</p>
+                        <p>Groq Whisper Large V3</p>
+                    </div>
+                </div>
+                
+                <script>
+                    function downloadFile() {
+                        // Decodificar contenido
+                        const base64Content = '%s';
+                        const binaryString = atob(base64Content);
+                        const bytes = new Uint8Array(binaryString.length);
+                        for (let i = 0; i < binaryString.length; i++) {
+                            bytes[i] = binaryString.charCodeAt(i);
+                        }
+                        
+                        // Crear blob
+                        const blob = new Blob([bytes], { type: 'text/plain;charset=utf-8' });
+                        const url = window.URL.createObjectURL(blob);
+                        
+                        // Crear link de descarga
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = '%s';
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        // Limpiar
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        // Mostrar mensaje
+                        document.getElementById('status').classList.add('show');
+                        
+                        console.log('✅ Descarga iniciada: %s');
+                    }
+                    
+                    // Auto-descarga después de 1 segundo
+                    setTimeout(function() {
+                        downloadFile();
+                    }, 1000);
+                </script>
+            </body>
+            </html>
+            """.formatted(
+                    session.getTitle(),
+                    session.getId(),
+                    wordCount,
+                    durationSeconds / 60,
+                    durationSeconds % 60,
+                    base64Content,
+                    fileName,
+                    fileName
+            );
 
-            byte[] contentBytes = content.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            System.out.println("========================================");
+            System.out.println("✅ PÁGINA TXT GENERADA");
+            System.out.println("   Archivo: " + fileName);
+            System.out.println("========================================");
 
+            return ResponseEntity.ok()
+                    .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                    .body(html);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error en página TXT: " + e.getMessage());
+            e.printStackTrace();
+
+            String errorHtml = """
+            <!DOCTYPE html>
+            <html>
+            <body style='font-family: Arial; text-align: center; padding: 50px;'>
+                <h2>❌ Error</h2>
+                <p>%s</p>
+            </body>
+            </html>
+            """.formatted(e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                    .body(errorHtml);
+        }
+    }
+
+    /**
+     * 📄 Descarga directa de archivo PDF
+     */
+    @GetMapping("/transcription/{sessionId}/download-pdf")
+    public ResponseEntity<?> downloadTranscriptionPdf(@PathVariable Long sessionId) {
+        try {
+            System.out.println("========================================");
+            System.out.println("📄 DESCARGA DE TRANSCRIPCIÓN PDF");
+            System.out.println("   Session ID: " + sessionId);
+            System.out.println("========================================");
+
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+            if (session.getFullText() == null || session.getFullText().isEmpty()) {
+                System.out.println("⚠️ No hay transcripción disponible");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No hay transcripción disponible para esta sesión".getBytes());
+            }
+
+            // Generar PDF usando el servicio
+            TranscriptionPdfService pdfService = new TranscriptionPdfService();
+            byte[] pdfBytes = pdfService.generateTranscriptionPdf(session);
+
+            String fileName = "transcripcion_sesion_" + session.getId() + "_" +
+                    new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date()) + ".pdf";
 
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-            headers.setContentType(org.springframework.http.MediaType.TEXT_PLAIN);
-            headers.setContentLength(contentBytes.length);
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+            headers.setContentLength(pdfBytes.length);
             headers.setCacheControl("no-cache, no-store, must-revalidate");
             headers.setPragma("no-cache");
             headers.setExpires(0);
-
-
             headers.set("Content-Disposition",
                     "attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" +
                             java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"));
 
             System.out.println("========================================");
-            System.out.println(" ARCHIVO GENERADO Y LISTO PARA DESCARGA");
+            System.out.println("✅ PDF LISTO PARA DESCARGA");
             System.out.println("========================================");
 
             return ResponseEntity.ok()
                     .headers(headers)
-                    .body(contentBytes);
+                    .body(pdfBytes);
 
         } catch (Exception e) {
             System.err.println("========================================");
-            System.err.println(" ERROR AL DESCARGAR TRANSCRIPCIÓN");
+            System.err.println("❌ ERROR AL DESCARGAR PDF");
             System.err.println("   Error: " + e.getMessage());
             System.err.println("========================================");
             e.printStackTrace();
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(("Error al descargar la transcripción: " + e.getMessage())
+                    .body(("Error al descargar PDF: " + e.getMessage())
                             .getBytes(java.nio.charset.StandardCharsets.UTF_8));
         }
     }

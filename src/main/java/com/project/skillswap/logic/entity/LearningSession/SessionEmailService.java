@@ -42,14 +42,14 @@ public class SessionEmailService {
      */
     public boolean sendSessionCreationEmail(LearningSession session, Person instructor) {
         try {
-            System.out.println(" [SessionEmailService] Iniciando envío para: " + instructor.getEmail());
+            System.out.println("📧 [SessionEmailService] Iniciando envío para: " + instructor.getEmail());
 
             MimeMessage msg = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(msg, "UTF-8");
 
             helper.setFrom(from);
             helper.setTo(instructor.getEmail());
-            helper.setSubject(" Sesión Publicada - " + session.getTitle());
+            helper.setSubject("✅ Sesión Publicada - " + session.getTitle());
 
             String htmlContent = buildSessionCreationTemplate(session, instructor);
             helper.setText(htmlContent, true);
@@ -57,11 +57,11 @@ public class SessionEmailService {
             mailSender.send(msg);
 
             registerSuccessfulNotification(instructor, session, "SESSION_CREATED");
-            System.out.println(" [SessionEmailService] Email enviado exitosamente");
+            System.out.println("✅ [SessionEmailService] Email enviado exitosamente");
             return true;
 
         } catch (Exception e) {
-            System.err.println(" [SessionEmailService] Error: " + e.getMessage());
+            System.err.println("❌ [SessionEmailService] Error: " + e.getMessage());
             e.printStackTrace();
             registerFailedNotification(instructor, "SESSION_CREATED", "Error: " + e.getMessage());
             return false;
@@ -74,14 +74,14 @@ public class SessionEmailService {
     public boolean sendTranscriptionReadyEmail(LearningSession session, Person instructor) {
         try {
             System.out.println("========================================");
-            System.out.println(" ENVIANDO EMAIL DE TRANSCRIPCIÓN");
+            System.out.println("📧 ENVIANDO EMAIL DE TRANSCRIPCIÓN");
             System.out.println("   Sesión: " + session.getTitle());
             System.out.println("   Instructor: " + instructor.getEmail());
             System.out.println("========================================");
 
             // Validar que hay transcripción
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
-                System.err.println(" No hay texto de transcripción para enviar");
+                System.err.println("⚠️ No hay texto de transcripción para enviar");
                 return false;
             }
 
@@ -100,14 +100,14 @@ public class SessionEmailService {
             registerSuccessfulNotification(instructor, session, "TRANSCRIPTION_READY");
 
             System.out.println("========================================");
-            System.out.println(" EMAIL DE TRANSCRIPCIÓN ENVIADO");
+            System.out.println("✅ EMAIL DE TRANSCRIPCIÓN ENVIADO");
             System.out.println("========================================");
 
             return true;
 
         } catch (Exception e) {
             System.err.println("========================================");
-            System.err.println(" ERROR ENVIANDO EMAIL DE TRANSCRIPCIÓN");
+            System.err.println("❌ ERROR ENVIANDO EMAIL DE TRANSCRIPCIÓN");
             System.err.println("   Error: " + e.getMessage());
             System.err.println("========================================");
             e.printStackTrace();
@@ -245,8 +245,9 @@ public class SessionEmailService {
      * Diseño oscuro SkillSwap con texto profesional
      */
     private String buildTranscriptionReadyTemplate(LearningSession session, Person instructor) {
-
-        String downloadLink = "http://localhost:8080/videocall/transcription/" + session.getId() + "/download";
+        // ⭐ Links de descarga
+        String downloadTxtLink = "http://localhost:8080/videocall/transcription/" + session.getId() + "/download";
+        String downloadPdfLink = "http://localhost:8080/videocall/transcription/" + session.getId() + "/download-pdf";
 
         // Calcular estadísticas
         int wordCount = session.getFullText() != null ? session.getFullText().split("\\s+").length : 0;
@@ -332,12 +333,18 @@ public class SessionEmailService {
                                 </p>
                             </div>
                             
-                            <!-- Botón de acción -->
+                            <!-- Botones de descarga -->
                             <table width='100%%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>
                                 <tr>
                                     <td align='center'>
-                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #141414; text-decoration: none; padding: 15px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4);'>
-                                            Descargar Transcripción
+                                        <!-- Botón TXT -->
+                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #141414; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4); margin: 0 5px;'>
+                                            📝 Descargar TXT
+                                        </a>
+                                        
+                                        <!-- Botón PDF -->
+                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #6b63d8 100%%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(80, 74, 183, 0.4); margin: 0 5px;'>
+                                            📄 Descargar PDF
                                         </a>
                                     </td>
                                 </tr>
@@ -382,7 +389,8 @@ public class SessionEmailService {
                 wordCount,
                 charCount,
                 preview != null ? preview : "",
-                downloadLink
+                downloadTxtLink,  // ⭐ Link TXT
+                downloadPdfLink   // ⭐ Link PDF
         );
     }
 
@@ -396,7 +404,7 @@ public class SessionEmailService {
             notification.setRead(false);
             notificationRepository.save(notification);
         } catch (Exception e) {
-            System.err.println(" Error registrando notificación: " + e.getMessage());
+            System.err.println("⚠️ Error registrando notificación: " + e.getMessage());
         }
     }
 
@@ -410,7 +418,7 @@ public class SessionEmailService {
             notification.setRead(false);
             notificationRepository.save(notification);
         } catch (Exception e) {
-            System.err.println(" Error registrando notificación fallida: " + e.getMessage());
+            System.err.println("⚠️ Error registrando notificación fallida: " + e.getMessage());
         }
     }
 
