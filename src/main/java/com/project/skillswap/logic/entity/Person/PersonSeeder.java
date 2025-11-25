@@ -160,8 +160,20 @@ public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> 
                 false, new BigDecimal("250.00"), 15, 5
         ));
         users.add(new PersonData(
+                "cmoralesso@ucenfotec.ac.cr", "Password123!", "Camila Morales",
+                "https://res.cloudinary.com/dnpnhjr4l/image/upload/v1763963973/skillswap/profile_photos/olbtxozvdpb6ukuuhxux.jpg", "en", null, true, true,
+                false, new BigDecimal("250.00"), 15, 5
+        ));
+        users.add(new PersonData(
                 "sophie.chen@skillswap.com", "Password123!", "Sophie Chen",
                 "https://i.pravatar.cc/150?img=3", "en", null, true, true,
+                true, "sophie.paypal@example.com", new BigDecimal("380.00"),
+                true, new BigDecimal("4.9"), 68, new BigDecimal("7200.00"),
+                "Desarrolladora senior con 8 años de experiencia en Python, JavaScript y React. Mentora en bootcamps y empresas Fortune 500. Enfocada en código limpio y arquitectura escalable."
+        ));
+        users.add(new PersonData(
+                "moralescamila500@gmail.com", "Password123!", "Mia Morales",
+                "https://res.cloudinary.com/dnpnhjr4l/image/upload/v1763963908/skillswap/profile_photos/qnl4ylt4gaxgu3ddfhnj.jpg", "en", null, true, true,
                 true, "sophie.paypal@example.com", new BigDecimal("380.00"),
                 true, new BigDecimal("4.9"), 68, new BigDecimal("7200.00"),
                 "Desarrolladora senior con 8 años de experiencia en Python, JavaScript y React. Mentora en bootcamps y empresas Fortune 500. Enfocada en código limpio y arquitectura escalable."

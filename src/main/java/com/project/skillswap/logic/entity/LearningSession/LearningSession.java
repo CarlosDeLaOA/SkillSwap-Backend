@@ -94,7 +94,17 @@ public class LearningSession {
     @Column(name = "cancelled_by_instructor_id")
     private Long cancelledByInstructorId;
 
-    // ⭐ Campos para control de grabación
+    //  TRANSCRIPCIÓN CON IA
+    @Column(name = "full_text", columnDefinition = "TEXT")
+    private String fullText;
+
+    @Column(name = "duration_seconds")
+    private Integer durationSeconds;
+
+    @Column(name = "processing_date")
+    private LocalDateTime processingDate;
+
+    // control de grabación
     @Transient
     private boolean recording = false;
 
@@ -306,7 +316,32 @@ public class LearningSession {
         this.attendanceRecord = attendanceRecord;
     }
 
-    // ⭐ Getters y Setters para grabación
+    //  GETTERS Y SETTERS PARA TRANSCRIPCIÓN
+    public String getFullText() {
+        return fullText;
+    }
+
+    public void setFullText(String fullText) {
+        this.fullText = fullText;
+    }
+
+    public Integer getDurationSeconds() {
+        return durationSeconds;
+    }
+
+    public void setDurationSeconds(Integer durationSeconds) {
+        this.durationSeconds = durationSeconds;
+    }
+
+    public LocalDateTime getProcessingDate() {
+        return processingDate;
+    }
+
+    public void setProcessingDate(LocalDateTime processingDate) {
+        this.processingDate = processingDate;
+    }
+
+    //  Getters y Setters para grabación
     public boolean isRecording() {
         return recording;
     }

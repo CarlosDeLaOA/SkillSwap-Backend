@@ -29,6 +29,9 @@ public class RecordingService {
     @Autowired
     private LearningSessionRepository sessionRepository;
 
+    @Autowired
+    private TranscriptionService transcriptionService;
+
     private static final String RECORDINGS_DIR = "recordings/audio/";
     private static final long MAX_RECORDING_SIZE = 500 * 1024 * 1024; // 500MB
 
@@ -79,7 +82,7 @@ public class RecordingService {
     }
 
     /**
-     * ⏹ Detiene sesión de grabación
+     *  Detiene sesión de grabación
      */
     public Map<String, Object> stopRecording(Long sessionId) {
         RecordingSession recording = activeRecordings.get(sessionId);
@@ -112,7 +115,6 @@ public class RecordingService {
 
     /**
      *  Guarda archivo de audio del navegador y lo convierte a MP3
-     *
      */
     public Map<String, Object> saveRecordingFile(Long sessionId, MultipartFile audioFile) {
         try {
@@ -137,7 +139,6 @@ public class RecordingService {
             System.out.println("   isEmpty: " + audioFile.isEmpty());
             System.out.println("========================================");
 
-
             if (audioFile.isEmpty() || audioFile.getSize() == 0) {
                 throw new RuntimeException(" El archivo está vacío. No se capturó audio.");
             }
@@ -160,7 +161,6 @@ public class RecordingService {
             System.out.println(" Archivo temporal guardado");
             System.out.println("   Ruta: " + tempFilePath.toAbsolutePath());
             System.out.println("   Tamaño verificado: " + formatFileSize(tempFileSize));
-
 
             boolean hasAudio = verifyAudioContent(tempFilePath);
 
@@ -210,7 +210,6 @@ public class RecordingService {
             System.out.println("️ Archivo temporal eliminado");
 
             //  GUARDAR RUTA EN BASE DE DATOS
-            String absolutePath = mp3FilePath.toAbsolutePath().toString();
             session.setAudioRecordingUrl(mp3FileName);
             sessionRepository.save(session);
 
@@ -230,7 +229,39 @@ public class RecordingService {
             System.out.println("   Guardado en BD: ✓");
             System.out.println("========================================");
 
+            // ⭐⭐⭐ TRIGGER TRANSCRIPCIÓN AUTOMÁTICA (AQUÍ ES EL LUGAR CORRECTO) ⭐⭐⭐
+            System.out.println("========================================");
+            System.out.println("🤖 INICIANDO TRANSCRIPCIÓN AUTOMÁTICA");
+            System.out.println("   Session ID: " + sessionId);
+            System.out.println("   Archivo MP3: " + mp3FileName);
+            System.out.println("========================================");
 
+            try {
+                transcriptionService.transcribeSessionAudio(sessionId)
+                        .thenAccept(transcriptionResult -> {
+                            if (transcriptionResult.isSuccess()) {
+                                System.out.println("========================================");
+                                System.out.println("✅ TRANSCRIPCIÓN AUTOMÁTICA COMPLETADA");
+                                System.out.println("   Session ID: " + sessionId);
+                                System.out.println("========================================");
+                            } else {
+                                System.err.println("========================================");
+                                System.err.println("❌ ERROR EN TRANSCRIPCIÓN AUTOMÁTICA");
+                                System.err.println("   Session ID: " + sessionId);
+                                System.err.println("   Error: " + transcriptionResult.getErrorMessage());
+                                System.err.println("========================================");
+                            }
+                        });
+
+                System.out.println("✅ Transcripción iniciada en segundo plano");
+
+            } catch (Exception e) {
+                System.err.println("========================================");
+                System.err.println("❌ ERROR AL INICIAR TRANSCRIPCIÓN");
+                System.err.println("   Error: " + e.getMessage());
+                System.err.println("========================================");
+                e.printStackTrace();
+            }
 
             Map<String, Object> result = new HashMap<>();
             result.put("sessionId", sessionId);
@@ -238,7 +269,6 @@ public class RecordingService {
             result.put("size", mp3FileSize);
             result.put("sizeFormatted", formatFileSize(mp3FileSize));
             result.put("path", mp3FilePath.toString());
-            result.put("absolutePath", absolutePath);
             result.put("format", "MP3");
             result.put("hasAudio", true);
             result.put("savedToDatabase", true);
@@ -417,6 +447,22 @@ public class RecordingService {
         }
 
         return result;
+    }
+
+    public int estimateRecordingDuration(String recordingUrl) {
+        // Estimación simple basada en tamaño del archivo
+        // 1 minuto de audio MP3 (128kbps) ≈ 1MB
+        try {
+            File file = new File(recordingUrl);
+            if (file.exists()) {
+                long fileSizeBytes = file.length();
+                long fileSizeMB = fileSizeBytes / (1024 * 1024);
+                return (int) (fileSizeMB * 60); // Convertir MB a segundos estimados
+            }
+        } catch (Exception e) {
+            System.err.println("Error estimando duración: " + e.getMessage());
+        }
+        return 0;
     }
 
     /**
