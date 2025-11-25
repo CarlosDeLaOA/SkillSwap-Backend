@@ -2,6 +2,7 @@ package com.project.skillswap.logic.entity.videocall;
 
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
+import com.project.skillswap.logic.entity.LearningSession.SessionEmailService;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 public class VideoCallRestController {
 
     //#region Dependencies
+
     @Autowired
     private VideoCallService videoCallService;
 
@@ -44,7 +46,239 @@ public class VideoCallRestController {
 
     @Autowired
     private SessionDocumentService documentService;
+
+    @Autowired
+    private TranscriptionService transcriptionService;
+
+    @Autowired
+    private SessionEmailService sessionEmailService;
+
     //#endregion
+
+
+//  TRANSCRIPTION ENDPOINTS
+
+    /**
+     *  ENDPOINT DE PRUEBA: Enviar email de transcripción manualmente
+     * Usar: GET http://localhost:8080/videocall/test-transcription-email/1464
+     *
+     *  ELIMINAR DESPUÉS DE CONFIRMAR QUE FUNCIONA
+     */
+    @GetMapping("/test-transcription-email/{sessionId}")
+    public ResponseEntity<Map<String, Object>> testTranscriptionEmail(@PathVariable Long sessionId) {
+        System.out.println("========================================");
+        System.out.println(" TEST EMAIL - Iniciando prueba manual");
+        System.out.println("   Session ID: " + sessionId);
+        System.out.println("========================================");
+
+        try {
+            // Obtener sesión
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+            // Obtener instructor
+            Person instructor = session.getInstructor().getPerson();
+
+            System.out.println(" Instructor: " + instructor.getEmail());
+            System.out.println(" Tiene transcripción: " + (session.getFullText() != null));
+
+            if (session.getFullText() == null || session.getFullText().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "La sesión no tiene transcripción",
+                        "sessionId", sessionId
+                ));
+            }
+
+            // Intentar enviar email
+            boolean emailSent = sessionEmailService.sendTranscriptionReadyEmail(session, instructor);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", emailSent);
+            response.put("message", emailSent ? "Email enviado exitosamente" : "Error al enviar email");
+            response.put("sessionId", sessionId);
+            response.put("instructorEmail", instructor.getEmail());
+            response.put("transcriptionLength", session.getFullText().length());
+
+            System.out.println("========================================");
+            System.out.println(emailSent ? " TEST EXITOSO" : " TEST FALLIDO");
+            System.out.println("========================================");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("========================================");
+            System.err.println(" ERROR EN TEST DE EMAIL");
+            System.err.println("   Error: " + e.getMessage());
+            System.err.println("========================================");
+            e.printStackTrace();
+
+            return ResponseEntity.status(500).body(Map.of(
+                    "success", false,
+                    "message", "Error: " + e.getMessage(),
+                    "sessionId", sessionId
+            ));
+        }
+    }
+
+    /**
+     *  Inicia transcripción de audio de sesión
+     * Se ejecuta automáticamente después de detener la grabación
+     */
+    @PostMapping("/transcription/start/{sessionId}")
+    public ResponseEntity<Map<String, Object>> startTranscription(@PathVariable Long sessionId) {
+        try {
+            Person person = getAuthenticatedPerson();
+            if (person == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Usuario no autenticado"));
+            }
+
+            if (!isSessionInstructor(person, sessionId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Solo el instructor puede iniciar la transcripción"));
+            }
+
+            System.out.println("========================================");
+            System.out.println(" INICIANDO PROCESO DE TRANSCRIPCIÓN");
+            System.out.println("   Session ID: " + sessionId);
+            System.out.println("   Solicitado por: " + person.getFullName());
+            System.out.println("========================================");
+
+            // Iniciar transcripción asíncrona
+            transcriptionService.transcribeSessionAudio(sessionId)
+                    .thenAccept(result -> {
+                        if (result.isSuccess()) {
+                            System.out.println(" Transcripción completada para sesión " + sessionId);
+                        } else {
+                            System.err.println(" Transcripción falló para sesión " + sessionId + ": " + result.getErrorMessage());
+                        }
+                    });
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Transcripción iniciada en segundo plano");
+            response.put("sessionId", sessionId);
+            response.put("status", "PROCESSING");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println(" Error al iniciar transcripción: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Error al iniciar transcripción: " + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
+     *  Obtiene estado y resultado de transcripción
+     */
+    @GetMapping("/transcription/status/{sessionId}")
+    public ResponseEntity<Map<String, Object>> getTranscriptionStatus(@PathVariable Long sessionId) {
+        try {
+            Person person = getAuthenticatedPerson();
+            if (person == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Usuario no autenticado"));
+            }
+
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+            Map<String, Object> status = new HashMap<>();
+            status.put("sessionId", sessionId);
+
+            if (session.getFullText() != null && !session.getFullText().isEmpty()) {
+                // Transcripción completada
+                status.put("status", "COMPLETED");
+                status.put("hasTranscription", true);
+                status.put("transcription", session.getFullText());
+                status.put("durationSeconds", session.getDurationSeconds());
+                status.put("processingDate", session.getProcessingDate());
+                status.put("wordCount", countWords(session.getFullText()));
+
+            } else if (session.getProcessingDate() != null) {
+                // En proceso
+                status.put("status", "PROCESSING");
+                status.put("hasTranscription", false);
+                status.put("message", "Transcripción en proceso");
+
+            } else if (session.getAudioRecordingUrl() != null) {
+                // Tiene audio pero no transcripción
+                status.put("status", "READY_TO_TRANSCRIBE");
+                status.put("hasTranscription", false);
+                status.put("message", "Audio disponible, listo para transcribir");
+
+            } else {
+                // Sin audio
+                status.put("status", "NO_AUDIO");
+                status.put("hasTranscription", false);
+                status.put("message", "No hay grabación de audio");
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Estado obtenido exitosamente");
+            response.put("data", status);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error al obtener estado: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 🗑️ Elimina transcripción (si necesitas regenerarla)
+     */
+    @DeleteMapping("/transcription/{sessionId}")
+    public ResponseEntity<Map<String, Object>> deleteTranscription(@PathVariable Long sessionId) {
+        try {
+            Person person = getAuthenticatedPerson();
+            if (person == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Usuario no autenticado"));
+            }
+
+            if (!isSessionInstructor(person, sessionId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Solo el instructor puede eliminar la transcripción"));
+            }
+
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+            session.setFullText(null);
+            session.setDurationSeconds(null);
+            session.setProcessingDate(null);
+            sessionRepository.save(session);
+
+            System.out.println("🗑️ Transcripción eliminada para sesión " + sessionId);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Transcripción eliminada exitosamente",
+                    "sessionId", sessionId
+            ));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error al eliminar transcripción: " + e.getMessage()));
+        }
+    }
+
+    /**
+     *  Cuenta palabras en texto
+     */
+    private int countWords(String text) {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+        return text.trim().split("\\s+").length;
+    }
 
     //#region Video Call Endpoints
     /**
@@ -388,7 +622,7 @@ public class VideoCallRestController {
     }
 
     /**
-     * ⭐ Procesa grabación de Jitsi: extrae audio y convierte a MP3
+     *  Procesa grabación de Jitsi: extrae audio y convierte a MP3
      */
     private void processJitsiRecording(Long sessionId, String videoPathStr) {
         try {
@@ -517,6 +751,66 @@ public class VideoCallRestController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Error al obtener URL: " + e.getMessage()));
+        }
+    }
+
+    /**
+     *  Obtiene la transcripción de una sesión (solo para instructores)
+     */
+    @GetMapping("/transcription/{sessionId}")
+    public ResponseEntity<?> getTranscription(@PathVariable Long sessionId) {
+        try {
+            System.out.println("========================================");
+            System.out.println(" SOLICITUD DE TRANSCRIPCIÓN");
+            System.out.println("   Session ID: " + sessionId);
+            System.out.println("========================================");
+
+            //  Obtener la sesión
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+            //  Validar que existe transcripción
+            if (session.getFullText() == null || session.getFullText().isEmpty()) {
+                System.out.println(" No hay transcripción disponible para esta sesión");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "No hay transcripción disponible para esta sesión"
+                        ));
+            }
+
+            // 3️ Calcular estadísticas
+            String fullText = session.getFullText();
+            int wordCount = fullText.split("\\s+").length;
+            int durationSeconds = session.getDurationSeconds() != null ? session.getDurationSeconds() : 0;
+
+            System.out.println(" Transcripción encontrada");
+            System.out.println("   Palabras: " + wordCount);
+            System.out.println("   Duración: " + durationSeconds + " segundos");
+            System.out.println("   Caracteres: " + fullText.length());
+
+            // 4️ Retornar datos
+            Map<String, Object> transcriptionData = new HashMap<>();
+            transcriptionData.put("transcription", fullText);
+            transcriptionData.put("wordCount", wordCount);
+            transcriptionData.put("durationSeconds", durationSeconds);
+            transcriptionData.put("processingDate", session.getProcessingDate());
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Transcripción obtenida exitosamente",
+                    "data", transcriptionData
+            ));
+
+        } catch (Exception e) {
+            System.err.println(" Error al obtener transcripción: " + e.getMessage());
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Error al obtener la transcripción: " + e.getMessage()
+                    ));
         }
     }
     //#endregion

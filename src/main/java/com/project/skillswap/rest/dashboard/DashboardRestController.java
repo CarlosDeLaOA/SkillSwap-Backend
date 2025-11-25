@@ -352,5 +352,54 @@ public class DashboardRestController {
         errorResponse.put("message", message);
         return errorResponse;
     }
+
+    /**
+     * Gets account balance for authenticated user
+     * Returns available SkillCoins
+     *
+     * Endpoint: GET /dashboard/account-balance
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with account balance data
+     */
+    @GetMapping("/account-balance")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getAccountBalance(HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            String role = determineUserRole(authenticatedPerson);
+
+            Integer balance = dashboardService.getAccountBalance(
+                    authenticatedPerson.getId(),
+                    role
+            );
+
+            // Crear respuesta simple con el balance
+            Map<String, Integer> response = new HashMap<>();
+            response.put("skillCoins", balance);
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Account balance retrieved successfully",
+                    response,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (Exception e) {
+            System.err.println("Error getting account balance: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving account balance",
+                            "Error retrieving account balance: " + e.getMessage()));
+        }
+    }
     //#endregion
 }

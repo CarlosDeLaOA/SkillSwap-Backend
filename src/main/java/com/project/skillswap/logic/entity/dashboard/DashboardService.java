@@ -66,22 +66,34 @@ public class DashboardService {
         return dashboardRepository.getRecentFeedbacks(personId);
     }
 
-    // ✅ NUEVO
     @Transactional(readOnly = true)
     public List<SkillSessionStatsResponse> getSkillSessionStats(Long personId, String role) {
         return dashboardRepository.getSkillSessionStats(personId, role);
     }
 
-    // ✅ NUEVO
+
     @Transactional(readOnly = true)
     public List<MonthlyAchievementResponse> getMonthlyAchievements(Long personId) {
         return dashboardRepository.getMonthlyAchievements(personId);
     }
 
-    // ✅ NUEVO
+
     @Transactional(readOnly = true)
     public List<MonthlyAttendanceResponse> getMonthlyAttendance(Long personId) {
         return dashboardRepository.getMonthlyAttendance(personId);
     }
+
+    /**
+     * Gets account balance for a user
+     *
+     * @param personId Person ID
+     * @param role User role (INSTRUCTOR or LEARNER)
+     * @return Account balance in SkillCoins
+     */
+    @Transactional(readOnly = true)
+    public Integer getAccountBalance(Long personId, String role) {
+        return dashboardRepository.getAccountBalance(personId, role);
+    }
+
     //#endregion
 }
