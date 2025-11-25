@@ -69,6 +69,54 @@ public class SessionEmailService {
     }
 
     /**
+     * Envía email cuando la transcripción está lista
+     */
+    public boolean sendTranscriptionReadyEmail(LearningSession session, Person instructor) {
+        try {
+            System.out.println("========================================");
+            System.out.println(" ENVIANDO EMAIL DE TRANSCRIPCIÓN");
+            System.out.println("   Sesión: " + session.getTitle());
+            System.out.println("   Instructor: " + instructor.getEmail());
+            System.out.println("========================================");
+
+            // Validar que hay transcripción
+            if (session.getFullText() == null || session.getFullText().isEmpty()) {
+                System.err.println(" No hay texto de transcripción para enviar");
+                return false;
+            }
+
+            MimeMessage msg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(msg, "UTF-8");
+
+            helper.setFrom(from);
+            helper.setTo(instructor.getEmail());
+            helper.setSubject("Transcripción Disponible - " + session.getTitle());
+
+            String htmlContent = buildTranscriptionReadyTemplate(session, instructor);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(msg);
+
+            registerSuccessfulNotification(instructor, session, "TRANSCRIPTION_READY");
+
+            System.out.println("========================================");
+            System.out.println(" EMAIL DE TRANSCRIPCIÓN ENVIADO");
+            System.out.println("========================================");
+
+            return true;
+
+        } catch (Exception e) {
+            System.err.println("========================================");
+            System.err.println(" ERROR ENVIANDO EMAIL DE TRANSCRIPCIÓN");
+            System.err.println("   Error: " + e.getMessage());
+            System.err.println("========================================");
+            e.printStackTrace();
+            registerFailedNotification(instructor, "TRANSCRIPTION_READY", "Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Construye el template HTML para el correo de creación de sesión.
      */
     private String buildSessionCreationTemplate(LearningSession session, Person instructor) {
@@ -147,7 +195,7 @@ public class SessionEmailService {
                                 <tr>
                                     <td align='center'>
                                         <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; margin-right: 10px;'>Ver Sesión</a>
-                                        <a href='%s' style='display: inline-block; background-color: #39434b; color: #aae16b; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; border: 2px solid #aae16b;'> Unirse a Videollamada</a>
+                                        <a href='%s' style='display: inline-block; background-color: #39434b; color: #aae16b; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; border: 2px solid #aae16b;'>Unirse a Videollamada</a>
                                     </td>
                                 </tr>
                             </table>
@@ -189,6 +237,150 @@ public class SessionEmailService {
                 session.getMaxCapacity(),
                 sessionLink,
                 session.getVideoCallLink()
+        );
+    }
+
+    /**
+     * Template HTML para email de transcripción lista
+     */
+    private String buildTranscriptionReadyTemplate(LearningSession session, Person instructor) {
+        String sessionLink = frontendUrl + "/app/video-call/" + session.getId();
+
+        // Calcular estadísticas
+        int wordCount = session.getFullText() != null ? session.getFullText().split("\\s+").length : 0;
+        int charCount = session.getFullText() != null ? session.getFullText().length() : 0;
+        int durationMinutes = session.getDurationSeconds() != null ? session.getDurationSeconds() / 60 : 0;
+
+        // Preview de las primeras 300 caracteres
+        String preview = "";
+        if (session.getFullText() != null) {
+            preview = session.getFullText().length() > 300
+                    ? session.getFullText().substring(0, 300) + "..."
+                    : session.getFullText();
+        }
+
+        return """
+<!DOCTYPE html>
+<html lang='es'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Transcripción Disponible</title>
+</head>
+<body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #39434b;'>
+    <table width='100%%' cellpadding='0' cellspacing='0' style='background-color: #39434b; padding: 40px 20px;'>
+        <tr>
+            <td align='center'>
+                <table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style='background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); padding: 40px 20px; text-align: center;'>
+                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1>
+                        </td>
+                    </tr>
+                    
+                    <!-- Contenido -->
+                    <tr>
+                        <td style='padding: 40px 30px; color: #ffffff;'>
+                            
+                            <!-- Título -->
+                            <h2 style='color: #aae16b; margin-top: 0; font-size: 24px; text-align: center;'>Transcripción Disponible</h2>
+                            
+                            <!-- Saludo -->
+                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0; text-align: center;'>
+                                Estimado/a <strong style='color: #aae16b;'>%s</strong>
+                            </p>
+                            
+                            <!-- Mensaje principal -->
+                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0; text-align: center;'>
+                                La transcripción automática de su sesión ha sido procesada exitosamente<br>y está disponible para su revisión y descarga.
+                            </p>
+                            
+                            <!-- Información de la sesión -->
+                            <div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #aae16b;'>
+                                <h3 style='color: #aae16b; margin-top: 0; font-size: 18px; text-align: center;'>%s</h3>
+                                
+                                <!-- Estadísticas -->
+                                <table width='100%%' cellpadding='8' cellspacing='0' style='font-size: 14px; margin-top: 15px;'>
+                                    <tr>
+                                        <td style='color: #aae16b; width: 40%%; font-weight: 600;'>Estadísticas:</td>
+                                        <td style='color: #ffffff;'></td>
+                                    </tr>
+                                    <tr>
+                                        <td style='color: #b0b0b0; padding-left: 20px;'>Duración:</td>
+                                        <td style='color: #ffffff; text-align: right;'>%d minutos</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='color: #b0b0b0; padding-left: 20px;'>Palabras:</td>
+                                        <td style='color: #ffffff; text-align: right;'>%,d palabras</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='color: #b0b0b0; padding-left: 20px;'>Caracteres:</td>
+                                        <td style='color: #ffffff; text-align: right;'>%,d caracteres</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <!-- Vista previa -->
+                            <div style='background-color: #1e1e1e; padding: 20px; border-radius: 8px; margin: 25px 0; border: 1px solid #504ab7;'>
+                                <h4 style='color: #aae16b; margin-top: 0; font-size: 14px; font-weight: 600;'>Vista Previa del Contenido:</h4>
+                                <p style='color: #b0b0b0; font-size: 13px; line-height: 1.6; font-style: italic; margin: 10px 0;'>
+                                    "%s"
+                                </p>
+                            </div>
+                            
+                            <!-- Botón de acción -->
+                            <table width='100%%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>
+                                <tr>
+                                    <td align='center'>
+                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #141414; text-decoration: none; padding: 15px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4);'>
+                                            Acceder a la Transcripción
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Información adicional -->
+                            <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #504ab7;'>
+                                <h4 style='color: #aae16b; margin-top: 0; font-size: 16px; font-weight: 600;'>Usos Recomendados</h4>
+                                <ul style='color: #ffffff; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 10px 0;'>
+                                    <li>Revisar y analizar los puntos clave de la sesión</li>
+                                    <li>Compartir contenido con estudiantes participantes</li>
+                                    <li>Crear material de estudio y documentación</li>
+                                    <li>Evaluar y mejorar futuras presentaciones</li>
+                                </ul>
+                            </div>
+                            
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>
+                            <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>
+                                © 2025 SkillSwap. Todos los derechos reservados.
+                            </p>
+                            <p style='margin: 10px 0 0 0; font-size: 11px; color: #888;'>
+                                Transcripción procesada con inteligencia artificial | Groq Whisper Large V3
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+""".formatted(
+                instructor.getFullName(),
+                session.getTitle(),
+                durationMinutes,
+                wordCount,
+                charCount,
+                preview != null ? preview : "",
+                sessionLink
         );
     }
 
