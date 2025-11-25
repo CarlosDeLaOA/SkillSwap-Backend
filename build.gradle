@@ -31,10 +31,10 @@ dependencies {
 	implementation 'com.cloudinary:cloudinary-http44:1.36.0'
     implementation 'ws.schild:jave-core:3.3.1'
     implementation 'ws.schild:jave-nativebin-win64:3.3.1'
-    // Dependencias para Transcripción
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'commons-io:commons-io:2.15.1'
+    implementation 'com.itextpdf:itext7-core:7.2.5'
 }
 
 bootJar {
