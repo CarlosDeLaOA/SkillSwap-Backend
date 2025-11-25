@@ -37,6 +37,7 @@ public class LearningCommunityRestController {
      * Obtiene todas las comunidades del usuario autenticado
      */
     @GetMapping("/my-communities")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> getMyCommunities(
             @RequestHeader("Authorization") String authHeader,
             @RequestParam(required = false) Integer maxMembers) {
@@ -69,6 +70,25 @@ public class LearningCommunityRestController {
                 communities = learningCommunityRepository.findCommunitiesByLearnerId(learner.getId());
                 System.out.println("[COMMUNITIES] Total de comunidades: " + communities.size());
             }
+
+            System.out.println("[COMMUNITIES] 🔄 Forzando carga de miembros...");
+            communities.forEach(community -> {
+                try {
+                    List<com.project.skillswap.logic.entity.CommunityMember.CommunityMember> members = community.getMembers();
+                    int memberCount = members != null ? members.size() : 0;
+                    System.out.println("[COMMUNITIES] ✅ Comunidad '" + community.getName() + "' tiene " + memberCount + " miembros");
+
+                    // Debug adicional
+                    if (members != null && !members.isEmpty()) {
+                        System.out.println("[COMMUNITIES]    └─ Miembros cargados en memoria");
+                    } else {
+                        System.out.println("[COMMUNITIES]    └─ ⚠️ Lista de miembros vacía o null");
+                    }
+                } catch (Exception e) {
+                    System.err.println("[COMMUNITIES] ❌ Error al cargar miembros de '" + community.getName() + "': " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

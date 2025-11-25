@@ -451,6 +451,7 @@ public class CommunityRestController {
     }
 
     @GetMapping("/my-communities")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<?> getMyCommunities(@AuthenticationPrincipal UserDetails userDetails) {
         logger.info(">>> getMyCommunities called. user={}",
                 userDetails != null ? userDetails.getUsername() : "anonymous");
@@ -476,11 +477,17 @@ public class CommunityRestController {
                     communityRepository.findByCreator_Person_Id(personId);
 
             for (LearningCommunity community : createdCommunities) {
+                // Forzar carga de miembros
+                int memberCount = community.getMembers() != null ? community.getMembers().size() : 0;
+                logger.info("Community '{}' has {} members", community.getName(), memberCount);
+
                 Map<String, Object> data = new HashMap<>();
                 data.put("id", community.getId());
                 data.put("name", community.getName());
                 data.put("description", community.getDescription());
                 data.put("role", "CREATOR");
+                data.put("members", community.getMembers());
+                data.put("memberCount", memberCount);
                 communitiesList.add(data);
             }
 
@@ -491,11 +498,17 @@ public class CommunityRestController {
             for (CommunityMember member : memberships) {
                 LearningCommunity community = member.getLearningCommunity();
 
+                // Forzar carga de miembros
+                int memberCount = community.getMembers() != null ? community.getMembers().size() : 0;
+                logger.info("Community '{}' has {} members", community.getName(), memberCount);
+
                 Map<String, Object> data = new HashMap<>();
                 data.put("id", community.getId());
                 data.put("name", community.getName());
                 data.put("description", community.getDescription());
                 data.put("role", member.getRole().name());
+                data.put("members", community.getMembers());
+                data.put("memberCount", memberCount);
 
                 communitiesList.add(data);
             }
