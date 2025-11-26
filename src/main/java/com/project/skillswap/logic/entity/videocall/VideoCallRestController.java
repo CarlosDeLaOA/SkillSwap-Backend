@@ -232,9 +232,6 @@ public class VideoCallRestController {
         }
     }
 
-    /**
-     * 🗑️ Elimina transcripción (si necesitas regenerarla)
-     */
     @DeleteMapping("/transcription/{sessionId}")
     public ResponseEntity<Map<String, Object>> deleteTranscription(@PathVariable Long sessionId) {
         try {
@@ -257,7 +254,7 @@ public class VideoCallRestController {
             session.setProcessingDate(null);
             sessionRepository.save(session);
 
-            System.out.println("🗑️ Transcripción eliminada para sesión " + sessionId);
+            System.out.println("🗑 Transcripción eliminada para sesión " + sessionId);
 
             return ResponseEntity.ok(Map.of(
                     "message", "Transcripción eliminada exitosamente",
@@ -755,7 +752,7 @@ public class VideoCallRestController {
     }
 
     /**
-     *  Obtiene la transcripción de una sesión (solo para instructores)
+     *  Obtiene la transcripción de una sesión (solo instructores)
      */
     @GetMapping("/transcription/{sessionId}")
     public ResponseEntity<?> getTranscription(@PathVariable Long sessionId) {
@@ -789,7 +786,7 @@ public class VideoCallRestController {
             System.out.println("   Duración: " + durationSeconds + " segundos");
             System.out.println("   Caracteres: " + fullText.length());
 
-            // 4️ Retornar datos
+
             Map<String, Object> transcriptionData = new HashMap<>();
             transcriptionData.put("transcription", fullText);
             transcriptionData.put("wordCount", wordCount);
@@ -815,14 +812,12 @@ public class VideoCallRestController {
     }
 
 
-    /**
-     * 📝 Descarga DIRECTA de archivo TXT (sin página intermedia)
-     */
+
     @GetMapping("/transcription/{sessionId}/download-txt")
     public ResponseEntity<?> downloadTranscriptionTxt(@PathVariable Long sessionId) {
         try {
             System.out.println("========================================");
-            System.out.println("📝 DESCARGA DIRECTA TXT");
+            System.out.println(" DESCARGA DIRECTA TXT");
             System.out.println("   Session ID: " + sessionId);
             System.out.println("========================================");
 
@@ -876,14 +871,14 @@ public class VideoCallRestController {
                     "attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" +
                             java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"));
 
-            System.out.println("✅ Descarga TXT iniciada: " + fileName);
+            System.out.println(" Descarga TXT iniciada: " + fileName);
 
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(contentBytes);
 
         } catch (Exception e) {
-            System.err.println("❌ Error descargando TXT: " + e.getMessage());
+            System.err.println(" Error descargando TXT: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Error: " + e.getMessage()).getBytes());
@@ -892,13 +887,13 @@ public class VideoCallRestController {
 
 
     /**
-     * 📄 Descarga directa de archivo PDF
+     *  Descarga directa de archivo PDF
      */
     @GetMapping("/transcription/{sessionId}/download-pdf")
     public ResponseEntity<?> downloadTranscriptionPdf(@PathVariable Long sessionId) {
         try {
             System.out.println("========================================");
-            System.out.println("📄 DESCARGA DE TRANSCRIPCIÓN PDF");
+            System.out.println(" DESCARGA DE TRANSCRIPCIÓN PDF");
             System.out.println("   Session ID: " + sessionId);
             System.out.println("========================================");
 
@@ -906,7 +901,7 @@ public class VideoCallRestController {
                     .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
-                System.out.println("⚠️ No hay transcripción disponible");
+                System.out.println(" No hay transcripción disponible");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("No hay transcripción disponible para esta sesión".getBytes());
             }
@@ -929,7 +924,7 @@ public class VideoCallRestController {
                             java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"));
 
             System.out.println("========================================");
-            System.out.println("✅ PDF LISTO PARA DESCARGA");
+            System.out.println(" PDF LISTO PARA DESCARGA");
             System.out.println("========================================");
 
             return ResponseEntity.ok()
@@ -938,7 +933,7 @@ public class VideoCallRestController {
 
         } catch (Exception e) {
             System.err.println("========================================");
-            System.err.println("❌ ERROR AL DESCARGAR PDF");
+            System.err.println(" ERROR AL DESCARGAR PDF");
             System.err.println("   Error: " + e.getMessage());
             System.err.println("========================================");
             e.printStackTrace();
