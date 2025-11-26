@@ -779,7 +779,7 @@ public class VideoCallRestController {
                         ));
             }
 
-            // 3️ Calcular estadísticas
+            //  Calcular estadísticas
             String fullText = session.getFullText();
             int wordCount = fullText.split("\\s+").length;
             int durationSeconds = session.getDurationSeconds() != null ? session.getDurationSeconds() : 0;
@@ -813,6 +813,142 @@ public class VideoCallRestController {
                     ));
         }
     }
+
+
+    /**
+     * 📝 Descarga DIRECTA de archivo TXT (sin página intermedia)
+     */
+    @GetMapping("/transcription/{sessionId}/download-txt")
+    public ResponseEntity<?> downloadTranscriptionTxt(@PathVariable Long sessionId) {
+        try {
+            System.out.println("========================================");
+            System.out.println("📝 DESCARGA DIRECTA TXT");
+            System.out.println("   Session ID: " + sessionId);
+            System.out.println("========================================");
+
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+            if (session.getFullText() == null || session.getFullText().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No hay transcripción disponible".getBytes());
+            }
+
+            String fullText = session.getFullText();
+            int wordCount = fullText.split("\\s+").length;
+            int durationSeconds = session.getDurationSeconds() != null ? session.getDurationSeconds() : 0;
+
+            StringBuilder content = new StringBuilder();
+            content.append("===========================================\n");
+            content.append("TRANSCRIPCIÓN DE SESIÓN - SKILLSWAP\n");
+            content.append("===========================================\n");
+            content.append("Sesión: #").append(session.getId()).append("\n");
+            content.append("Título: ").append(session.getTitle()).append("\n");
+
+            if (session.getInstructor() != null && session.getInstructor().getPerson() != null) {
+                content.append("Instructor: ").append(session.getInstructor().getPerson().getFullName()).append("\n");
+            }
+
+            if (session.getSkill() != null) {
+                content.append("Habilidad: ").append(session.getSkill().getName()).append("\n");
+            }
+
+            content.append("Palabras: ").append(wordCount).append("\n");
+            content.append("Duración: ").append(durationSeconds / 60).append(" minutos ")
+                    .append(durationSeconds % 60).append(" segundos\n");
+            content.append("Fecha: ").append(new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm")
+                    .format(new java.util.Date())).append("\n");
+            content.append("===========================================\n\n");
+            content.append(fullText);
+
+            String fileName = "transcripcion_sesion_" + session.getId() + "_" +
+                    new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date()) + ".txt";
+
+            byte[] contentBytes = content.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.TEXT_PLAIN);
+            headers.setContentLength(contentBytes.length);
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            headers.setPragma("no-cache");
+            headers.setExpires(0);
+            headers.set("Content-Disposition",
+                    "attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" +
+                            java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"));
+
+            System.out.println("✅ Descarga TXT iniciada: " + fileName);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(contentBytes);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error descargando TXT: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Error: " + e.getMessage()).getBytes());
+        }
+    }
+
+
+    /**
+     * 📄 Descarga directa de archivo PDF
+     */
+    @GetMapping("/transcription/{sessionId}/download-pdf")
+    public ResponseEntity<?> downloadTranscriptionPdf(@PathVariable Long sessionId) {
+        try {
+            System.out.println("========================================");
+            System.out.println("📄 DESCARGA DE TRANSCRIPCIÓN PDF");
+            System.out.println("   Session ID: " + sessionId);
+            System.out.println("========================================");
+
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+            if (session.getFullText() == null || session.getFullText().isEmpty()) {
+                System.out.println("⚠️ No hay transcripción disponible");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No hay transcripción disponible para esta sesión".getBytes());
+            }
+
+            // Generar PDF usando el servicio
+            TranscriptionPdfService pdfService = new TranscriptionPdfService();
+            byte[] pdfBytes = pdfService.generateTranscriptionPdf(session);
+
+            String fileName = "transcripcion_sesion_" + session.getId() + "_" +
+                    new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date()) + ".pdf";
+
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+            headers.setContentLength(pdfBytes.length);
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            headers.setPragma("no-cache");
+            headers.setExpires(0);
+            headers.set("Content-Disposition",
+                    "attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" +
+                            java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"));
+
+            System.out.println("========================================");
+            System.out.println("✅ PDF LISTO PARA DESCARGA");
+            System.out.println("========================================");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+
+        } catch (Exception e) {
+            System.err.println("========================================");
+            System.err.println("❌ ERROR AL DESCARGAR PDF");
+            System.err.println("   Error: " + e.getMessage());
+            System.err.println("========================================");
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Error al descargar PDF: " + e.getMessage())
+                            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+    }
+
     //#endregion
 
     //#region Document Endpoints

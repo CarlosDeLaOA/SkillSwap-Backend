@@ -216,6 +216,20 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             @Param("sessionId") Long sessionId,
             @Param("instructorId") Long instructorId
     );
+
+
+    /**
+     * Obtiene el historial de sesiones para un SkillSeeker (estudiante).
+     * Retorna sesiones completadas o canceladas en las que el estudiante participó.
+     *
+     */
+    @Query("""
+        SELECT DISTINCT ls FROM LearningSession ls
+        INNER JOIN Booking b ON b.learningSession.id = ls.id
+        WHERE b.learner.id = :learnerId
+        ORDER BY ls.scheduledDatetime DESC
+        """)
+    Page<LearningSession> findHistoricalSessionsByLearnerId(@Param("learnerId") Long learnerId, Pageable pageable);
     //</editor-fold>
 
     //<editor-fold desc="Added for SessionSuggestionService compatibility">

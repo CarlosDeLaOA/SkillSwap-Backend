@@ -45,14 +45,14 @@ public class SessionEmailService {
      */
     public boolean sendSessionCreationEmail(LearningSession session, Person instructor) {
         try {
-            System.out.println(" [SessionEmailService] Iniciando envío para: " + instructor.getEmail());
+            System.out.println("📧 [SessionEmailService] Iniciando envío para: " + instructor.getEmail());
 
             MimeMessage msg = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(msg, "UTF-8");
 
             helper.setFrom(from);
             helper.setTo(instructor.getEmail());
-            helper.setSubject("Sesión Publicada - " + session.getTitle());
+            helper.setSubject("✅ Sesión Publicada - " + session.getTitle());
 
             String htmlContent = buildSessionCreationTemplate(session, instructor);
             helper.setText(htmlContent, true);
@@ -60,11 +60,11 @@ public class SessionEmailService {
             mailSender.send(msg);
 
             registerSuccessfulNotification(instructor, session, "SESSION_CREATED");
-            System.out.println(" [SessionEmailService] Email enviado exitosamente");
+            System.out.println("✅ [SessionEmailService] Email enviado exitosamente");
             return true;
 
         } catch (Exception e) {
-            System.err.println(" [SessionEmailService] Error: " + e.getMessage());
+            System.err.println("❌ [SessionEmailService] Error: " + e.getMessage());
             e.printStackTrace();
             registerFailedNotification(instructor, "SESSION_CREATED", "Error: " + e.getMessage());
             return false;
@@ -77,13 +77,14 @@ public class SessionEmailService {
     public boolean sendTranscriptionReadyEmail(LearningSession session, Person instructor) {
         try {
             System.out.println("========================================");
-            System.out.println(" ENVIANDO EMAIL DE TRANSCRIPCIÓN");
+            System.out.println("📧 ENVIANDO EMAIL DE TRANSCRIPCIÓN");
             System.out.println("   Sesión: " + session.getTitle());
             System.out.println("   Instructor: " + instructor.getEmail());
             System.out.println("========================================");
 
+            // Validar que hay transcripción
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
-                System.err.println(" No hay texto de transcripción para enviar");
+                System.err.println("⚠️ No hay texto de transcripción para enviar");
                 return false;
             }
 
@@ -102,14 +103,14 @@ public class SessionEmailService {
             registerSuccessfulNotification(instructor, session, "TRANSCRIPTION_READY");
 
             System.out.println("========================================");
-            System.out.println(" EMAIL DE TRANSCRIPCIÓN ENVIADO");
+            System.out.println("✅ EMAIL DE TRANSCRIPCIÓN ENVIADO");
             System.out.println("========================================");
 
             return true;
 
         } catch (Exception e) {
             System.err.println("========================================");
-            System.err.println(" ERROR ENVIANDO EMAIL DE TRANSCRIPCIÓN");
+            System.err.println("❌ ERROR ENVIANDO EMAIL DE TRANSCRIPCIÓN");
             System.err.println("   Error: " + e.getMessage());
             System.err.println("========================================");
             e.printStackTrace();
@@ -260,26 +261,31 @@ public class SessionEmailService {
                 formattedDate,
                 formattedTime,
                 session.getDurationMinutes(),
-                skillName,
-                categoryName,
-                languageName,
+                session.getSkill().getName(),
+                session.getSkill().getKnowledgeArea().getName(),
+                getLanguageName(session.getLanguage()),
                 session.getMaxCapacity(),
                 googleCalendarUrl,
                 sessionLink,
-                session.getVideoCallLink() == null ? "" : session.getVideoCallLink()
+                session.getVideoCallLink()
         );
     }
 
     /**
      * Template HTML para email de transcripción lista
+     * Diseño oscuro SkillSwap con texto profesional
      */
     private String buildTranscriptionReadyTemplate(LearningSession session, Person instructor) {
-        String sessionLink = frontendUrl + "/app/video-call/" + session.getId();
+        // ⭐ Links de descarga
+        String downloadTxtLink = "http://localhost:8080/videocall/transcription/" + session.getId() + "/download";
+        String downloadPdfLink = "http://localhost:8080/videocall/transcription/" + session.getId() + "/download-pdf";
 
+        // Calcular estadísticas
         int wordCount = session.getFullText() != null ? session.getFullText().split("\\s+").length : 0;
         int charCount = session.getFullText() != null ? session.getFullText().length() : 0;
         int durationMinutes = session.getDurationSeconds() != null ? session.getDurationSeconds() / 60 : 0;
 
+        // Preview de las primeras 300 caracteres
         String preview = "";
         if (session.getFullText() != null) {
             preview = session.getFullText().length() > 300
@@ -301,28 +307,35 @@ public class SessionEmailService {
             <td align='center'>
                 <table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
                     
+                    <!-- Header -->
                     <tr>
                         <td style='background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); padding: 40px 20px; text-align: center;'>
                             <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1>
                         </td>
                     </tr>
                     
+                    <!-- Contenido -->
                     <tr>
                         <td style='padding: 40px 30px; color: #ffffff;'>
                             
+                            <!-- Título -->
                             <h2 style='color: #aae16b; margin-top: 0; font-size: 24px; text-align: center;'>Transcripción Disponible</h2>
                             
+                            <!-- Saludo -->
                             <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0; text-align: center;'>
                                 Estimado/a <strong style='color: #aae16b;'>%s</strong>
                             </p>
                             
+                            <!-- Mensaje principal -->
                             <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0; text-align: center;'>
                                 La transcripción automática de su sesión ha sido procesada exitosamente<br>y está disponible para su revisión y descarga.
                             </p>
                             
+                            <!-- Información de la sesión -->
                             <div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #aae16b;'>
                                 <h3 style='color: #aae16b; margin-top: 0; font-size: 18px; text-align: center;'>%s</h3>
                                 
+                                <!-- Estadísticas -->
                                 <table width='100%%' cellpadding='8' cellspacing='0' style='font-size: 14px; margin-top: 15px;'>
                                     <tr>
                                         <td style='color: #aae16b; width: 40%%; font-weight: 600;'>Estadísticas:</td>
@@ -343,6 +356,7 @@ public class SessionEmailService {
                                 </table>
                             </div>
                             
+                            <!-- Vista previa -->
                             <div style='background-color: #1e1e1e; padding: 20px; border-radius: 8px; margin: 25px 0; border: 1px solid #504ab7;'>
                                 <h4 style='color: #aae16b; margin-top: 0; font-size: 14px; font-weight: 600;'>Vista Previa del Contenido:</h4>
                                 <p style='color: #b0b0b0; font-size: 13px; line-height: 1.6; font-style: italic; margin: 10px 0;'>
@@ -350,16 +364,24 @@ public class SessionEmailService {
                                 </p>
                             </div>
                             
+                            <!-- Botones de descarga -->
                             <table width='100%%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>
                                 <tr>
                                     <td align='center'>
-                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #141414; text-decoration: none; padding: 15px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4);'>
-                                            Acceder a la Transcripción
+                                        <!-- Botón TXT -->
+                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #141414; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4); margin: 0 5px;'>
+                                            📝 Descargar TXT
+                                        </a>
+                                        
+                                        <!-- Botón PDF -->
+                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #6b63d8 100%%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(80, 74, 183, 0.4); margin: 0 5px;'>
+                                            📄 Descargar PDF
                                         </a>
                                     </td>
                                 </tr>
                             </table>
                             
+                            <!-- Información adicional -->
                             <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #504ab7;'>
                                 <h4 style='color: #aae16b; margin-top: 0; font-size: 16px; font-weight: 600;'>Usos Recomendados</h4>
                                 <ul style='color: #ffffff; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 10px 0;'>
@@ -373,6 +395,7 @@ public class SessionEmailService {
                         </td>
                     </tr>
                     
+                    <!-- Footer -->
                     <tr>
                         <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>
                             <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>
@@ -397,7 +420,8 @@ public class SessionEmailService {
                 wordCount,
                 charCount,
                 preview != null ? preview : "",
-                sessionLink
+                downloadTxtLink,  // ⭐ Link TXT
+                downloadPdfLink   // ⭐ Link PDF
         );
     }
 
@@ -411,7 +435,7 @@ public class SessionEmailService {
             notification.setRead(false);
             notificationRepository.save(notification);
         } catch (Exception e) {
-            System.err.println(" Error registrando notificación: " + e.getMessage());
+            System.err.println("⚠️ Error registrando notificación: " + e.getMessage());
         }
     }
 
@@ -425,7 +449,7 @@ public class SessionEmailService {
             notification.setRead(false);
             notificationRepository.save(notification);
         } catch (Exception e) {
-            System.err.println(" Error registrando notificación fallida: " + e.getMessage());
+            System.err.println("⚠️ Error registrando notificación fallida: " + e.getMessage());
         }
     }
 
