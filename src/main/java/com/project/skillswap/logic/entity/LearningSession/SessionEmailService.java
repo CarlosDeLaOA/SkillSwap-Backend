@@ -289,11 +289,11 @@ public class SessionEmailService {
         );
     }
 
-    /**
-     * Template HTML para email de transcripción lista
-     */
+
     private String buildTranscriptionReadyTemplate(LearningSession session, Person instructor) {
-        String sessionLink = frontendUrl + "/app/video-call/" + session.getId();
+        //  Links de descarga
+        String downloadTxtLink = "http://localhost:8080/videocall/transcription/" + session.getId() + "/download-txt";
+        String downloadPdfLink = "http://localhost:8080/videocall/transcription/" + session.getId() + "/download-pdf";
 
         // Calcular estadísticas
         int wordCount = session.getFullText() != null ? session.getFullText().split("\\s+").length : 0;
@@ -379,12 +379,18 @@ public class SessionEmailService {
                                 </p>
                             </div>
                             
-                            <!-- Botón de acción -->
+                            <!-- Botones de descarga -->
                             <table width='100%%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>
                                 <tr>
                                     <td align='center'>
-                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #141414; text-decoration: none; padding: 15px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4);'>
-                                            Acceder a la Transcripción
+                                        <!-- Botón TXT -->
+                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #141414; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4); margin: 0 5px;'>
+                                             Descargar TXT
+                                        </a>
+                                        
+                                        <!-- Botón PDF -->
+                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #6b63d8 100%%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(80, 74, 183, 0.4); margin: 0 5px;'>
+                                             Descargar PDF
                                         </a>
                                     </td>
                                 </tr>
@@ -429,7 +435,8 @@ public class SessionEmailService {
                 wordCount,
                 charCount,
                 preview != null ? preview : "",
-                sessionLink
+                downloadTxtLink,
+                downloadPdfLink
         );
     }
 
