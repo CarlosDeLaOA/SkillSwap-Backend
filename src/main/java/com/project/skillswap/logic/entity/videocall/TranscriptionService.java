@@ -19,9 +19,6 @@ import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Servicio de transcripción usando Groq API
- */
 @Service
 public class TranscriptionService {
 
@@ -47,6 +44,7 @@ public class TranscriptionService {
     private int timeoutSeconds;
 
     private static final String RECORDINGS_DIR = "recordings/audio/";
+    private static final String TRANSCRIPTIONS_DIR = "recordings/Transcription/";
 
     private final OkHttpClient httpClient;
     private final Gson gson;
@@ -61,7 +59,7 @@ public class TranscriptionService {
     }
 
     /**
-     *  Transcribe audio de sesión de forma asíncrona
+     * ️ Transcribe audio de sesión de forma asíncrona
      *
      * @param sessionId ID de la sesión
      * @return CompletableFuture con resultado de transcripción
@@ -76,7 +74,7 @@ public class TranscriptionService {
         System.out.println("========================================");
 
         try {
-            //  Obtener sesión y validar
+
             LearningSession session = sessionRepository.findById(sessionId)
                     .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
@@ -84,14 +82,14 @@ public class TranscriptionService {
                 throw new RuntimeException("No hay grabación de audio para esta sesión");
             }
 
-            //  IMPORTANTE: Cargar Person del instructor EXPLÍCITAMENTE para evitar LazyInitializationException
+
             Person instructor = session.getInstructor().getPerson();
             String instructorEmail = instructor.getEmail();
             String instructorFullName = instructor.getFullName();
 
             System.out.println("👤 Instructor cargado: " + instructorFullName + " (" + instructorEmail + ")");
 
-            //  CORRECCIÓN: Construir ruta completa del archivo
+
             String audioFileName = session.getAudioRecordingUrl();
             File audioFile = new File(RECORDINGS_DIR + audioFileName);
 
@@ -108,22 +106,22 @@ public class TranscriptionService {
             System.out.println("   Ruta: " + audioFile.getAbsolutePath());
             System.out.println("   Tamaño: " + formatFileSize(audioFile.length()));
 
-            //  Validar formato MP3
+
             if (!audioFile.getName().toLowerCase().endsWith(".mp3")) {
                 throw new RuntimeException("Solo se aceptan archivos MP3");
             }
 
-            //  Actualizar estado: procesando
+
             session.setProcessingDate(LocalDateTime.now());
             sessionRepository.save(session);
 
-            //  Enviar a Groq con reintentos
+
             String transcription = transcribeWithRetry(audioFile);
 
-            //  Calcular duración estimada
+
             int durationSeconds = estimateAudioDuration(audioFile);
 
-            // 7⃣ Guardar transcripción en base de datos
+
             session.setFullText(transcription);
             session.setDurationSeconds(durationSeconds);
             sessionRepository.save(session);
@@ -135,9 +133,26 @@ public class TranscriptionService {
             System.out.println("   Guardado en BD: ✓");
             System.out.println("========================================");
 
+            //  GUARDAR TRANSCRIPCIÓN EN JSON
+            try {
+                saveTranscriptionAsJson(session);
+            } catch (Exception jsonError) {
+                System.err.println(" Error guardando JSON: " + jsonError.getMessage());
+                // No lanzar excepción, continuar con el proceso
+            }
+
+            //  GUARDAR TRANSCRIPCIÓN EN JSON
+            try {
+                saveTranscriptionAsJson(session);
+                System.out.println(" Transcripción guardada en JSON");
+            } catch (Exception jsonError) {
+                System.err.println(" Error guardando JSON: " + jsonError.getMessage());
+                // No lanzar excepción, continuar con el proceso
+            }
+
             //  ENVIAR EMAIL AL INSTRUCTOR
             try {
-                // ⭐ Ya tenemos el instructor cargado al inicio del método
+                //  Ya tenemos el instructor cargado al inicio del método
                 if (instructor != null && instructorEmail != null) {
                     System.out.println(" Enviando email de notificación...");
 
@@ -190,13 +205,13 @@ public class TranscriptionService {
                 return sendToGroq(audioFile);
             } catch (IOException e) {
                 lastException = e;
-                System.err.println("⚠️ Error en intento " + attempt + ": " + e.getMessage());
+                System.err.println(" Error en intento " + attempt + ": " + e.getMessage());
 
                 if (attempt < maxRetries) {
                     try {
                         // Esperar antes de reintentar (backoff exponencial)
                         int waitSeconds = (int) Math.pow(2, attempt);
-                        System.out.println("⏳ Esperando " + waitSeconds + " segundos antes de reintentar...");
+                        System.out.println(" Esperando " + waitSeconds + " segundos antes de reintentar...");
                         Thread.sleep(waitSeconds * 1000L);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
@@ -211,7 +226,7 @@ public class TranscriptionService {
     }
 
     /**
-     * 📤 Envía archivo a la API de Groq (formato OpenAI compatible)
+     *  Envía archivo a la API de Groq
      */
     private String sendToGroq(File audioFile) throws IOException {
         System.out.println(" Enviando audio a Groq...");
@@ -243,7 +258,7 @@ public class TranscriptionService {
             }
 
             String responseBody = response.body().string();
-            System.out.println("📥 Respuesta recibida de Groq");
+            System.out.println(" Respuesta recibida de Groq");
 
             // Parsear respuesta JSON
             JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
@@ -262,17 +277,75 @@ public class TranscriptionService {
     }
 
     /**
-     * ️ Estima duración del audio (simplificado)
+     *  Obtiene duración REAL del audio usando FFmpeg
      */
     private int estimateAudioDuration(File audioFile) {
+        try {
+            System.out.println(" Obteniendo duración real del audio con FFmpeg...");
+
+            // Ejecutar FFmpeg para obtener duración
+            ProcessBuilder pb = new ProcessBuilder(
+                    "ffprobe",
+                    "-v", "error",
+                    "-show_entries", "format=duration",
+                    "-of", "default=noprint_wrappers=1:nokey=1",
+                    audioFile.getAbsolutePath()
+            );
+
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            // Leer output
+            StringBuilder output = new StringBuilder();
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line);
+                }
+            }
+
+            int exitCode = process.waitFor();
+
+            if (exitCode == 0 && output.length() > 0) {
+                // Parsear duración (viene en segundos con decimales: "15.234567")
+                double durationSeconds = Double.parseDouble(output.toString().trim());
+                int duration = (int) Math.ceil(durationSeconds);
+
+                System.out.println(" Duración real obtenida: " + duration + " segundos (" +
+                        (duration / 60) + "m " + (duration % 60) + "s)");
+
+                return duration;
+            } else {
+                System.err.println(" FFprobe falló, usando estimación por tamaño de archivo");
+                return estimateByFileSize(audioFile);
+            }
+
+        } catch (Exception e) {
+            System.err.println(" Error obteniendo duración real: " + e.getMessage());
+            return estimateByFileSize(audioFile);
+        }
+    }
+
+    /**
+     *  Estimación de duración por tamaño de archivo (fallback)
+     */
+    private int estimateByFileSize(File audioFile) {
         // Estimación aproximada: 1 minuto de audio MP3 (128kbps) ≈ 1MB
         long fileSizeBytes = audioFile.length();
         long fileSizeMB = fileSizeBytes / (1024 * 1024);
 
-        // Estimación conservadora
-        int estimatedSeconds = (int) (fileSizeMB * 60);
+        // Para archivos pequeños, usar cálculo más preciso
+        if (fileSizeMB == 0) {
+            // 128 kbps = 16 KB/segundo
+            int estimatedSeconds = (int) (fileSizeBytes / 16000);
+            System.out.println("️ Duración estimada (archivo pequeño): " + estimatedSeconds + " segundos");
+            return Math.max(estimatedSeconds, 1); // Mínimo 1 segundo
+        }
 
-        System.out.println("⏱ Duración estimada: " + estimatedSeconds + " segundos (" +
+        // Estimación conservadora para archivos grandes
+        int estimatedSeconds = (int) (fileSizeMB * 60);
+        System.out.println("️ Duración estimada: " + estimatedSeconds + " segundos (" +
                 (estimatedSeconds / 60) + " minutos)");
 
         return estimatedSeconds;
@@ -286,6 +359,69 @@ public class TranscriptionService {
         if (bytes < 1024 * 1024) return String.format("%.2f KB", bytes / 1024.0);
         if (bytes < 1024 * 1024 * 1024) return String.format("%.2f MB", bytes / (1024.0 * 1024.0));
         return String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0));
+    }
+
+    /**
+     *  Guarda la transcripción en formato JSON
+     */
+    private void saveTranscriptionAsJson(LearningSession session) throws IOException {
+        // Crear directorio si no existe
+        File transcriptionDir = new File(TRANSCRIPTIONS_DIR);
+        if (!transcriptionDir.exists()) {
+            transcriptionDir.mkdirs();
+            System.out.println(" Directorio creado: " + TRANSCRIPTIONS_DIR);
+        }
+
+        // Crear objeto JSON con metadatos completos
+        JsonObject jsonTranscription = new JsonObject();
+
+        // Información de la sesión
+        jsonTranscription.addProperty("sessionId", session.getId());
+        jsonTranscription.addProperty("sessionTitle", session.getTitle());
+        jsonTranscription.addProperty("sessionDescription", session.getDescription());
+
+        // Información del instructor
+        if (session.getInstructor() != null && session.getInstructor().getPerson() != null) {
+            Person instructor = session.getInstructor().getPerson();
+            jsonTranscription.addProperty("instructorName", instructor.getFullName());
+            jsonTranscription.addProperty("instructorEmail", instructor.getEmail());
+        }
+
+        // Información de la habilidad
+        if (session.getSkill() != null) {
+            jsonTranscription.addProperty("skillName", session.getSkill().getName());
+            if (session.getSkill().getKnowledgeArea() != null) {
+                jsonTranscription.addProperty("knowledgeArea", session.getSkill().getKnowledgeArea().getName());
+            }
+        }
+
+        // Transcripción y metadatos
+        jsonTranscription.addProperty("fullText", session.getFullText());
+        jsonTranscription.addProperty("durationSeconds", session.getDurationSeconds());
+        jsonTranscription.addProperty("durationMinutes", session.getDurationSeconds() != null ? session.getDurationSeconds() / 60 : 0);
+
+        // Estadísticas
+        String fullText = session.getFullText();
+        jsonTranscription.addProperty("wordCount", fullText != null ? fullText.split("\\s+").length : 0);
+        jsonTranscription.addProperty("characterCount", fullText != null ? fullText.length() : 0);
+
+        // Fechas
+        jsonTranscription.addProperty("processingDate", session.getProcessingDate() != null ? session.getProcessingDate().toString() : null);
+        jsonTranscription.addProperty("scheduledDate", session.getScheduledDatetime() != null ? session.getScheduledDatetime().toString() : null);
+        jsonTranscription.addProperty("audioRecordingUrl", session.getAudioRecordingUrl());
+
+        // Nombre del archivo: session_[ID]_[TIMESTAMP].json
+        String timestamp = LocalDateTime.now().toString().replace(":", "-");
+        String filename = String.format("session_%d_%s.json", session.getId(), timestamp);
+        File jsonFile = new File(TRANSCRIPTIONS_DIR + filename);
+
+        // Escribir JSON a archivo
+        try (java.io.FileWriter writer = new java.io.FileWriter(jsonFile)) {
+            gson.toJson(jsonTranscription, writer);
+        }
+
+        System.out.println(" JSON guardado: " + jsonFile.getAbsolutePath());
+        System.out.println("   Tamaño: " + formatFileSize(jsonFile.length()));
     }
 
     /**

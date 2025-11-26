@@ -62,6 +62,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/dashboard/**").authenticated()
                         .requestMatchers("/user-skills/**").permitAll()
                         .requestMatchers("/verification/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/videocall/transcription/*/download").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/videocall/transcription/*/download-pdf").permitAll()
                         .requestMatchers("/videocall/**").authenticated()
                         .requestMatchers("/ws-documents/**").permitAll()
                         .requestMatchers("/api/collaborative-documents/**").permitAll()

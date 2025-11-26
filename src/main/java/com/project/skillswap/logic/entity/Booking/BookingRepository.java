@@ -58,4 +58,26 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.learningSession.id = :sessionId AND b.community.id = :communityId AND b.status != 'CANCELLED'")
     List<Booking> findByLearningSessionIdAndCommunityId(@Param("sessionId") Long sessionId, @Param("communityId") Long communityId);
 
+    /**
+     * Cuenta los participantes confirmados de una sesión.
+     *
+     * @param sessionId ID de la sesión
+     * @return número de participantes confirmados
+     */
+    @Query("""
+    SELECT COUNT(b) FROM Booking b 
+    WHERE b.learningSession.id = :sessionId 
+    AND b.status = 'CONFIRMED'
+    """)
+    Integer countParticipantsBySessionId(@Param("sessionId") Long sessionId);
+
+    /**
+     * Verifica si un estudiante participó en una sesión específica.
+     *
+     * @param sessionId ID de la sesión
+     * @param learnerId ID del estudiante
+     * @return true si el estudiante tiene un booking en la sesión
+     */
+    boolean existsByLearningSessionIdAndLearnerId(Long sessionId, Long learnerId);
+
 }
