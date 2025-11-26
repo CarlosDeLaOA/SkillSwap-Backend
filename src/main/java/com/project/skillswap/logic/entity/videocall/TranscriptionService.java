@@ -1,6 +1,7 @@
 package com.project.skillswap.logic.entity.videocall;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
@@ -55,7 +56,7 @@ public class TranscriptionService {
                 .writeTimeout(120, TimeUnit.SECONDS)
                 .readTimeout(300, TimeUnit.SECONDS)
                 .build();
-        this.gson = new Gson();
+        this.gson = new GsonBuilder().setPrettyPrinting().create();
     }
 
     /**
