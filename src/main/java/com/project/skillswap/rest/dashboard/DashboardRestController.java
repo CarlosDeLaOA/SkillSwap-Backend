@@ -401,5 +401,129 @@ public class DashboardRestController {
                             "Error retrieving account balance: " + e.getMessage()));
         }
     }
+
+    //#region Session History Endpoints
+    /**
+     * Gets historical sessions for authenticated learner
+     * Returns completed and cancelled sessions with pagination
+     *
+     * Endpoint: GET /dashboard/session-history
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param page Page number (default: 0)
+     * @param size Page size (default: 10)
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with paginated historical sessions
+     */
+    @GetMapping("/session-history")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getHistoricalSessions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            String role = determineUserRole(authenticatedPerson);
+
+            if (!"LEARNER".equals(role)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Access denied",
+                                "Only learners can access session history"));
+            }
+
+            // Obtener el ID del Learner
+            Long learnerId = authenticatedPerson.getLearner().getId();
+
+            Map<String, Object> response = dashboardService.getLearnerHistoricalSessions(
+                    learnerId,
+                    page,
+                    size
+            );
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Historical sessions retrieved successfully",
+                    response,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (Exception e) {
+            System.err.println("Error getting historical sessions: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving historical sessions",
+                            "Error retrieving historical sessions: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Gets details of a specific historical session for authenticated learner
+     * Returns session information and participant count
+     *
+     * Endpoint: GET /dashboard/session-history/{sessionId}
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param sessionId ID of the session
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with session details
+     */
+    @GetMapping("/session-history/{sessionId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getSessionDetails(
+            @PathVariable Long sessionId,
+            HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            String role = determineUserRole(authenticatedPerson);
+
+            if (!"LEARNER".equals(role)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Access denied",
+                                "Only learners can access session details"));
+            }
+
+            // Obtener el ID del Learner
+            Long learnerId = authenticatedPerson.getLearner().getId();
+
+            Map<String, Object> response = dashboardService.getSessionDetails(
+                    sessionId,
+                    learnerId
+            );
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Session details retrieved successfully",
+                    response,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (RuntimeException e) {
+            System.err.println("Error getting session details: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse("Session not found", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Error getting session details: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving session details",
+                            "Error retrieving session details: " + e.getMessage()));
+        }
+    }
+        //#endregion
+
     //#endregion
 }

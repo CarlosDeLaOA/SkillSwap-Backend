@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service for dashboard business logic
@@ -16,6 +17,9 @@ public class DashboardService {
     //#region Dependencies
     @Autowired
     private DashboardRepository dashboardRepository;
+
+    @Autowired
+    private SessionHistoryService sessionHistoryService;
     //#endregion
 
     //#region Public Methods
@@ -71,12 +75,10 @@ public class DashboardService {
         return dashboardRepository.getSkillSessionStats(personId, role);
     }
 
-
     @Transactional(readOnly = true)
     public List<MonthlyAchievementResponse> getMonthlyAchievements(Long personId) {
         return dashboardRepository.getMonthlyAchievements(personId);
     }
-
 
     @Transactional(readOnly = true)
     public List<MonthlyAttendanceResponse> getMonthlyAttendance(Long personId) {
@@ -94,6 +96,32 @@ public class DashboardService {
     public Integer getAccountBalance(Long personId, String role) {
         return dashboardRepository.getAccountBalance(personId, role);
     }
+    //#endregion
 
+    //#region Session History Methods
+    /**
+     * Gets historical sessions for a learner with pagination
+     *
+     * @param learnerId ID of the learner
+     * @param page Page number
+     * @param size Page size
+     * @return Map with paginated sessions and metadata
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getLearnerHistoricalSessions(Long learnerId, int page, int size) {
+        return sessionHistoryService.getLearnerHistoricalSessions(learnerId, page, size);
+    }
+
+    /**
+     * Gets details of a specific session for a learner
+     *
+     * @param sessionId ID of the session
+     * @param learnerId ID of the learner
+     * @return Map with session details and participant count
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getSessionDetails(Long sessionId, Long learnerId) {
+        return sessionHistoryService.getSessionDetails(sessionId, learnerId);
+    }
     //#endregion
 }
