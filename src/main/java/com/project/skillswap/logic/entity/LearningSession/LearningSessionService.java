@@ -36,19 +36,15 @@ public class LearningSessionService {
     @Autowired
     private SessionEmailService sessionEmailService;
 
-    // Servicio de Google Calendar
     @Autowired
     private SessionGoogleCalendarService googleCalendarService;
 
-    // Validator para agendar la sesion
     @Autowired
     private SessionScheduleValidator scheduleValidator;
 
-    //  Validador de persistencia en BD
     @Autowired
     private SessionPersistenceValidator persistenceValidator;
 
-    //  Logger de integraciones
     @Autowired
     private SessionIntegrationLogger integrationLogger;
     //#endregion
@@ -67,11 +63,6 @@ public class LearningSessionService {
     //#endregion
 
     //#region Public Methods - Query
-    /**
-     * Obtiene todas las sesiones disponibles (SCHEDULED o ACTIVE recientes)
-     *
-     * @return Lista de sesiones disponibles
-     */
     @Transactional(readOnly = true)
     public List<LearningSession> getAvailableSessions() {
         Date currentDate = new Date();
@@ -80,13 +71,6 @@ public class LearningSessionService {
         return learningSessionRepository.findAvailableSessions(currentDate, fiveMinutesAgo);
     }
 
-    /**
-     * Obtiene sesiones filtradas por categoría y/o idioma
-     *
-     * @param categoryId ID de la categoría (opcional)
-     * @param language Idioma de la sesión (opcional)
-     * @return Lista de sesiones filtradas
-     */
     @Transactional(readOnly = true)
     public List<LearningSession> getFilteredSessions(Long categoryId, String language) {
         Date currentDate = new Date();
@@ -114,12 +98,7 @@ public class LearningSessionService {
     }
 
     /**
-     * Obtiene una sesión por ID con validación de propiedad
-     *
-     * @param sessionId ID de la sesión
-     * @param authenticatedPerson Persona autenticada
-     * @return Sesión encontrada
-     * @throws IllegalArgumentException Si la sesión no existe o no pertenece al instructor
+     * Obtiene una sesión para estudiantes (inscripción)
      */
     @Transactional(readOnly = true)
     public LearningSession getSessionById(Long sessionId, Person authenticatedPerson) {
@@ -131,8 +110,38 @@ public class LearningSessionService {
 
         LearningSession session = sessionOptional.get();
 
+        // No pueden inscribirse en su propia sesión
+        if (authenticatedPerson.getInstructor() != null &&
+                session.getInstructor().getId().equals(authenticatedPerson.getInstructor().getId())) {
+            throw new IllegalArgumentException("No puedes inscribirte en tu propia sesión");
+        }
+
+        // Solo mostrar sesiones publicadas
+        if (session.getStatus() != SessionStatus.SCHEDULED &&
+                session.getStatus() != SessionStatus.ACTIVE) {
+            throw new IllegalArgumentException("Esta sesión no está disponible para inscripción");
+        }
+
+        return session;
+    }
+
+    /**
+     * Obtiene sesión para el instructor
+     */
+    @Transactional(readOnly = true)
+    public LearningSession getSessionByIdForInstructor(Long sessionId, Person authenticatedPerson) {
+        validateInstructorRole(authenticatedPerson);
+
+        Optional<LearningSession> sessionOptional = learningSessionRepository.findById(sessionId);
+
+        if (sessionOptional.isEmpty()) {
+            throw new IllegalArgumentException("La sesión no existe");
+        }
+
+        LearningSession session = sessionOptional.get();
+
         if (!session.getInstructor().getId().equals(authenticatedPerson.getInstructor().getId())) {
-            throw new IllegalArgumentException("No tienes permiso para acceder a esta sesión");
+            throw new IllegalArgumentException("No tienes permiso para gestionar esta sesión");
         }
 
         return session;
@@ -140,15 +149,6 @@ public class LearningSessionService {
     //#endregion
 
     //#region Public Methods - Create
-    /**
-     * Crea una nueva sesión de aprendizaje con validaciones completas
-     *
-     * @param session Sesión a crear con todos los datos
-     * @param authenticatedPerson Persona autenticada que crea la sesión
-     * @return Sesión creada y guardada
-     * @throws IllegalArgumentException Si las validaciones fallan
-     * @throws IllegalStateException Si el usuario no es instructor
-     */
     @Transactional
     public LearningSession createSession(LearningSession session, Person authenticatedPerson) {
         validateInstructorRole(authenticatedPerson);
@@ -161,15 +161,13 @@ public class LearningSessionService {
         validateCapacity(session.getMaxCapacity());
         validateScheduledDatetime(session.getScheduledDatetime());
 
-        // Validar anticipación mínima
         scheduleValidator.validateMinimumAdvanceTime(session.getScheduledDatetime());
 
-        // Validar conflictos de horario del instructor
         scheduleValidator.validateNoScheduleConflicts(
                 instructor.getId(),
                 session.getScheduledDatetime(),
                 session.getDurationMinutes(),
-                null // No hay ID de sesión a excluir porque es nueva
+                null
         );
 
         String language = validateAndNormalizeLanguage(session.getLanguage());
@@ -185,7 +183,6 @@ public class LearningSessionService {
 
         LearningSession createdSession = learningSessionRepository.save(session);
 
-        /// Validar y loguear guardado en BD interna
         persistenceValidator.validateSessionSavedCorrectly(createdSession);
         integrationLogger.logSessionCreatedAsDraft(createdSession);
 
@@ -194,54 +191,35 @@ public class LearningSessionService {
     //#endregion
 
     //#region Public Methods - Publish
-    /**
-     * Publica una sesión cambiando su estado y haciéndola visible
-     *
-     * @param sessionId ID de la sesión a publicar
-     * @param authenticatedPerson Persona autenticada
-     * @param minorEdits Ediciones menores opcionales (título y descripción)
-     * @return Sesión publicada
-     * @throws IllegalArgumentException Si las validaciones fallan
-     */
     @Transactional
     public LearningSession publishSession(Long sessionId, Person authenticatedPerson, Map<String, String> minorEdits) {
         validateInstructorRole(authenticatedPerson);
 
-        LearningSession session = getSessionById(sessionId, authenticatedPerson);
+        LearningSession session = getSessionByIdForInstructor(sessionId, authenticatedPerson);
 
         validateSessionIsComplete(session);
-
-        /// Validar que la sesión esté en estado DRAFT
         validateSessionStatusIsPublishable(session);
 
         if (minorEdits != null) {
             applyMinorEdits(session, minorEdits);
         }
 
-        // Obtener parámetro de integración Google Calendar
         boolean enableGoogleCalendar = false;
         if (minorEdits != null && minorEdits.containsKey("enableGoogleCalendar")) {
-            String enableValue = minorEdits.get("enableGoogleCalendar");
-            enableGoogleCalendar = "true".equalsIgnoreCase(enableValue);
+            enableGoogleCalendar = "true".equalsIgnoreCase(minorEdits.get("enableGoogleCalendar"));
         }
 
-        //  revalidar anticipación y conflictos al publicar
         scheduleValidator.validateMinimumAdvanceTime(session.getScheduledDatetime());
         scheduleValidator.validateNoScheduleConflicts(
                 session.getInstructor().getId(),
                 session.getScheduledDatetime(),
                 session.getDurationMinutes(),
-                sessionId // Excluir esta sesión de la búsqueda de conflictos
+                sessionId
         );
 
-        /// Determinar nuevo estado (SCHEDULED o ACTIVE)
         SessionStatus newStatus = determinePublishStatus(session.getScheduledDatetime());
-
-        /// Log del cambio de estado
-        System.out.println(" [LearningSessionService] Cambio de estado: " + session.getStatus() + " → " + newStatus);
         session.setStatus(newStatus);
 
-        // Intentar crear evento en Google Calendar
         if (enableGoogleCalendar) {
             String googleCalendarEventId = googleCalendarService.tryCreateCalendarEvent(
                     session,
@@ -251,15 +229,10 @@ public class LearningSessionService {
 
             if (googleCalendarEventId != null) {
                 session.setGoogleCalendarId(googleCalendarEventId);
-                System.out.println(" [LearningSessionService] Google Calendar ID asignado: " + googleCalendarEventId);
-            } else {
-                System.out.println("⚠️ [LearningSessionService] Sesión creada sin integración con Google Calendar");
             }
         }
 
         LearningSession publishedSession = learningSessionRepository.save(session);
-
-        /// Validar y loguear guardado en BD interna
         persistenceValidator.validateSessionSavedCorrectly(publishedSession);
 
         if (publishedSession.getGoogleCalendarId() != null) {
@@ -272,61 +245,30 @@ public class LearningSessionService {
         }
 
         try {
-            boolean emailSent = sessionEmailService.sendSessionCreationEmail(
-                    publishedSession,
-                    authenticatedPerson
-            );
-
-            if (emailSent) {
-                System.out.println(" [LearningSessionService] Email de confirmación enviado");
-            } else {
-                System.out.println("⚠ [LearningSessionService] Email no enviado (validación fallida)");
-            }
-        } catch (Exception e) {
-            System.err.println(" [LearningSessionService] Error enviando email: " + e.getMessage());
-        }
+            sessionEmailService.sendSessionCreationEmail(publishedSession, authenticatedPerson);
+        } catch (Exception ignored) {}
 
         return publishedSession;
     }
     //#endregion
 
     //#region Public Methods - Cancel
-    /**
-     * Cancela una sesión de aprendizaje con validaciones completas
-     *
-     * @param sessionId ID de la sesión a cancelar
-     * @param authenticatedPerson Persona autenticada que cancela
-     * @param reason Razón de cancelación (opcional)
-     * @return Sesión cancelada con metadata actualizada
-     * @throws IllegalArgumentException Si las validaciones fallan
-     * @throws IllegalStateException Si el usuario no es el creador
-     */
     @Transactional
     public LearningSession cancelSession(Long sessionId, Person authenticatedPerson, String reason) {
         validateInstructorRole(authenticatedPerson);
 
-        LearningSession session = getSessionById(sessionId, authenticatedPerson);
+        LearningSession session = getSessionByIdForInstructor(sessionId, authenticatedPerson);
 
-        // Validar que la sesión no esté ya cancelada o finalizada
         validateSessionCanBeCancelled(session);
-
-        // Validar que sea el creador
         validateIsSessionOwner(session, authenticatedPerson);
 
-        // Validar si la sesión está activa (requiere confirmación adicional)
-        if (session.getStatus() == SessionStatus.ACTIVE) {
-            System.out.println(" [WARNING] Cancelling ACTIVE session - requires additional confirmation");
-        }
-
-        // Obtener emails de participantes ANTES de cancelar
         List<String> participantEmails = session.getBookings().stream()
-                .map(booking -> booking.getLearner().getPerson().getEmail())
+                .map(b -> b.getLearner().getPerson().getEmail())
                 .filter(email -> email != null && !email.isEmpty())
                 .toList();
 
         int participantsCount = participantEmails.size();
 
-        // Actualizar estado y metadata
         session.setStatus(SessionStatus.CANCELLED);
         session.setCancellationReason(reason != null ? reason.trim() : "Sin razón especificada");
         session.setCancellationDate(new Date());
@@ -334,32 +276,15 @@ public class LearningSessionService {
 
         LearningSession cancelledSession = learningSessionRepository.save(session);
 
-        System.out.println(String.format(
-                " [SUCCESS] Session %d cancelled by instructor %d. Participants to notify: %d",
-                sessionId,
-                authenticatedPerson.getInstructor().getId(),
-                participantsCount
-        ));
-
-        // Enviar notificaciones por email a participantes
         if (!participantEmails.isEmpty()) {
             try {
-                int emailsSent = sessionNotificationService.sendCancellationNotifications(
+                sessionNotificationService.sendCancellationNotifications(
                         cancelledSession,
                         participantEmails
                 );
-                System.out.println(String.format(
-                        " [EMAIL] Sent %d/%d cancellation notifications",
-                        emailsSent,
-                        participantsCount
-                ));
-            } catch (Exception e) {
-                System.err.println(" [ERROR] Failed to send some notification emails: " + e.getMessage());
-                // No lanzamos excepción porque la sesión ya fue cancelada exitosamente
-            }
+            } catch (Exception ignored) {}
         }
 
-        // Eliminar evento de Google Calendar si existe
         if (cancelledSession.getGoogleCalendarId() != null) {
             googleCalendarService.tryDeleteCalendarEvent(
                     cancelledSession.getGoogleCalendarId(),
@@ -372,24 +297,12 @@ public class LearningSessionService {
     //#endregion
 
     //#region Private Methods - Validation
-    /**
-     * Valida que el usuario tenga rol de Instructor
-     *
-     * @param person Persona a validar
-     * @throws IllegalStateException Si no es instructor
-     */
     private void validateInstructorRole(Person person) {
         if (person.getInstructor() == null) {
             throw new IllegalStateException("rol no autorizado");
         }
     }
 
-    /**
-     * Valida el título de la sesión
-     *
-     * @param title Título a validar
-     * @throws IllegalArgumentException Si el título no cumple los requisitos
-     */
     private void validateTitle(String title) {
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("El título es obligatorio");
@@ -402,12 +315,6 @@ public class LearningSessionService {
         }
     }
 
-    /**
-     * Valida la descripción de la sesión
-     *
-     * @param description Descripción a validar
-     * @throws IllegalArgumentException Si la descripción no cumple los requisitos
-     */
     private void validateDescription(String description) {
         if (description == null || description.trim().isEmpty()) {
             throw new IllegalArgumentException("La descripción es obligatoria");
@@ -420,12 +327,6 @@ public class LearningSessionService {
         }
     }
 
-    /**
-     * Valida la duración de la sesión
-     *
-     * @param durationMinutes Duración en minutos
-     * @throws IllegalArgumentException Si la duración está fuera del rango permitido
-     */
     private void validateDuration(Integer durationMinutes) {
         if (durationMinutes == null || durationMinutes <= 0) {
             throw new IllegalArgumentException("La duración debe ser un valor positivo");
@@ -433,18 +334,14 @@ public class LearningSessionService {
 
         if (durationMinutes < MIN_DURATION_MINUTES || durationMinutes > MAX_DURATION_MINUTES) {
             throw new IllegalArgumentException(
-                    String.format("La duración debe estar entre %d y %d minutos",
-                            MIN_DURATION_MINUTES, MAX_DURATION_MINUTES)
+                    String.format(
+                            "La duración debe estar entre %d y %d minutos",
+                            MIN_DURATION_MINUTES, MAX_DURATION_MINUTES
+                    )
             );
         }
     }
 
-    /**
-     * Valida la capacidad máxima de participantes
-     *
-     * @param maxCapacity Capacidad máxima
-     * @throws IllegalArgumentException Si la capacidad está fuera del rango permitido
-     */
     private void validateCapacity(Integer maxCapacity) {
         if (maxCapacity == null || maxCapacity <= 0) {
             throw new IllegalArgumentException("La capacidad máxima debe ser un valor positivo");
@@ -452,18 +349,14 @@ public class LearningSessionService {
 
         if (maxCapacity < MIN_CAPACITY || maxCapacity > MAX_CAPACITY) {
             throw new IllegalArgumentException(
-                    String.format("La capacidad máxima debe estar entre %d y %d participantes",
-                            MIN_CAPACITY, MAX_CAPACITY)
+                    String.format(
+                            "La capacidad máxima debe estar entre %d y %d participantes",
+                            MIN_CAPACITY, MAX_CAPACITY
+                    )
             );
         }
     }
 
-    /**
-     * Valida la fecha y hora programada
-     *
-     * @param scheduledDatetime Fecha y hora programada
-     * @throws IllegalArgumentException Si la fecha es nula o en el pasado
-     */
     private void validateScheduledDatetime(Date scheduledDatetime) {
         if (scheduledDatetime == null) {
             throw new IllegalArgumentException("La fecha y hora de la sesión son obligatorias");
@@ -475,33 +368,20 @@ public class LearningSessionService {
         }
     }
 
-    /**
-     * Valida y normaliza el idioma de la sesión
-     *
-     * @param language Idioma solicitado
-     * @return Idioma validado o español por defecto
-     */
     private String validateAndNormalizeLanguage(String language) {
         if (language == null || language.trim().isEmpty()) {
             return DEFAULT_LANGUAGE;
         }
 
-        String normalizedLanguage = language.trim().toLowerCase();
+        String normalized = language.trim().toLowerCase();
 
-        if (!VALID_LANGUAGES.contains(normalizedLanguage)) {
+        if (!VALID_LANGUAGES.contains(normalized)) {
             return DEFAULT_LANGUAGE;
         }
 
-        return normalizedLanguage;
+        return normalized;
     }
 
-    /**
-     * Valida que el skill existe, está activo y lo extrae del objeto
-     *
-     * @param skill Skill a validar
-     * @return Skill validado desde la base de datos
-     * @throws IllegalArgumentException Si el skill no existe o no está activo
-     */
     private Skill validateAndGetSkill(Skill skill) {
         if (skill == null || skill.getId() == null) {
             throw new IllegalArgumentException("La habilidad es obligatoria");
@@ -522,13 +402,6 @@ public class LearningSessionService {
         return dbSkill;
     }
 
-    /**
-     * Valida que el instructor tiene la skill como experta
-     *
-     * @param personId ID de la persona
-     * @param skill Skill a validar
-     * @throws IllegalArgumentException Si el instructor no tiene la skill
-     */
     private void validateInstructorHasExpertSkill(Long personId, Skill skill) {
         List<UserSkill> userSkills = userSkillRepository.findActiveUserSkillsByPersonId(personId);
 
@@ -537,108 +410,71 @@ public class LearningSessionService {
 
         if (!hasSkill) {
             throw new IllegalArgumentException(
-                    String.format("No tienes la habilidad '%s' en tu perfil. " +
-                                    "Solo puedes crear sesiones de habilidades que dominas.",
-                            skill.getName())
+                    String.format(
+                            "No tienes la habilidad '%s' en tu perfil. Solo puedes crear sesiones de habilidades que dominas.",
+                            skill.getName()
+                    )
             );
         }
     }
 
-    /**
-     * Valida que la sesión esté completa antes de publicar
-     *
-     * @param session Sesión a validar
-     * @throws IllegalArgumentException Si falta algún campo obligatorio
-     */
     private void validateSessionIsComplete(LearningSession session) {
-        List<String> missingFields = new ArrayList<>();
+        List<String> missing = new ArrayList<>();
 
-        if (session.getTitle() == null || session.getTitle().trim().isEmpty()) {
-            missingFields.add("título");
-        }
-        if (session.getDescription() == null || session.getDescription().trim().isEmpty()) {
-            missingFields.add("descripción");
-        }
-        if (session.getSkill() == null) {
-            missingFields.add("habilidad");
-        }
-        if (session.getScheduledDatetime() == null) {
-            missingFields.add("fecha y hora");
-        }
-        if (session.getDurationMinutes() == null) {
-            missingFields.add("duración");
-        }
-        if (session.getMaxCapacity() == null) {
-            missingFields.add("capacidad");
-        }
+        if (isEmpty(session.getTitle())) missing.add("título");
+        if (isEmpty(session.getDescription())) missing.add("descripción");
+        if (session.getSkill() == null) missing.add("habilidad");
+        if (session.getScheduledDatetime() == null) missing.add("fecha y hora");
+        if (session.getDurationMinutes() == null) missing.add("duración");
+        if (session.getMaxCapacity() == null) missing.add("capacidad");
 
-        if (!missingFields.isEmpty()) {
+        if (!missing.isEmpty()) {
             throw new IllegalArgumentException(
-                    "La sesión está incompleta. Campos pendientes: " + String.join(", ", missingFields)
+                    "La sesión está incompleta. Campos pendientes: " + String.join(", ", missing)
             );
         }
     }
 
-    /// Validar que la sesión esté en estado DRAFT
-    /**
-     * Valida que la sesión esté en estado DRAFT y sea programable
-     * Solo se pueden publicar sesiones que aún no han sido programadas
-     *
-     * @param session Sesión a validar
-     * @throws IllegalArgumentException Si la sesión no puede ser programada
-     */
+    private boolean isEmpty(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
     private void validateSessionStatusIsPublishable(LearningSession session) {
         if (session.getStatus() == null) {
             throw new IllegalArgumentException("La sesión no tiene estado definido");
         }
 
-        // Solo se permite programar sesiones en estado DRAFT
         if (session.getStatus() != SessionStatus.DRAFT) {
-            String errorMessage = switch (session.getStatus()) {
+            String msg = switch (session.getStatus()) {
                 case SCHEDULED -> "Esta sesión ya está programada. No puedes reprogramarla.";
                 case ACTIVE -> "Esta sesión ya está activa. No puedes cambiarla.";
                 case FINISHED -> "Esta sesión ya ha finalizado. No puedes modificarla.";
                 case CANCELLED -> "Esta sesión ha sido cancelada. No puedes modificarla.";
                 default -> "Esta sesión no puede ser programada en su estado actual.";
             };
-            throw new IllegalArgumentException(errorMessage);
+            throw new IllegalArgumentException(msg);
         }
     }
     //#endregion
 
-    //#region Private Methods - Minor Edits
-    /**
-     * Aplica ediciones menores a título y descripción
-     *
-     * @param session Sesión a editar
-     * @param minorEdits Ediciones a aplicar
-     * @throws IllegalArgumentException Si las ediciones exceden el 50% de cambio
-     */
+    //#region Minor Edits
     private void applyMinorEdits(LearningSession session, Map<String, String> minorEdits) {
         String newTitle = minorEdits.get("title");
         String newDescription = minorEdits.get("description");
 
-        if (newTitle != null && !newTitle.trim().isEmpty()) {
+        if (!isEmpty(newTitle)) {
             validateMinorEdit(session.getTitle(), newTitle, "título");
             validateTitle(newTitle);
             session.setTitle(newTitle.trim());
         }
 
-        if (newDescription != null && !newDescription.trim().isEmpty()) {
+        if (!isEmpty(newDescription)) {
             validateMinorEdit(session.getDescription(), newDescription, "descripción");
             validateDescription(newDescription);
             session.setDescription(newDescription.trim());
         }
     }
 
-    /**
-     * Valida que un cambio menor no exceda el 50% de la longitud original
-     *
-     * @param original Texto original
-     * @param edited Texto editado
-     * @param fieldName Nombre del campo
-     * @throws IllegalArgumentException Si el cambio excede el 50%
-     */
     private void validateMinorEdit(String original, String edited, String fieldName) {
         int originalLength = original.length();
         int editedLength = edited.length();
@@ -647,20 +483,16 @@ public class LearningSessionService {
 
         if (changePercentage > MAX_EDIT_CHANGE_PERCENTAGE) {
             throw new IllegalArgumentException(
-                    String.format("El cambio en %s excede el 50%% permitido. " +
-                            "Considera esto como una edición mayor.", fieldName)
+                    String.format(
+                            "El cambio en %s excede el 50%% permitido. Considera esto como una edición mayor.",
+                            fieldName
+                    )
             );
         }
     }
     //#endregion
 
-    //#region Private Methods - Cancel Validation
-    /**
-     * Valida que la sesión pueda ser cancelada
-     *
-     * @param session Sesión a validar
-     * @throws IllegalArgumentException Si la sesión ya está cancelada o finalizada
-     */
+    //#region Cancel Validation
     private void validateSessionCanBeCancelled(LearningSession session) {
         if (session.getStatus() == SessionStatus.CANCELLED) {
             throw new IllegalArgumentException("La sesión ya está cancelada");
@@ -671,13 +503,6 @@ public class LearningSessionService {
         }
     }
 
-    /**
-     * Valida que el usuario sea el creador de la sesión
-     *
-     * @param session Sesión a validar
-     * @param authenticatedPerson Persona autenticada
-     * @throws IllegalStateException Si el usuario no es el creador
-     */
     private void validateIsSessionOwner(LearningSession session, Person authenticatedPerson) {
         if (!session.getInstructor().getId().equals(authenticatedPerson.getInstructor().getId())) {
             throw new IllegalStateException("Solo el creador de la sesión puede cancelarla");
@@ -685,13 +510,7 @@ public class LearningSessionService {
     }
     //#endregion
 
-    //#region Private Methods - Business Logic
-    /**
-     * Determina el estado de la sesión basándose en la fecha programada
-     *
-     * @param scheduledDatetime Fecha y hora programada
-     * @return Estado de la sesión (ACTIVE o SCHEDULED)
-     */
+    //#region Business Logic
     private SessionStatus determineSessionStatus(Date scheduledDatetime) {
         Date now = new Date();
         long diffInMillis = scheduledDatetime.getTime() - now.getTime();
@@ -704,22 +523,10 @@ public class LearningSessionService {
         return SessionStatus.SCHEDULED;
     }
 
-    /**
-     * Determina el estado al publicar (ACTIVE o SCHEDULED)
-     *
-     * @param scheduledDatetime Fecha programada
-     * @return Estado apropiado para publicación
-     */
     private SessionStatus determinePublishStatus(Date scheduledDatetime) {
         return determineSessionStatus(scheduledDatetime);
     }
 
-    /**
-     * Calcula la fecha de hace 5 minutos
-     *
-     * @param currentDate Fecha actual
-     * @return Fecha de hace 5 minutos
-     */
     private Date getFiveMinutesAgo(Date currentDate) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(currentDate);

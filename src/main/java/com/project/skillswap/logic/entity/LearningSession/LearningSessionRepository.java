@@ -15,7 +15,6 @@ import java.util.Optional;
 public interface LearningSessionRepository extends JpaRepository<LearningSession, Long> {
 
     //<editor-fold desc="Available Sessions Queries">
-
     /**
      * Obtiene todas las sesiones que están programadas (SCHEDULED)
      * o que están activas y comenzaron hace menos de 5 minutos
@@ -29,7 +28,7 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             "LEFT JOIN FETCH ls.bookings b " +
             "WHERE (ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
             "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo) " +
-            "ORDER BY ls.scheduledDatetime ASC")
+            "ORDER BY ls. scheduledDatetime ASC")
     List<LearningSession> findAvailableSessions(
             @Param("currentDate") Date currentDate,
             @Param("fiveMinutesAgo") Date fiveMinutesAgo
@@ -37,7 +36,6 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     //</editor-fold>
 
     //<editor-fold desc="Filtered Sessions Queries">
-
     /**
      * Filtra sesiones disponibles por categoría (KnowledgeArea)
      */
@@ -46,10 +44,10 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             "LEFT JOIN FETCH i.person p " +
             "LEFT JOIN FETCH ls.skill s " +
             "LEFT JOIN FETCH s.knowledgeArea ka " +
-            "LEFT JOIN FETCH ls.bookings b " +
+            "LEFT JOIN FETCH ls. bookings b " +
             "WHERE ((ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
-            "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo)) " +
-            "AND ka.id = :categoryId " +
+            "OR (ls.status = 'ACTIVE' AND ls. scheduledDatetime >= :fiveMinutesAgo)) " +
+            "AND ka. id = :categoryId " +
             "ORDER BY ls.scheduledDatetime ASC")
     List<LearningSession> findSessionsByCategory(
             @Param("currentDate") Date currentDate,
@@ -67,7 +65,7 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             "LEFT JOIN FETCH s.knowledgeArea ka " +
             "LEFT JOIN FETCH ls.bookings b " +
             "WHERE ((ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
-            "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo)) " +
+            "OR (ls.status = 'ACTIVE' AND ls. scheduledDatetime >= :fiveMinutesAgo)) " +
             "AND ls.language = :language " +
             "ORDER BY ls.scheduledDatetime ASC")
     List<LearningSession> findSessionsByLanguage(
@@ -86,7 +84,7 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             "LEFT JOIN FETCH s.knowledgeArea ka " +
             "LEFT JOIN FETCH ls.bookings b " +
             "WHERE ((ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
-            "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo)) " +
+            "OR (ls.status = 'ACTIVE' AND ls. scheduledDatetime >= :fiveMinutesAgo)) " +
             "AND ka.id = :categoryId " +
             "AND ls.language = :language " +
             "ORDER BY ls.scheduledDatetime ASC")
@@ -99,7 +97,6 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     //</editor-fold>
 
     //<editor-fold desc="Schedule Conflict Queries">
-    /// Queries para detectar conflictos y sugerir horarios
     /**
      * Busca todas las sesiones de un instructor en un rango de tiempo específico
      * Utilizado para detectar conflictos de horario
@@ -137,7 +134,6 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     //</editor-fold>
 
     //<editor-fold desc="Reminder Queries">
-    /// Queries para recordatorios automáticos
     /**
      * Busca sesiones programadas dentro de un rango de fechas
      * Utilizado para encontrar sesiones próximas a 24 horas
@@ -155,13 +151,12 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     //</editor-fold>
 
     //<editor-fold desc="Instructor Session Management">
-
     /**
      * Lista todas las sesiones de un instructor con filtro por estado
      *
      * @param instructorId ID del instructor
-     * @param status       Estado de la sesión (null para traer todos)
-     * @param pageable     Configuración de paginación
+     * @param status Estado de la sesión (null para traer todos)
+     * @param pageable Configuración de paginación
      * @return Página de sesiones
      */
     @Query("""
@@ -199,7 +194,7 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     /**
      * Busca una sesión por ID y verifica que pertenezca al instructor
      *
-     * @param sessionId    ID de la sesión
+     * @param sessionId ID de la sesión
      * @param instructorId ID del instructor
      * @return Optional con la sesión si existe y pertenece al instructor
      */
@@ -213,11 +208,9 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             @Param("instructorId") Long instructorId
     );
 
-
     /**
      * Obtiene el historial de sesiones para un SkillSeeker (estudiante).
      * Retorna sesiones completadas o canceladas en las que el estudiante participó.
-     *
      */
     @Query("""
         SELECT DISTINCT ls FROM LearningSession ls
@@ -225,10 +218,13 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
         WHERE b.learner.id = :learnerId
         ORDER BY ls.scheduledDatetime DESC
         """)
-    Page<LearningSession> findHistoricalSessionsByLearnerId(@Param("learnerId") Long learnerId, Pageable pageable);
+    Page<LearningSession> findHistoricalSessionsByLearnerId(
+            @Param("learnerId") Long learnerId,
+            Pageable pageable
+    );
     //</editor-fold>
 
-    //#region Suggestion Queries
+    //<editor-fold desc="Suggestion Queries">
     /**
      * Encuentra todas las sesiones por estado
      */
@@ -244,5 +240,5 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     @Query("SELECT ls FROM LearningSession ls " +
             "WHERE ls.instructor.id = :instructorId")
     List<LearningSession> findByInstructorId(@Param("instructorId") Long instructorId);
-    //#endregion
+    //</editor-fold>
 }
