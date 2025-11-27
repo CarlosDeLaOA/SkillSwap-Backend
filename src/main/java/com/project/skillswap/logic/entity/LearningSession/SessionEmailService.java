@@ -11,7 +11,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -125,6 +127,49 @@ public class SessionEmailService {
             return false;
         }
     }
+    //#region Helper Methods - Subject & Calendar
+    /**
+     * Construye el subject del email
+     */
+    private String buildSubject(LearningSession session) {
+        return "Sesión Publicada: " + session.getTitle() + " - SkillSwap";
+    }
+
+    /**
+     * Construye el link de Google Calendar para agregar el evento
+     */
+    private String buildGoogleCalendarLink(LearningSession session) {
+        try {
+            String title = URLEncoder.encode(session. getTitle(), StandardCharsets.UTF_8.toString());
+            String description = URLEncoder.encode(
+                    session.getDescription() != null ? session.getDescription() : "",
+                    StandardCharsets.UTF_8.toString()
+            );
+
+            Date startDate = session. getScheduledDatetime();
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(startDate);
+            cal.add(Calendar.MINUTE, session.getDurationMinutes());
+            Date endDate = cal.getTime();
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
+            String start = sdf.format(startDate);
+            String end = sdf. format(endDate);
+
+            return String. format(
+                    "https://calendar. google.com/calendar/render?action=TEMPLATE&text=%s&dates=%s/%s&details=%s",
+                    title, start, end, description
+            );
+        } catch (Exception e) {
+            System.err. println("Error construyendo Google Calendar link: " + e.getMessage());
+            return "https://calendar.google.com";
+        }
+    }
+
+    //#endregion
+
+
+
 
     /**
      * Construye el template HTML para el correo de creación de sesión.

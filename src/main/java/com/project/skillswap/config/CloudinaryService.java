@@ -11,10 +11,7 @@ import java.util.Map;
 
 /**
  * Service para manejar operaciones con Cloudinary
- * Proporciona métodos para subir, eliminar y gestionar imágenes
- *
- * @author SkillSwap Team
- * @version 1.0.0
+ * Proporciona métodos para subir, eliminar y gestionar imágenes y documentos
  */
 @Service
 public class CloudinaryService {
@@ -30,7 +27,7 @@ public class CloudinaryService {
      * @throws IOException si hay error en la subida
      */
     public String uploadImage(MultipartFile file) throws IOException {
-        System.out.println(" [CloudinaryService] Uploading image: " + file.getOriginalFilename());
+        System.out.println("[CloudinaryService] Uploading image: " + file.getOriginalFilename());
 
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
                 ObjectUtils.asMap(
@@ -40,9 +37,33 @@ public class CloudinaryService {
                 ));
 
         String imageUrl = uploadResult.get("secure_url").toString();
-        System.out.println(" [CloudinaryService] Image uploaded successfully: " + imageUrl);
+        System.out.println("[CloudinaryService] Image uploaded successfully: " + imageUrl);
 
         return imageUrl;
+    }
+
+    /**
+     * Sube un documento PDF a Cloudinary
+     *
+     * @param file Archivo PDF a subir
+     * @param communityId ID de la comunidad para organizar en carpetas
+     * @return URL segura del documento subido
+     * @throws IOException si hay error en la subida
+     */
+    public String uploadPdf(MultipartFile file, Long communityId) throws IOException {
+        System.out.println("[CloudinaryService] Uploading PDF: " + file.getOriginalFilename());
+
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                ObjectUtils.asMap(
+                        "folder", "skillswap/documents/community_" + communityId,
+                        "resource_type", "raw",
+                        "format", "pdf"
+                ));
+
+        String pdfUrl = uploadResult.get("secure_url").toString();
+        System.out.println("[CloudinaryService] PDF uploaded successfully: " + pdfUrl);
+
+        return pdfUrl;
     }
 
     /**
@@ -52,9 +73,22 @@ public class CloudinaryService {
      * @throws IOException si hay error en la eliminación
      */
     public void deleteImage(String publicId) throws IOException {
-        System.out.println(" [CloudinaryService] Deleting image with public_id: " + publicId);
+        System.out.println("[CloudinaryService] Deleting image with public_id: " + publicId);
         Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
-        System.out.println(" [CloudinaryService] Image deleted successfully: " + result);
+        System.out.println("[CloudinaryService] Image deleted successfully: " + result);
+    }
+
+    /**
+     * Elimina un documento PDF de Cloudinary usando su public_id
+     *
+     * @param publicId ID público del documento en Cloudinary
+     * @throws IOException si hay error en la eliminación
+     */
+    public void deletePdf(String publicId) throws IOException {
+        System.out.println("[CloudinaryService] Deleting PDF with public_id: " + publicId);
+        Map result = cloudinary.uploader().destroy(publicId,
+                ObjectUtils.asMap("resource_type", "raw"));
+        System.out.println("[CloudinaryService] PDF deleted successfully: " + result);
     }
 
     /**
@@ -76,11 +110,11 @@ public class CloudinaryService {
             String withoutVersion = pathAfterUpload.replaceFirst("v\\d+/", "");
             String publicId = withoutVersion.replaceFirst("\\.[^.]+$", "");
 
-            System.out.println("[CloudinaryService] Extracted public_id: " + publicId + " from URL: " + imageUrl);
+            System.out. println("[CloudinaryService] Extracted public_id: " + publicId + " from URL: " + imageUrl);
 
             return publicId;
         } catch (Exception e) {
-            System.err.println(" [CloudinaryService] Error extracting public_id: " + e.getMessage());
+            System.err.println("[CloudinaryService] Error extracting public_id: " + e.getMessage());
             return null;
         }
     }
