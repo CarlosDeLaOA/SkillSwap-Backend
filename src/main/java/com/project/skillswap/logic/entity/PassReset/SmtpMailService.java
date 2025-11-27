@@ -1,4 +1,4 @@
-package com.project.skillswap.logic.entity.PassReset;
+package com.project.skillswap.logic.entity.passreset;
 
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;

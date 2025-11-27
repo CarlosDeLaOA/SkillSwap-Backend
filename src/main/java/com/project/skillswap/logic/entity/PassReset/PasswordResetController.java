@@ -1,4 +1,4 @@
-package com.project.skillswap.logic.entity.PassReset;
+package com.project.skillswap.logic.entity.passreset;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
