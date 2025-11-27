@@ -5,6 +5,9 @@ import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
+import com.itextpdf.layout.borders.Border;
+import com.itextpdf.layout.borders.SolidBorder;
+import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
@@ -15,9 +18,6 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 
-/**
- * 📄 Servicio para generar PDFs de transcripciones
- */
 @Service
 public class TranscriptionPdfService {
 
@@ -30,23 +30,22 @@ public class TranscriptionPdfService {
     public byte[] generateTranscriptionPdf(LearningSession session) {
         try {
             System.out.println("========================================");
-            System.out.println("📄 GENERANDO PDF DE TRANSCRIPCIÓN");
+            System.out.println(" GENERANDO PDF DE TRANSCRIPCIÓN");
             System.out.println("   Session ID: " + session.getId());
             System.out.println("========================================");
 
-            // Crear PDF en memoria
+
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = new Document(pdfDoc);
 
-            // Color corporativo de SkillSwap
+
             DeviceRgb skillswapPurple = new DeviceRgb(80, 74, 183); // #504AB7
             DeviceRgb skillswapGreen = new DeviceRgb(170, 225, 107); // #AAE16B
 
-            // ========================================
-            // HEADER - LOGO Y TÍTULO
-            // ========================================
+
+
             Paragraph header = new Paragraph("SkillSwap")
                     .setFontSize(32)
                     .setBold()
@@ -62,9 +61,7 @@ public class TranscriptionPdfService {
                     .setMarginBottom(20);
             document.add(subtitle);
 
-            // ========================================
-            // TÍTULO PRINCIPAL
-            // ========================================
+
             Paragraph title = new Paragraph("Transcripción de Sesión")
                     .setFontSize(24)
                     .setBold()
@@ -73,9 +70,7 @@ public class TranscriptionPdfService {
                     .setMarginBottom(30);
             document.add(title);
 
-            // ========================================
-            // INFORMACIÓN DE LA SESIÓN
-            // ========================================
+
             Table infoTable = new Table(UnitValue.createPercentArray(new float[]{30, 70}))
                     .useAllAvailableWidth()
                     .setMarginBottom(20);
@@ -113,9 +108,7 @@ public class TranscriptionPdfService {
 
             document.add(infoTable);
 
-            // ========================================
-            // TRANSCRIPCIÓN
-            // ========================================
+
             Paragraph transcriptionTitle = new Paragraph("Contenido de la Transcripción")
                     .setFontSize(16)
                     .setBold()
@@ -124,11 +117,19 @@ public class TranscriptionPdfService {
                     .setMarginBottom(10);
             document.add(transcriptionTitle);
 
-            Paragraph transcriptionContent = new Paragraph(fullText)
-                    .setFontSize(11)
-                    .setTextAlignment(TextAlignment.JUSTIFIED)
-                    .setMarginBottom(30);
-            document.add(transcriptionContent);
+
+            Table transcriptionTable = new Table(UnitValue.createPercentArray(new float[]{100}))
+                    .useAllAvailableWidth();
+
+
+            Cell transcriptionCell = new Cell()
+                    .add(new Paragraph(fullText)
+                            .setFontSize(11)
+                            .setTextAlignment(TextAlignment.JUSTIFIED))
+                    .setPadding(8);
+
+            transcriptionTable.addCell(transcriptionCell);
+            document.add(transcriptionTable);
 
             // ========================================
             // FOOTER
@@ -140,19 +141,13 @@ public class TranscriptionPdfService {
                     .setMarginTop(20);
             document.add(footer);
 
-            Paragraph techFooter = new Paragraph("Transcripción procesada con inteligencia artificial | Groq Whisper Large V3")
-                    .setFontSize(7)
-                    .setFontColor(ColorConstants.LIGHT_GRAY)
-                    .setTextAlignment(TextAlignment.CENTER);
-            document.add(techFooter);
 
-            // Cerrar documento
             document.close();
 
             byte[] pdfBytes = baos.toByteArray();
 
             System.out.println("========================================");
-            System.out.println("✅ PDF GENERADO EXITOSAMENTE");
+            System.out.println(" PDF GENERADO EXITOSAMENTE");
             System.out.println("   Tamaño: " + formatFileSize(pdfBytes.length));
             System.out.println("========================================");
 
@@ -160,7 +155,7 @@ public class TranscriptionPdfService {
 
         } catch (Exception e) {
             System.err.println("========================================");
-            System.err.println("❌ ERROR GENERANDO PDF");
+            System.err.println(" ERROR GENERANDO PDF");
             System.err.println("   Error: " + e.getMessage());
             System.err.println("========================================");
             e.printStackTrace();
@@ -168,9 +163,7 @@ public class TranscriptionPdfService {
         }
     }
 
-    /**
-     * Agrega fila a tabla de información
-     */
+
     private void addInfoRow(Table table, String label, String value, DeviceRgb labelColor) {
         table.addCell(new Paragraph(label)
                 .setBold()
@@ -181,9 +174,6 @@ public class TranscriptionPdfService {
                 .setFontSize(10));
     }
 
-    /**
-     * Formatea tamaño de archivo
-     */
     private String formatFileSize(long bytes) {
         if (bytes < 1024) return bytes + " B";
         if (bytes < 1024 * 1024) return String.format("%.2f KB", bytes / 1024.0);

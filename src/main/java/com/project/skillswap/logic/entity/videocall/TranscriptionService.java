@@ -153,7 +153,7 @@ public class TranscriptionService {
 
             //  ENVIAR EMAIL AL INSTRUCTOR
             try {
-                //  Ya tenemos el instructor cargado al inicio del método
+
                 if (instructor != null && instructorEmail != null) {
                     System.out.println(" Enviando email de notificación...");
 
@@ -336,7 +336,7 @@ public class TranscriptionService {
         long fileSizeBytes = audioFile.length();
         long fileSizeMB = fileSizeBytes / (1024 * 1024);
 
-        // Para archivos pequeños, usar cálculo más preciso
+
         if (fileSizeMB == 0) {
             // 128 kbps = 16 KB/segundo
             int estimatedSeconds = (int) (fileSizeBytes / 16000);
@@ -344,7 +344,7 @@ public class TranscriptionService {
             return Math.max(estimatedSeconds, 1); // Mínimo 1 segundo
         }
 
-        // Estimación conservadora para archivos grandes
+
         int estimatedSeconds = (int) (fileSizeMB * 60);
         System.out.println("️ Duración estimada: " + estimatedSeconds + " segundos (" +
                 (estimatedSeconds / 60) + " minutos)");
@@ -373,7 +373,7 @@ public class TranscriptionService {
             System.out.println(" Directorio creado: " + TRANSCRIPTIONS_DIR);
         }
 
-        // Crear objeto JSON con metadatos completos
+
         JsonObject jsonTranscription = new JsonObject();
 
         // Información de la sesión
@@ -411,12 +411,12 @@ public class TranscriptionService {
         jsonTranscription.addProperty("scheduledDate", session.getScheduledDatetime() != null ? session.getScheduledDatetime().toString() : null);
         jsonTranscription.addProperty("audioRecordingUrl", session.getAudioRecordingUrl());
 
-        // Nombre del archivo: session_[ID]_[TIMESTAMP].json
+
         String timestamp = LocalDateTime.now().toString().replace(":", "-");
         String filename = String.format("session_%d_%s.json", session.getId(), timestamp);
         File jsonFile = new File(TRANSCRIPTIONS_DIR + filename);
 
-        // Escribir JSON a archivo
+
         try (java.io.FileWriter writer = new java.io.FileWriter(jsonFile)) {
             gson.toJson(jsonTranscription, writer);
         }
