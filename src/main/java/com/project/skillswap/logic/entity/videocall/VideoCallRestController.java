@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.text.SimpleDateFormat;
 
 /**
  * Controlador REST para operaciones de videollamadas
@@ -52,6 +53,15 @@ public class VideoCallRestController {
 
     @Autowired
     private SessionEmailService sessionEmailService;
+
+    @Autowired
+    private SessionSummaryService summaryService;
+
+    @Autowired
+    private SessionSummaryPdfService summaryPdfService;
+
+    @Autowired
+    private SessionSummaryEmailService summaryEmailService;
 
     //#endregion
 
@@ -1087,5 +1097,269 @@ public class VideoCallRestController {
         if (bytes < 1024 * 1024) return String.format("%.2f KB", bytes / 1024.0);
         return String.format("%.2f MB", bytes / (1024.0 * 1024.0));
     }
+
+
+// ========================================
+// SUMMARY ENDPOINTS (RESÚMENES CON IA)
+// ========================================
+
+    /**
+     * 🤖 Genera resumen de sesión con IA y lo envía por email a participantes
+     * POST /videocall/summary/generate/{sessionId}
+     */
+    @PostMapping("/summary/generate/{sessionId}")
+    public ResponseEntity<Map<String, Object>> generateAndSendSummary(@PathVariable Long sessionId) {
+        try {
+            Person person = getAuthenticatedPerson();
+            if (person == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Usuario no autenticado"));
+            }
+
+            if (!isSessionInstructor(person, sessionId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Solo el instructor puede generar resúmenes"));
+            }
+
+            System.out.println("========================================");
+            System.out.println("🤖 GENERANDO RESUMEN DE SESIÓN");
+            System.out.println("   Session ID: " + sessionId);
+            System.out.println("   Solicitado por: " + person.getFullName());
+            System.out.println("========================================");
+
+            // 1. Obtener sesión
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+            // 2. Validar que tenga transcripción
+            if (session.getFullText() == null || session.getFullText().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "La sesión no tiene transcripción. Genera primero la transcripción."
+                        ));
+            }
+
+            // 3. Generar resumen con IA
+            String summary = summaryService.generateSummary(session);
+
+            // 4. Validar resumen
+            if (!summaryService.validateSummary(summary)) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "El resumen generado no cumple con los requisitos de calidad"
+                        ));
+            }
+
+            // 5. Generar PDF del resumen
+            byte[] summaryPdf = summaryPdfService.generateSummaryPdf(session, summary);
+
+            // 6. Enviar a todos los participantes
+            boolean emailsSent = summaryEmailService.sendSummaryToParticipants(session, summaryPdf, summary);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", emailsSent
+                    ? "Resumen generado y enviado a todos los participantes"
+                    : "Resumen generado pero no se pudieron enviar emails");
+            response.put("sessionId", sessionId);
+            response.put("summaryLength", summary.length());
+            response.put("emailsSent", emailsSent);
+
+            System.out.println("========================================");
+            System.out.println("✅ PROCESO COMPLETADO");
+            System.out.println("   Resumen generado: ✓");
+            System.out.println("   PDF creado: ✓");
+            System.out.println("   Emails enviados: " + (emailsSent ? "✓" : "✗"));
+            System.out.println("========================================");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("========================================");
+            System.err.println("❌ ERROR GENERANDO RESUMEN");
+            System.err.println("   Error: " + e.getMessage());
+            System.err.println("========================================");
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Error al generar resumen: " + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
+     * Obtiene el resumen de una sesión (texto plano)
+     * GET /videocall/summary/{sessionId}
+     */
+    @GetMapping("/summary/{sessionId}")
+    public ResponseEntity<Map<String, Object>> getSummary(@PathVariable Long sessionId) {
+        try {
+            Person person = getAuthenticatedPerson();
+            if (person == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Usuario no autenticado"));
+            }
+
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+
+            if (session.getFullText() == null || session.getFullText().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "No hay transcripción disponible para esta sesión"
+                        ));
+            }
+
+            String summary = summaryService.generateSummary(session);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("sessionId", sessionId);
+            response.put("summary", summary);
+            response.put("wordCount", summary.split("\\s+").length);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("Error obteniendo resumen: " + e.getMessage());
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Error al obtener resumen: " + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
+     * Descarga el resumen en PDF
+     * GET /videocall/summary/{sessionId}/download-pdf
+     */
+    @GetMapping("/summary/{sessionId}/download-pdf")
+    public ResponseEntity<?> downloadSummaryPdf(@PathVariable Long sessionId) {
+        try {
+            System.out.println("========================================");
+            System.out.println("📥 DESCARGA DE RESUMEN PDF");
+            System.out.println("   Session ID: " + sessionId);
+            System.out.println("========================================");
+
+            Person person = getAuthenticatedPerson();
+            if (person == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Usuario no autenticado".getBytes());
+            }
+
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+            if (session.getFullText() == null || session.getFullText().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No hay transcripción disponible".getBytes());
+            }
+
+            // Generar resumen
+            String summary = summaryService.generateSummary(session);
+
+            // Generar PDF
+            byte[] pdfBytes = summaryPdfService.generateSummaryPdf(session, summary);
+
+            String fileName = "resumen_sesion_" + session.getId() + "_" +
+                    new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".pdf";
+
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+            headers.setContentLength(pdfBytes.length);
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            headers.setPragma("no-cache");
+            headers.setExpires(0);
+            headers.set("Content-Disposition",
+                    "attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" +
+                            java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"));
+
+            System.out.println("========================================");
+            System.out.println("✅ PDF DE RESUMEN LISTO");
+            System.out.println("   Archivo: " + fileName);
+            System.out.println("========================================");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+
+        } catch (Exception e) {
+            System.err.println("========================================");
+            System.err.println("❌ ERROR DESCARGANDO PDF");
+            System.err.println("   Error: " + e.getMessage());
+            System.err.println("========================================");
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Error al descargar PDF: " + e.getMessage())
+                            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+    }
+
+    /**
+     * Reenvía el resumen por email (manual)
+     * POST /videocall/summary/{sessionId}/resend-email
+     */
+    @PostMapping("/summary/{sessionId}/resend-email")
+    public ResponseEntity<Map<String, Object>> resendSummaryEmail(@PathVariable Long sessionId) {
+        try {
+            Person person = getAuthenticatedPerson();
+            if (person == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Usuario no autenticado"));
+            }
+
+            if (!isSessionInstructor(person, sessionId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Solo el instructor puede reenviar resúmenes"));
+            }
+
+            LearningSession session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+
+            if (session.getFullText() == null || session.getFullText().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "La sesión no tiene transcripción"
+                        ));
+            }
+
+            // Generar resumen y PDF
+            String summary = summaryService.generateSummary(session);
+            byte[] summaryPdf = summaryPdfService.generateSummaryPdf(session, summary);
+
+            // Reenviar emails
+            boolean emailsSent = summaryEmailService.sendSummaryToParticipants(session, summaryPdf, summary);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", emailsSent,
+                    "message", emailsSent
+                            ? "Resumen reenviado exitosamente"
+                            : "No se pudieron enviar los emails",
+                    "sessionId", sessionId
+            ));
+
+        } catch (Exception e) {
+            System.err.println("Error reenviando resumen: " + e.getMessage());
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Error al reenviar resumen: " + e.getMessage()
+                    ));
+        }
+    }
+
     //#endregion
 }
