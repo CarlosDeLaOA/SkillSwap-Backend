@@ -52,7 +52,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("❌ [NOTIFICATION] Error: " + e.getMessage());
+            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -85,7 +85,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("❌ [NOTIFICATION] Error: " + e.getMessage());
+            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -117,7 +117,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("❌ [NOTIFICATION] Error: " + e.getMessage());
+            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -150,7 +150,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("❌ [NOTIFICATION] Error: " + e.getMessage());
+            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -182,7 +182,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("❌ [NOTIFICATION] Error: " + e.getMessage());
+            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -215,7 +215,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("❌ [NOTIFICATION] Error: " + e.getMessage());
+            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
