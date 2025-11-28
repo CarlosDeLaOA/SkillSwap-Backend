@@ -68,27 +68,27 @@ public class BookingService {
 
         System.out.println("[BOOKING] Learner encontrado con ID: " + learner.getId());
 
-        // 3. Validar que la sesión existe
+        // 3. Validar que la sesion existe
         LearningSession session = learningSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Sesión no encontrada con ID: " + sessionId));
+                .orElseThrow(() -> new RuntimeException("Sesion no encontrada con ID: " + sessionId));
 
-        System.out.println("[BOOKING] Sesión encontrada: " + session.getTitle());
+        System.out.println("[BOOKING] Sesion encontrada: " + session.getTitle());
 
-        // 4.Validar que la sesión está en estado SCHEDULED o ACTIVE
+        // 4.Validar que la sesion esta en estado SCHEDULED o ACTIVE
         if (! SessionStatus.SCHEDULED.equals(session.getStatus()) && ! SessionStatus.ACTIVE.equals(session.getStatus())) {
-            throw new RuntimeException("No se puede registrar en una sesión que no está programada o activa");
+            throw new RuntimeException("No se puede registrar en una sesion que no esta programada o activa");
         }
 
-        // 5. Buscar bookings existentes para este usuario y sesión
+        // 5. Buscar bookings existentes para este usuario y sesion
         List<Booking> existingBookings = bookingRepository.findByLearnerIdAndLearningSessionId(learner.getId(), sessionId);
 
         // Verificar si ya tiene un booking activo
         for (Booking existingBooking : existingBookings) {
             if (BookingStatus.CONFIRMED.equals(existingBooking.getStatus())) {
-                throw new RuntimeException("Ya estás registrado en esta sesión");
+                throw new RuntimeException("Ya estas registrado en esta sesion");
             }
             if (BookingStatus.WAITING.equals(existingBooking.getStatus())) {
-                throw new RuntimeException("Ya estás en lista de espera para esta sesión");
+                throw new RuntimeException("Ya estas en lista de espera para esta sesion");
             }
         }
 
@@ -97,20 +97,20 @@ public class BookingService {
         System.out.println("[BOOKING] Cupos confirmados: " + confirmedBookings + "/" + session.getMaxCapacity());
 
         if (confirmedBookings >= session.getMaxCapacity()) {
-            throw new RuntimeException("No hay cupos disponibles para esta sesión");
+            throw new RuntimeException("No hay cupos disponibles para esta sesion");
         }
 
-        // 7.Validar que la sesión tenga un video_call_link configurado
+        // 7.Validar que la sesion tenga un video_call_link configurado
         if (session.getVideoCallLink() == null || session.getVideoCallLink().isEmpty()) {
-            throw new RuntimeException("La sesión no tiene un enlace de videollamada configurado");
+            throw new RuntimeException("La sesion no tiene un enlace de videollamada configurado");
         }
 
-        // 8.Validar y procesar pago de SkillCoins para sesiones Premium
+        // 8. Validar y procesar pago de SkillCoins para sesiones Premium
         if (Boolean.TRUE.equals(session.getIsPremium())) {
             processSkillCoinsPayment(learner, session);
         }
 
-        // 9. Buscar si existe un booking CANCELLED que podamos reutilizar
+        // 9.Buscar si existe un booking CANCELLED que podamos reutilizar
         Booking booking = null;
         for (Booking existingBooking : existingBookings) {
             if (BookingStatus.CANCELLED.equals(existingBooking.getStatus())) {
@@ -137,10 +137,10 @@ public class BookingService {
         Booking savedBooking = bookingRepository.save(booking);
         System.out.println("[BOOKING] Booking guardado exitosamente con ID: " + savedBooking.getId());
 
-        // 12.Enviar email de confirmación
+        // 12. Enviar email de confirmacion
         try {
             bookingEmailService.sendBookingConfirmationEmail(savedBooking, person);
-            System.out.println("[BOOKING] Email de confirmación enviado a: " + person.getEmail());
+            System.out.println("[BOOKING] Email de confirmacion enviado a: " + person.getEmail());
         } catch (Exception e) {
             System.err.println("[BOOKING] Error al enviar email: " + e.getMessage());
         }
@@ -155,7 +155,7 @@ public class BookingService {
         BigDecimal cost = session.getSkillcoinsCost();
 
         if (cost == null || cost.compareTo(BigDecimal.ZERO) <= 0) {
-            System.out.println("[SKILLCOINS] Sesión premium sin costo definido, permitiendo registro gratuito");
+            System.out.println("[SKILLCOINS] Sesion premium sin costo definido, permitiendo registro gratuito");
             return;
         }
 
@@ -170,7 +170,7 @@ public class BookingService {
         if (learnerBalance.compareTo(cost) < 0) {
             throw new RuntimeException(
                     String.format("Saldo insuficiente de SkillCoins.Necesitas %s SkillCoins pero solo tienes %s. " +
-                                    "Por favor, adquiere más SkillCoins para inscribirte en esta sesión premium.",
+                                    "Por favor, adquiere mas SkillCoins para inscribirte en esta sesion premium.",
                             cost.intValue(), learnerBalance.intValue())
             );
         }
@@ -196,11 +196,25 @@ public class BookingService {
         System.out.println("[SKILLCOINS] Acreditado al instructor " + instructor.getPerson().getFullName() +
                 ".Nuevo balance: " + newInstructorBalance);
 
-        System.out.println("[SKILLCOINS] Transacción completada exitosamente. Transferidos " + cost + " SkillCoins");
+        // Enviar email al instructor notificando el pago recibido
+        try {
+            bookingEmailService.sendInstructorPaymentReceivedEmail(
+                    session,
+                    instructor.getPerson(),
+                    learner.getPerson().getFullName(),
+                    cost,
+                    newInstructorBalance
+            );
+            System.out.println("[EMAIL] Notificacion de pago enviada al instructor");
+        } catch (Exception e) {
+            System.err.println("[EMAIL] Error al enviar notificacion de pago al instructor: " + e.getMessage());
+        }
+
+        System.out.println("[SKILLCOINS] Transaccion completada exitosamente. Transferidos " + cost + " SkillCoins");
     }
 
     /**
-     * Valida que el estudiante tenga suficiente balance para una sesión Premium
+     * Valida que el estudiante tenga suficiente balance para una sesion Premium
      */
     private void validateSkillCoinsBalance(Learner learner, LearningSession session) {
         BigDecimal cost = session.getSkillcoinsCost();
@@ -217,7 +231,7 @@ public class BookingService {
         if (balance.compareTo(cost) < 0) {
             throw new RuntimeException(
                     String.format("Saldo insuficiente de SkillCoins para unirse a la lista de espera." +
-                                    "Esta sesión cuesta %s SkillCoins y solo tienes %s.",
+                                    "Esta sesion cuesta %s SkillCoins y solo tienes %s.",
                             cost.intValue(), balance.intValue())
             );
         }
@@ -226,7 +240,7 @@ public class BookingService {
     }
 
     /**
-     * Reembolsa SkillCoins al estudiante cuando cancela una sesión Premium
+     * Reembolsa SkillCoins al estudiante cuando cancela una sesion Premium
      */
     private void refundSkillCoins(Learner learner, LearningSession session) {
         BigDecimal cost = session.getSkillcoinsCost();
@@ -288,8 +302,8 @@ public class BookingService {
         LearningCommunity community = learningCommunityRepository.findById(communityId)
                 .orElseThrow(() -> new RuntimeException("Comunidad no encontrada con ID: " + communityId));
 
-        if (! community.getActive()) {
-            throw new RuntimeException("La comunidad no está activa");
+        if (!community.getActive()) {
+            throw new RuntimeException("La comunidad no esta activa");
         }
 
         // 3.Obtener todos los miembros activos de la comunidad
@@ -299,7 +313,7 @@ public class BookingService {
             throw new RuntimeException("La comunidad no tiene miembros activos");
         }
 
-        // 4.Validar que el usuario es miembro de la comunidad
+        // 4. Validar que el usuario es miembro de la comunidad
         boolean isUserMember = allMembers.stream()
                 .anyMatch(cm -> cm.getLearner().getId().equals(requestingLearner.getId()));
 
@@ -309,34 +323,34 @@ public class BookingService {
 
         System.out.println("[BOOKING] Registrando " + allMembers.size() + " miembros de la comunidad");
 
-        // 5.Validar que la sesión existe
+        // 5. Validar que la sesion existe
         LearningSession session = learningSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Sesión no encontrada con ID: " + sessionId));
+                .orElseThrow(() -> new RuntimeException("Sesion no encontrada con ID: " + sessionId));
 
-        System.out.println("[BOOKING] Sesión encontrada: " + session.getTitle());
+        System.out.println("[BOOKING] Sesion encontrada: " + session.getTitle());
 
-        // 6. Validar que la sesión está en estado SCHEDULED o ACTIVE
+        // 6. Validar que la sesion esta en estado SCHEDULED o ACTIVE
         if (!SessionStatus.SCHEDULED.equals(session.getStatus()) && !SessionStatus.ACTIVE.equals(session.getStatus())) {
-            throw new RuntimeException("No se puede registrar en una sesión que no está programada o activa");
+            throw new RuntimeException("No se puede registrar en una sesion que no esta programada o activa");
         }
 
-        // 7.Validar que la sesión tenga un video_call_link configurado
+        // 7. Validar que la sesion tenga un video_call_link configurado
         if (session.getVideoCallLink() == null || session.getVideoCallLink().isEmpty()) {
-            throw new RuntimeException("La sesión no tiene un enlace de videollamada configurado");
+            throw new RuntimeException("La sesion no tiene un enlace de videollamada configurado");
         }
 
-        // 8. Validar que ningún miembro esté ya registrado (CONFIRMED o WAITING)
+        // 8.Validar que ningun miembro este ya registrado (CONFIRMED o WAITING)
         for (CommunityMember member : allMembers) {
             List<Booking> memberBookings = bookingRepository.findByLearnerIdAndLearningSessionId(
                     member.getLearner().getId(), sessionId);
             for (Booking booking : memberBookings) {
                 if (BookingStatus.CONFIRMED.equals(booking.getStatus()) || BookingStatus.WAITING.equals(booking.getStatus())) {
-                    throw new RuntimeException("Uno o más miembros ya están registrados en esta sesión");
+                    throw new RuntimeException("Uno o mas miembros ya estan registrados en esta sesion");
                 }
             }
         }
 
-        // 9. Validar que haya cupo suficiente para todos los miembros
+        // 9.Validar que haya cupo suficiente para todos los miembros
         long confirmedBookings = bookingRepository.countConfirmedBookingsBySessionId(sessionId);
         int availableSpots = session.getMaxCapacity() - (int) confirmedBookings;
 
@@ -411,7 +425,7 @@ public class BookingService {
             emailData.add(data);
         }
 
-        // 13.Enviar emails de forma asíncrona
+        // 13.Enviar emails de forma asincrona
         CompletableFuture.runAsync(() -> {
             for (Map<String, Object> data : emailData) {
                 try {
@@ -435,7 +449,7 @@ public class BookingService {
         BigDecimal costPerPerson = session.getSkillcoinsCost();
 
         if (costPerPerson == null || costPerPerson.compareTo(BigDecimal.ZERO) <= 0) {
-            System.out.println("[SKILLCOINS] Sesión premium sin costo definido, permitiendo registro gratuito");
+            System.out.println("[SKILLCOINS] Sesion premium sin costo definido, permitiendo registro gratuito");
             return;
         }
 
@@ -493,7 +507,21 @@ public class BookingService {
         instructor.setSkillcoinsBalance(newInstructorBalance);
         instructorRepository.save(instructor);
 
-        System.out.println("[SKILLCOINS] Transacción grupal completada. Total transferido al instructor: " + totalToInstructor + " SkillCoins");
+        // Enviar email al instructor notificando el pago grupal recibido
+        try {
+            bookingEmailService.sendInstructorGroupPaymentReceivedEmail(
+                    session,
+                    instructor.getPerson(),
+                    members.size(),
+                    totalToInstructor,
+                    newInstructorBalance
+            );
+            System.out.println("[EMAIL] Notificacion de pago grupal enviada al instructor");
+        } catch (Exception e) {
+            System.err.println("[EMAIL] Error al enviar notificacion de pago grupal al instructor: " + e.getMessage());
+        }
+
+        System.out.println("[SKILLCOINS] Transaccion grupal completada. Total transferido al instructor: " + totalToInstructor + " SkillCoins");
     }
 
     /**
@@ -513,18 +541,18 @@ public class BookingService {
     }
 
     /**
-     * Genera un enlace único de acceso
+     * Genera un enlace unico de acceso
      */
     private String generateAccessLink() {
         return "https://skillswap.com/session/join/" + UUID.randomUUID().toString();
     }
     /**
-     * Une a un usuario a la lista de espera de una sesión
+     * Une a un usuario a la lista de espera de una sesion
      */
     @Transactional
     public Booking joinWaitlist(Long sessionId, String userEmail) {
 
-        System.out.println("[WAITLIST] Uniendo a lista de espera - Sesión: " + sessionId);
+        System.out.println("[WAITLIST] Uniendo a lista de espera - Sesion: " + sessionId);
 
         Person person = personRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con email: " + userEmail));
@@ -535,22 +563,22 @@ public class BookingService {
         }
 
         LearningSession session = learningSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Sesión no encontrada con ID: " + sessionId));
+                .orElseThrow(() -> new RuntimeException("Sesion no encontrada con ID: " + sessionId));
 
-        System.out.println("[WAITLIST] Sesión encontrada: " + session.getTitle());
+        System.out.println("[WAITLIST] Sesion encontrada: " + session.getTitle());
 
         if (! SessionStatus.SCHEDULED.equals(session.getStatus())) {
-            throw new RuntimeException("No se puede unir a lista de espera de una sesión que no está programada");
+            throw new RuntimeException("No se puede unir a lista de espera de una sesion que no esta programada");
         }
 
         List<Booking> existingBookings = bookingRepository.findByLearnerIdAndLearningSessionId(learner.getId(), sessionId);
 
         for (Booking booking : existingBookings) {
             if (BookingStatus.CONFIRMED.equals(booking.getStatus())) {
-                throw new RuntimeException("Ya estás registrado en esta sesión");
+                throw new RuntimeException("Ya estas registrado en esta sesion");
             }
             if (BookingStatus.WAITING.equals(booking.getStatus())) {
-                throw new RuntimeException("Ya estás en lista de espera para esta sesión");
+                throw new RuntimeException("Ya estas en lista de espera para esta sesion");
             }
         }
 
@@ -558,10 +586,10 @@ public class BookingService {
         int availableSpots = session.getMaxCapacity() - (int) confirmedBookings;
 
         if (availableSpots > 0) {
-            throw new RuntimeException("Aún hay cupos disponibles. Por favor, regístrate normalmente.");
+            throw new RuntimeException("Aun hay cupos disponibles. Por favor, registrate normalmente.");
         }
 
-        // Validar balance para sesiones Premium (solo validar, no cobrar aún)
+        // Validar balance para sesiones Premium (solo validar, no cobrar aun)
         if (Boolean.TRUE.equals(session.getIsPremium())) {
             validateSkillCoinsBalance(learner, session);
         }
@@ -571,7 +599,7 @@ public class BookingService {
         System.out.println("[WAITLIST] Usuarios en lista de espera: " + waitlistCount);
 
         if (waitlistCount >= 20) {
-            throw new RuntimeException("Lista de espera llena.Máximo 20 usuarios permitidos.");
+            throw new RuntimeException("Lista de espera llena.Maximo 20 usuarios permitidos.");
         }
 
         Booking waitlistBooking = null;
@@ -597,11 +625,11 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(waitlistBooking);
 
-        System.out.println("[WAITLIST] Usuario agregado a lista de espera - Posición: " + (waitlistCount + 1));
+        System.out.println("[WAITLIST] Usuario agregado a lista de espera - Posicion: " + (waitlistCount + 1));
 
         try {
             bookingEmailService.sendWaitlistConfirmationEmail(savedBooking, person);
-            System.out.println("[WAITLIST] Email de confirmación enviado");
+            System.out.println("[WAITLIST] Email de confirmacion enviado");
         } catch (Exception e) {
             System.err.println("[WAITLIST] Error al enviar email: " + e.getMessage());
         }
@@ -615,10 +643,10 @@ public class BookingService {
     @Transactional
     public void processWaitlist(Long sessionId) {
 
-        System.out.println("[WAITLIST] Procesando lista de espera para sesión: " + sessionId);
+        System.out.println("[WAITLIST] Procesando lista de espera para sesion: " + sessionId);
 
         LearningSession session = learningSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+                .orElseThrow(() -> new RuntimeException("Sesion no encontrada"));
 
         long confirmedBookings = bookingRepository.countConfirmedBookingsBySessionId(sessionId);
         int availableSpots = session.getMaxCapacity() - (int) confirmedBookings;
@@ -687,12 +715,12 @@ public class BookingService {
         Person person = personRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        if (!booking.getLearner().getId().equals(person.getLearner().getId())) {
+        if (! booking.getLearner().getId().equals(person.getLearner().getId())) {
             throw new RuntimeException("No tienes permiso para modificar este booking");
         }
 
         if (! BookingStatus.WAITING.equals(booking.getStatus())) {
-            throw new RuntimeException("Solo puedes salir de una lista de espera si estás en estado WAITING");
+            throw new RuntimeException("Solo puedes salir de una lista de espera si estas en estado WAITING");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
@@ -702,7 +730,7 @@ public class BookingService {
 
         try {
             bookingEmailService.sendWaitlistExitConfirmationEmail(booking, person);
-            System.out.println("[WAITLIST] Email de confirmación de salida enviado");
+            System.out.println("[WAITLIST] Email de confirmacion de salida enviado");
         } catch (Exception e) {
             System.err.println("[WAITLIST] Error al enviar email: " + e.getMessage());
         }
@@ -714,7 +742,7 @@ public class BookingService {
     @Transactional
     public Booking cancelBooking(Long bookingId, String userEmail) {
 
-        System.out.println("[BOOKING_CANCEL] Iniciando cancelación de booking: " + bookingId);
+        System.out.println("[BOOKING_CANCEL] Iniciando cancelacion de booking: " + bookingId);
 
         Person person = personRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -732,12 +760,12 @@ public class BookingService {
         }
 
         if (BookingStatus.CANCELLED.equals(booking.getStatus())) {
-            throw new RuntimeException("Este booking ya está cancelado");
+            throw new RuntimeException("Este booking ya esta cancelado");
         }
 
         LearningSession session = booking.getLearningSession();
         if (session.getStatus() == SessionStatus.ACTIVE || session.getStatus() == SessionStatus.FINISHED) {
-            throw new RuntimeException("No se puede cancelar un registro de una sesión que ya inició o terminó");
+            throw new RuntimeException("No se puede cancelar un registro de una sesion que ya inicio o termino");
         }
 
         boolean isGroupBooking = BookingType.GROUP.equals(booking.getType());
@@ -753,9 +781,16 @@ public class BookingService {
 
         System.out.println("[BOOKING_CANCEL] Cancelando booking individual: " + booking.getId());
 
-        // Reembolsar SkillCoins si era sesión Premium
-        if (Boolean.TRUE.equals(session.getIsPremium()) && BookingStatus.CONFIRMED.equals(booking.getStatus())) {
+        // Verificar si la sesion ya paso (no reembolsar)
+        boolean sessionAlreadyPassed = session.getScheduledDatetime().before(new Date());
+
+        // Reembolsar SkillCoins solo si era sesion Premium, estaba confirmado Y la sesion NO ha pasado
+        if (Boolean.TRUE.equals(session.getIsPremium()) &&
+                BookingStatus.CONFIRMED.equals(booking.getStatus()) &&
+                ! sessionAlreadyPassed) {
             refundSkillCoins(booking.getLearner(), session);
+        } else if (sessionAlreadyPassed && Boolean.TRUE.equals(session.getIsPremium())) {
+            System.out.println("[SKILLCOINS] No se reembolsa porque la sesion ya paso");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
@@ -763,9 +798,9 @@ public class BookingService {
 
         System.out.println("[SUCCESS] Booking individual cancelado. Cupo liberado: 1");
 
-        sendCancellationNotifications(cancelledBooking, person, session, false, 1);
+        sendCancellationNotifications(cancelledBooking, person, session, false, 1, sessionAlreadyPassed);
 
-        System.out.println("[WAITLIST] Procesando lista de espera después de cancelación...");
+        System.out.println("[WAITLIST] Procesando lista de espera despues de cancelacion...");
         try {
             processWaitlist(session.getId());
         } catch (Exception e) {
@@ -784,13 +819,18 @@ public class BookingService {
             throw new RuntimeException("No se puede determinar la comunidad del booking grupal");
         }
 
+        // Verificar si la sesion ya paso (no reembolsar)
+        boolean sessionAlreadyPassed = session.getScheduledDatetime().before(new Date());
+
         List<Booking> groupBookings = bookingRepository.findByLearningSessionIdAndCommunityId(session.getId(), community.getId());
 
         int cancelledCount = 0;
         for (Booking groupBooking : groupBookings) {
             if (! BookingStatus.CANCELLED.equals(groupBooking.getStatus())) {
-                // Reembolsar SkillCoins si era sesión Premium
-                if (Boolean.TRUE.equals(session.getIsPremium()) && BookingStatus.CONFIRMED.equals(groupBooking.getStatus())) {
+                // Reembolsar SkillCoins solo si la sesion NO ha pasado
+                if (Boolean.TRUE.equals(session.getIsPremium()) &&
+                        BookingStatus.CONFIRMED.equals(groupBooking.getStatus()) &&
+                        !sessionAlreadyPassed) {
                     refundSkillCoins(groupBooking.getLearner(), session);
                 }
 
@@ -800,11 +840,15 @@ public class BookingService {
             }
         }
 
-        System.out.println("[SUCCESS] Booking grupal cancelado. Cupos liberados: " + cancelledCount);
+        if (sessionAlreadyPassed && Boolean.TRUE.equals(session.getIsPremium())) {
+            System.out.println("[SKILLCOINS] No se reembolsa a " + cancelledCount + " miembros porque la sesion ya paso");
+        }
 
-        sendCancellationNotifications(booking, person, session, true, cancelledCount);
+        System.out.println("[SUCCESS] Booking grupal cancelado.Cupos liberados: " + cancelledCount);
 
-        System.out.println("[WAITLIST] Procesando lista de espera después de cancelación grupal...");
+        sendCancellationNotifications(booking, person, session, true, cancelledCount, sessionAlreadyPassed);
+
+        System.out.println("[WAITLIST] Procesando lista de espera despues de cancelacion grupal...");
         try {
             processWaitlist(session.getId());
         } catch (Exception e) {
@@ -815,14 +859,15 @@ public class BookingService {
     }
 
     private void sendCancellationNotifications(Booking booking, Person learnerPerson,
-                                               LearningSession session, boolean isGroup, int spotsFreed) {
+                                               LearningSession session, boolean isGroup, int spotsFreed,
+                                               boolean sessionAlreadyPassed) {
         try {
-            bookingEmailService.sendBookingCancellationEmail(booking, learnerPerson);
-            System.out.println("[EMAIL] Confirmación de cancelación enviada a: " + learnerPerson.getEmail());
+            bookingEmailService.sendBookingCancellationEmail(booking, learnerPerson, sessionAlreadyPassed);
+            System.out.println("[EMAIL] Confirmacion de cancelacion enviada a: " + learnerPerson.getEmail());
 
             Person instructorPerson = session.getInstructor().getPerson();
             bookingEmailService.sendInstructorNotificationEmail(session, instructorPerson, learnerPerson.getFullName(), isGroup, spotsFreed);
-            System.out.println("[EMAIL] Notificación enviada al instructor: " + instructorPerson.getEmail());
+            System.out.println("[EMAIL] Notificacion enviada al instructor: " + instructorPerson.getEmail());
 
         } catch (Exception e) {
             System.err.println("[ERROR] Error al enviar notificaciones: " + e.getMessage());
