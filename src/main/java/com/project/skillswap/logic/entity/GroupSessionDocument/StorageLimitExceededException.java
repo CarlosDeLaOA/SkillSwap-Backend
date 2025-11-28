@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 /**
  * Excepción lanzada cuando se excede el límite de almacenamiento del grupo (100MB).
  */
-@ResponseStatus(HttpStatus. PAYLOAD_TOO_LARGE)
+@ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
 public class StorageLimitExceededException extends RuntimeException {
 
     //#region Constants
@@ -29,14 +29,14 @@ public class StorageLimitExceededException extends RuntimeException {
 
     public StorageLimitExceededException(Long communityId, Long currentStorageBytes, Long fileSize) {
         super(String.format(
-                        "Límite de almacenamiento excedido para el grupo %d.  " +
+                        "Límite de almacenamiento excedido para el grupo %d. " +
                                 "Almacenamiento actual: %.2f MB, Archivo: %.2f MB, Límite: 100 MB.",
                         communityId,
                         currentStorageBytes / (1024.0 * 1024.0),
                 fileSize / (1024.0 * 1024.0)));
         this.communityId = communityId;
         this.currentStorageBytes = currentStorageBytes;
-        this. fileSize = fileSize;
+        this.fileSize = fileSize;
     }
 
     public StorageLimitExceededException(String message, Throwable cause) {

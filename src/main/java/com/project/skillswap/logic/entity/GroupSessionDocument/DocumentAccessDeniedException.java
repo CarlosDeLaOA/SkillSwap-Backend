@@ -1,7 +1,7 @@
-package com. project.skillswap.logic.entity.GroupSessionDocument;
+package com.project.skillswap.logic.entity.GroupSessionDocument;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind. annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * Excepción lanzada cuando un usuario intenta acceder a documentos sin ser miembro del grupo.
@@ -19,16 +19,16 @@ public class DocumentAccessDeniedException extends RuntimeException {
     public DocumentAccessDeniedException(String message) {
         super(message);
         this.personId = null;
-        this. communityId = null;
-        this. action = null;
+        this.communityId = null;
+        this.action = null;
     }
 
     public DocumentAccessDeniedException(Long personId, Long communityId, String action) {
         super(String.format(
-                "Acceso denegado: el usuario %d no tiene permisos para %s documentos en el grupo %d.  Solo los miembros pueden acceder.",
+                "Acceso denegado: el usuario %d no tiene permisos para %s documentos en el grupo %d. Solo los miembros pueden acceder.",
                 personId, action, communityId));
-        this. personId = personId;
-        this. communityId = communityId;
+        this.personId = personId;
+        this.communityId = communityId;
         this.action = action;
     }
 

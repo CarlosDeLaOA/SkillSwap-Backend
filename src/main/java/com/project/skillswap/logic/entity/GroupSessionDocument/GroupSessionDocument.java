@@ -3,7 +3,7 @@ package com.project.skillswap.logic.entity.GroupSessionDocument;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunity;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
-import com. project.skillswap.logic.entity.Person.Person;
+import com.project.skillswap.logic.entity.Person.Person;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -167,7 +167,7 @@ public class GroupSessionDocument {
     }
 
     public void setFileSize(Long fileSize) {
-        this. fileSize = fileSize;
+        this.fileSize = fileSize;
     }
 
     public String getContentType() {
@@ -183,7 +183,7 @@ public class GroupSessionDocument {
     }
 
     public void setSessionDate(LocalDateTime sessionDate) {
-        this. sessionDate = sessionDate;
+        this.sessionDate = sessionDate;
     }
 
     public LocalDateTime getUploadDate() {
@@ -245,7 +245,7 @@ public class GroupSessionDocument {
         } else if (fileSize < 1024 * 1024) {
             return String.format("%.2f KB", fileSize / 1024.0);
         } else {
-            return String.format("%. 2f MB", fileSize / (1024.0 * 1024.0));
+            return String.format("%.2f MB", fileSize / (1024.0 * 1024.0));
         }
     }
 

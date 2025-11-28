@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart. MultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -116,7 +116,7 @@ public class GroupSessionDocumentController {
         } catch (DocumentAccessDeniedException e) {
             response.put("success", false);
             response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus. FORBIDDEN).body(response);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
 
         } catch (Exception e) {
             response.put("success", false);
@@ -351,7 +351,7 @@ public class GroupSessionDocumentController {
         } catch (DocumentAccessDeniedException e) {
             response.put("success", false);
             response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus. FORBIDDEN).body(response);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
 
         } catch (Exception e) {
             response.put("success", false);
@@ -421,7 +421,7 @@ public class GroupSessionDocumentController {
         } catch (DocumentAccessDeniedException e) {
             response.put("success", false);
             response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus. FORBIDDEN).body(response);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
 
         } catch (Exception e) {
             response.put("success", false);

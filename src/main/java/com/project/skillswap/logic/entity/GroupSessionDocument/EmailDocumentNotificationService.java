@@ -2,7 +2,7 @@ package com.project.skillswap.logic.entity.GroupSessionDocument;
 
 import com.project.skillswap.logic.entity.CommunityMember.CommunityMember;
 import com.project.skillswap.logic.entity.CommunityMember.CommunityMemberRepository;
-import com. project.skillswap.logic.entity.Person.Person;
+import com.project.skillswap.logic.entity.Person.Person;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,14 +140,14 @@ public class EmailDocumentNotificationService {
                 "                                    </tr>" +
                 "                                    <tr>" +
                 "                                        <td style='padding: 10px 0;'>" +
-                "                                            <span style='color: rgba(255,255,255,0. 7); font-size: 14px;'>Tamaño:</span><br>" +
+                "                                            <span style='color: rgba(255,255,255,0.7); font-size: 14px;'>Tamaño:</span><br>" +
                 "                                            <span style='color: #ffffff; font-size: 16px;'>" + fileSizeFormatted + "</span>" +
                 "                                        </td>" +
                 "                                    </tr>" +
                 (document.getDescription() != null && ! document.getDescription().isEmpty() ?
                         "                                    <tr>" +
                                 "                                        <td style='padding: 10px 0;'>" +
-                                "                                            <span style='color: rgba(255,255,255,0. 7); font-size: 14px;'>Descripción:</span><br>" +
+                                "                                            <span style='color: rgba(255,255,255,0.7); font-size: 14px;'>Descripción:</span><br>" +
                                 "                                            <span style='color: #ffffff; font-size: 16px;'>" + document.getDescription() + "</span>" +
                                 "                                        </td>" +
                                 "                                    </tr>" : "") +
@@ -168,7 +168,7 @@ public class EmailDocumentNotificationService {
                 "                    <tr>" +
                 "                        <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>" +
                 "                            <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>" +
-                "                                © 2025 SkillSwap. Todos los derechos reservados." +
+                "                                © 2025 SkillSwap.Todos los derechos reservados." +
                 "                            </p>" +
                 "                        </td>" +
                 "                    </tr>" +

@@ -150,7 +150,7 @@ public class GroupSessionDocumentService {
             if (doc.getLearningSession() != null) {
                 key = doc.getLearningSession().getTitle();
             } else {
-                key = "📚 Material de Apoyo";
+                key = " Material de Apoyo";
             }
 
             grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(doc);

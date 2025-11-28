@@ -23,7 +23,7 @@ public class InvalidDocumentFormatException extends RuntimeException {
     }
 
     public InvalidDocumentFormatException(String fileName, String contentType) {
-        super(String.format("Formato de archivo inválido: '%s' (tipo: %s).  Solo se permiten archivos PDF.",
+        super(String.format("Formato de archivo inválido: '%s' (tipo: %s). Solo se permiten archivos PDF.",
                 fileName, contentType));
         this.fileName = fileName;
         this.contentType = contentType;
@@ -32,7 +32,7 @@ public class InvalidDocumentFormatException extends RuntimeException {
     public InvalidDocumentFormatException(String message, Throwable cause) {
         super(message, cause);
         this.fileName = null;
-        this. contentType = null;
+        this.contentType = null;
     }
     //#endregion
 

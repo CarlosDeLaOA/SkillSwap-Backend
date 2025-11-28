@@ -1,7 +1,7 @@
-package com. project.skillswap.logic.entity.GroupSessionDocument;
+package com.project.skillswap.logic.entity.GroupSessionDocument;
 
-import org.springframework.data. jpa.repository.JpaRepository;
-import org.springframework.data.jpa. repository.Query;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -24,7 +24,7 @@ public interface GroupSessionDocumentRepository extends JpaRepository<GroupSessi
      * @return lista de documentos ordenados por fecha descendente
      */
     @Query("SELECT gsd FROM GroupSessionDocument gsd " +
-            "WHERE gsd.learningCommunity. id = :communityId " +
+            "WHERE gsd.learningCommunity.id = :communityId " +
             "AND gsd.active = true " +
             "ORDER BY gsd.sessionDate DESC, gsd.uploadDate DESC")
     List<GroupSessionDocument> findByCommunityIdOrderBySessionDateDesc(@Param("communityId") Long communityId);
@@ -41,7 +41,7 @@ public interface GroupSessionDocumentRepository extends JpaRepository<GroupSessi
             "WHERE gsd.learningCommunity.id = :communityId " +
             "AND gsd.active = true " +
             "AND gsd.sessionDate BETWEEN :startDate AND :endDate " +
-            "ORDER BY gsd.sessionDate DESC, gsd. uploadDate DESC")
+            "ORDER BY gsd.sessionDate DESC, gsd.uploadDate DESC")
     List<GroupSessionDocument> findByCommunityIdAndDateRange(
             @Param("communityId") Long communityId,
             @Param("startDate") LocalDateTime startDate,
@@ -72,7 +72,7 @@ public interface GroupSessionDocumentRepository extends JpaRepository<GroupSessi
      */
     @Query("SELECT gsd FROM GroupSessionDocument gsd " +
             "WHERE gsd.learningCommunity.id = :communityId " +
-            "AND gsd.learningSession. id = :sessionId " +
+            "AND gsd.learningSession.id = :sessionId " +
             "AND gsd.active = true " +
             "ORDER BY gsd.uploadDate DESC")
     List<GroupSessionDocument> findByCommunityIdAndSessionId(
@@ -89,7 +89,7 @@ public interface GroupSessionDocumentRepository extends JpaRepository<GroupSessi
      * @param communityId ID de la comunidad
      * @return tamaño total en bytes
      */
-    @Query("SELECT COALESCE(SUM(gsd. fileSize), 0) FROM GroupSessionDocument gsd " +
+    @Query("SELECT COALESCE(SUM(gsd.fileSize), 0) FROM GroupSessionDocument gsd " +
             "WHERE gsd.learningCommunity.id = :communityId " +
             "AND gsd.active = true")
     Long getTotalStorageByCommunityId(@Param("communityId") Long communityId);
@@ -136,7 +136,7 @@ public interface GroupSessionDocumentRepository extends JpaRepository<GroupSessi
      * @return lista de IDs de sesiones únicas
      */
     @Query("SELECT DISTINCT gsd.learningSession.id FROM GroupSessionDocument gsd " +
-            "WHERE gsd.learningCommunity. id = :communityId " +
+            "WHERE gsd.learningCommunity.id = :communityId " +
             "AND gsd.active = true " +
             "ORDER BY gsd.learningSession.id DESC")
     List<Long> findDistinctSessionIdsByCommunityId(@Param("communityId") Long communityId);
