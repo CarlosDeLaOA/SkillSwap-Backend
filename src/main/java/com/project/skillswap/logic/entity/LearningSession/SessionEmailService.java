@@ -51,7 +51,7 @@ public class SessionEmailService {
 
             helper.setFrom(from);
             helper.setTo(instructor.getEmail());
-            helper.setSubject("✅ Sesión Publicada - " + session.getTitle());
+            helper.setSubject(" Sesión Publicada - " + session.getTitle());
 
             String htmlContent = buildSessionCreationTemplate(session, instructor);
             helper.setText(htmlContent, true);
@@ -76,13 +76,13 @@ public class SessionEmailService {
     public boolean sendTranscriptionReadyEmail(LearningSession session, Person instructor) {
         try {
             System.out.println("========================================");
-            System.out.println("📧 ENVIANDO EMAIL DE TRANSCRIPCIÓN");
+            System.out.println(" ENVIANDO EMAIL DE TRANSCRIPCIÓN");
             System.out.println("   Sesión: " + session.getTitle());
             System.out.println("   Instructor: " + instructor.getEmail());
             System.out.println("========================================");
 
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
-                System.err.println("❌ No hay texto de transcripción para enviar");
+                System.err.println(" No hay texto de transcripción para enviar");
                 return false;
             }
 
@@ -91,7 +91,7 @@ public class SessionEmailService {
 
             helper.setFrom(from);
             helper.setTo(instructor.getEmail());
-            helper.setSubject("📄 Transcripción Disponible - " + session.getTitle());
+            helper.setSubject(" Transcripción Disponible - " + session.getTitle());
 
             String htmlContent = buildTranscriptionReadyTemplate(session, instructor);
             helper.setText(htmlContent, true);
@@ -101,14 +101,14 @@ public class SessionEmailService {
             registerSuccessfulNotification(instructor, session, "TRANSCRIPTION_READY");
 
             System.out.println("========================================");
-            System.out.println("✅ EMAIL DE TRANSCRIPCIÓN ENVIADO");
+            System.out.println(" EMAIL DE TRANSCRIPCIÓN ENVIADO");
             System.out.println("========================================");
 
             return true;
 
         } catch (Exception e) {
             System.err.println("========================================");
-            System.err.println("❌ ERROR ENVIANDO EMAIL DE TRANSCRIPCIÓN");
+            System.err.println(" ERROR ENVIANDO EMAIL DE TRANSCRIPCIÓN");
             System.err.println("   Error: " + e.getMessage());
             System.err.println("========================================");
             e.printStackTrace();
@@ -147,7 +147,7 @@ public class SessionEmailService {
                 <table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
                     <tr>
                         <td style='background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); padding: 40px 20px; text-align: center;'>
-                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>✅ SkillSwap</h1>
+                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'> SkillSwap</h1>
                         </td>
                     </tr>
                     <tr>
@@ -165,38 +165,38 @@ public class SessionEmailService {
                                 <hr style='border: none; border-top: 1px solid #504ab7; margin: 20px 0;'>
                                 <table width='100%%' cellpadding='5' cellspacing='0' style='font-size: 14px;'>
                                     <tr>
-                                        <td style='color: #aae16b; width: 40%%;'><strong>📅 Fecha:</strong></td>
+                                        <td style='color: #aae16b; width: 40%%;'><strong> Fecha:</strong></td>
                                         <td style='color: #ffffff;'>%s</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong>⏰ Hora:</strong></td>
+                                        <td style='color: #aae16b;'><strong> Hora:</strong></td>
                                         <td style='color: #ffffff;'>%s</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong>⏱️ Duración:</strong></td>
+                                        <td style='color: #aae16b;'><strong> Duración:</strong></td>
                                         <td style='color: #ffffff;'>%d minutos</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong>🎯 Habilidad:</strong></td>
+                                        <td style='color: #aae16b;'><strong> Habilidad:</strong></td>
                                         <td style='color: #ffffff;'>%s</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong>📂 Categoría:</strong></td>
+                                        <td style='color: #aae16b;'><strong> Categoría:</strong></td>
                                         <td style='color: #ffffff;'>%s</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong>🌐 Idioma:</strong></td>
+                                        <td style='color: #aae16b;'><strong> Idioma:</strong></td>
                                         <td style='color: #ffffff;'>%s</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong>👥 Capacidad:</strong></td>
+                                        <td style='color: #aae16b;'><strong> Capacidad:</strong></td>
                                         <td style='color: #ffffff;'>%d participantes</td>
                                     </tr>
                                 </table>
                             </div>
 
                             <div style='background-color: #39434b; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4285F4;'>
-                                <h4 style='color: #4285F4; margin-top: 0; margin-bottom: 10px; font-size: 16px;'>📅 Agregar a Google Calendar</h4>
+                                <h4 style='color: #4285F4; margin-top: 0; margin-bottom: 10px; font-size: 16px;'> Agregar a Google Calendar</h4>
                                 <p style='margin: 0 0 15px 0; font-size: 14px; color: #ffffff;'>
                                     Haz clic para agregar esta sesión a tu calendario de Google.
                                 </p>
@@ -207,13 +207,13 @@ public class SessionEmailService {
                                 <tr>
                                     <td align='center'>
                                         <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; margin-right: 10px;'>Ver Sesión</a>
-                                        <a href='%s' style='display: inline-block; background-color: #39434b; color: #aae16b; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; border: 2px solid #aae16b;'>🎥 Unirse a Videollamada</a>
+                                        <a href='%s' style='display: inline-block; background-color: #39434b; color: #aae16b; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; border: 2px solid #aae16b;'> Unirse a Videollamada</a>
                                     </td>
                                 </tr>
                             </table>
 
                             <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #504ab7;'>
-                                <h4 style='color: #aae16b; margin-top: 0; font-size: 16px;'>✅ Consejos para tu sesión:</h4>
+                                <h4 style='color: #aae16b; margin-top: 0; font-size: 16px;'> Consejos para tu sesión:</h4>
                                 <ul style='color: #ffffff; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 10px 0;'>
                                     <li>Prepara tu material con anticipación</li>
                                     <li>Verifica tu conexión y equipo antes de comenzar</li>
@@ -254,7 +254,7 @@ public class SessionEmailService {
     }
 
     /**
-     * ⭐ NUEVO MÉTODO: Construye el link de Google Calendar (SIN ESPACIO)
+     *  Construye el link de Google Calendar
      */
     private String buildGoogleCalendarLink(LearningSession session) {
         try {
@@ -315,7 +315,7 @@ public class SessionEmailService {
                     
                     <tr>
                         <td style='background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); padding: 40px 20px; text-align: center;'>
-                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>📄 SkillSwap</h1>
+                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'> SkillSwap</h1>
                         </td>
                     </tr>
                     
@@ -366,11 +366,11 @@ public class SessionEmailService {
                                 <tr>
                                     <td align='center'>
                                         <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #141414; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4); margin: 0 5px;'>
-                                            📄 Descargar TXT
+                                             Descargar TXT
                                         </a>
                                         
                                         <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #6b63d8 100%%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(80, 74, 183, 0.4); margin: 0 5px;'>
-                                            📄 Descargar PDF
+                                             Descargar PDF
                                         </a>
                                     </td>
                                 </tr>
@@ -423,12 +423,12 @@ public class SessionEmailService {
             Notification notification = new Notification();
             notification.setPerson(person);
             notification.setType(NotificationType.EMAIL);
-            notification.setTitle("✅ " + eventType + " - " + session.getTitle());
+            notification.setTitle( eventType + " - " + session.getTitle());
             notification.setMessage("Email enviado exitosamente para la sesión #" + session.getId());
             notification.setRead(false);
             notificationRepository.save(notification);
         } catch (Exception e) {
-            System.err.println("❌ Error registrando notificación: " + e.getMessage());
+            System.err.println(" Error registrando notificación: " + e.getMessage());
         }
     }
 
@@ -437,12 +437,12 @@ public class SessionEmailService {
             Notification notification = new Notification();
             notification.setPerson(person);
             notification.setType(NotificationType.EMAIL);
-            notification.setTitle("❌ Email no enviado - " + eventType);
+            notification.setTitle(" Email no enviado - " + eventType);
             notification.setMessage("Razón: " + reason);
             notification.setRead(false);
             notificationRepository.save(notification);
         } catch (Exception e) {
-            System.err.println("❌ Error registrando notificación fallida: " + e.getMessage());
+            System.err.println(" Error registrando notificación fallida: " + e.getMessage());
         }
     }
 

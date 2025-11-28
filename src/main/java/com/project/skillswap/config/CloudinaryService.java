@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -43,7 +46,8 @@ public class CloudinaryService {
     }
 
     /**
-     * Sube un documento PDF a Cloudinary
+     * Sube un documento PDF a Cloudinary usando el preset skillswap_pdfs
+     * Los archivos se organizan por comunidad en carpetas separadas
      *
      * @param file Archivo PDF a subir
      * @param communityId ID de la comunidad para organizar en carpetas
@@ -52,18 +56,135 @@ public class CloudinaryService {
      */
     public String uploadPdf(MultipartFile file, Long communityId) throws IOException {
         System.out.println("[CloudinaryService] Uploading PDF: " + file.getOriginalFilename());
+        System.out.println("[CloudinaryService] File size: " + file.getSize() + " bytes");
 
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
                 ObjectUtils.asMap(
+                        "upload_preset", "skillswap_pdfs",
                         "folder", "skillswap/documents/community_" + communityId,
                         "resource_type", "raw",
-                        "format", "pdf"
+                        "type", "upload"
                 ));
 
         String pdfUrl = uploadResult.get("secure_url").toString();
-        System.out.println("[CloudinaryService] PDF uploaded successfully: " + pdfUrl);
+        String publicId = uploadResult.get("public_id").toString();
+
+        System.out.println("[CloudinaryService] PDF uploaded successfully");
+        System.out.println("[CloudinaryService] URL: " + pdfUrl);
+        System.out.println("[CloudinaryService] Public ID: " + publicId);
+        System.out.println("[CloudinaryService] Type: " + uploadResult.getOrDefault("type", "N/A"));
+        System.out.println("[CloudinaryService] Access mode: " + uploadResult.getOrDefault("access_mode", "N/A"));
 
         return pdfUrl;
+    }
+
+    /**
+     * Descarga un PDF desde Cloudinary como bytes
+     * Intenta primero con URL directa, si falla usa URL firmada
+     *
+     * @param cloudinaryUrl URL del archivo en Cloudinary
+     * @return Bytes del archivo PDF
+     * @throws IOException si hay error en la descarga
+     */
+    public byte[] downloadPdfFromCloudinary(String cloudinaryUrl) throws IOException {
+        System.out.println("[CloudinaryService] Downloading PDF from: " + cloudinaryUrl);
+
+        try {
+            URL url = new URL(cloudinaryUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
+
+            int responseCode = connection.getResponseCode();
+            System.out.println("[CloudinaryService] Response code: " + responseCode);
+
+            if (responseCode == 200) {
+                try (InputStream in = connection.getInputStream()) {
+                    byte[] fileBytes = in.readAllBytes();
+                    System.out.println("[CloudinaryService] Downloaded " + fileBytes.length + " bytes");
+                    return fileBytes;
+                }
+            } else if (responseCode == 401 || responseCode == 404) {
+                System.out.println("[CloudinaryService] Direct URL failed, trying signed URL...");
+                return downloadWithSignedUrl(cloudinaryUrl);
+            } else {
+                throw new IOException("HTTP error code: " + responseCode);
+            }
+        } catch (Exception e) {
+            System.err.println("[CloudinaryService] Error downloading PDF: " + e.getMessage());
+            throw new IOException("Error al descargar el documento desde Cloudinary: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Intenta descargar usando URL firmada como fallback
+     */
+    private byte[] downloadWithSignedUrl(String cloudinaryUrl) throws IOException {
+        try {
+            String publicId = extractPublicIdFromCloudinaryUrl(cloudinaryUrl);
+            if (publicId == null) {
+                throw new IOException("No se pudo extraer public_id de la URL");
+            }
+
+            System.out.println("[CloudinaryService] Extracted public_id: " + publicId);
+
+            String signedUrl = cloudinary.url()
+                    .resourceType("raw")
+                    .type("upload")
+                    .signed(true)
+                    .generate(publicId);
+
+            System.out.println("[CloudinaryService] Generated signed URL");
+
+            URL url = new URL(signedUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
+
+            int responseCode = connection.getResponseCode();
+            System.out.println("[CloudinaryService] Signed URL response code: " + responseCode);
+
+            if (responseCode == 200) {
+                try (InputStream in = connection.getInputStream()) {
+                    byte[] fileBytes = in.readAllBytes();
+                    System.out.println("[CloudinaryService] Downloaded " + fileBytes.length + " bytes with signed URL");
+                    return fileBytes;
+                }
+            } else {
+                throw new IOException("Signed URL also failed with code: " + responseCode);
+            }
+        } catch (Exception e) {
+            System.err.println("[CloudinaryService] Error with signed URL: " + e.getMessage());
+            throw new IOException("Error descargando con URL firmada: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Extrae el public_id de una URL de Cloudinary
+     *
+     * @param cloudinaryUrl URL completa de Cloudinary
+     * @return public_id extraído o null si la URL no es válida
+     */
+    private String extractPublicIdFromCloudinaryUrl(String cloudinaryUrl) {
+        if (cloudinaryUrl == null || ! cloudinaryUrl.contains("cloudinary.com")) {
+            return null;
+        }
+
+        try {
+            String[] parts = cloudinaryUrl.split("/upload/");
+            if (parts.length < 2) return null;
+
+            String pathAfterUpload = parts[1];
+            String withoutVersion = pathAfterUpload.replaceFirst("v\\d+/", "");
+            String publicId = withoutVersion.replaceFirst("\\.[^.]+$", "");
+
+            return publicId;
+        } catch (Exception e) {
+            System.err.println("[CloudinaryService] Error extracting public_id: " + e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -80,6 +201,7 @@ public class CloudinaryService {
 
     /**
      * Elimina un documento PDF de Cloudinary usando su public_id
+     * Incluye invalidación de cache para asegurar que el archivo se elimine del CDN
      *
      * @param publicId ID público del documento en Cloudinary
      * @throws IOException si hay error en la eliminación
@@ -87,12 +209,16 @@ public class CloudinaryService {
     public void deletePdf(String publicId) throws IOException {
         System.out.println("[CloudinaryService] Deleting PDF with public_id: " + publicId);
         Map result = cloudinary.uploader().destroy(publicId,
-                ObjectUtils.asMap("resource_type", "raw"));
+                ObjectUtils.asMap(
+                        "resource_type", "raw",
+                        "invalidate", true
+                ));
         System.out.println("[CloudinaryService] PDF deleted successfully: " + result);
     }
 
     /**
      * Extrae el public_id de una URL de Cloudinary
+     * El public_id es necesario para operaciones de eliminación y transformación
      *
      * @param imageUrl URL completa de Cloudinary
      * @return public_id extraído o null si la URL no es válida
@@ -110,7 +236,7 @@ public class CloudinaryService {
             String withoutVersion = pathAfterUpload.replaceFirst("v\\d+/", "");
             String publicId = withoutVersion.replaceFirst("\\.[^.]+$", "");
 
-            System.out. println("[CloudinaryService] Extracted public_id: " + publicId + " from URL: " + imageUrl);
+            System.out.println("[CloudinaryService] Extracted public_id: " + publicId + " from URL: " + imageUrl);
 
             return publicId;
         } catch (Exception e) {
