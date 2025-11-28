@@ -82,15 +82,15 @@ public class AlertTestController {
     }
 
     /**
-     * ENVIAR alertas de sesiones AHORA (para testing)
+     * ENVIAR alertas de sesiones (modo testing - sin validar duplicados)
      */
-    @PostMapping("/sessions/send")
-    public ResponseEntity<Map<String, String>> sendSessionAlertsNow() {
+    @PostMapping("/sessions/send-testing")
+    public ResponseEntity<Map<String, String>> sendSessionAlertsTestingMode() {
         try {
             sessionAlertService.processAndSendSessionAlerts();
 
             Map<String, String> response = new HashMap<>();
-            response.put("message", "Alertas de sesiones enviadas exitosamente");
+            response.put("message", "Alertas de sesiones enviadas en modo testing (sin validar duplicados)");
             response.put("status", "success");
 
             return ResponseEntity.ok(response);

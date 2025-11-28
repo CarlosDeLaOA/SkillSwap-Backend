@@ -150,14 +150,14 @@ public class AlertEmailService {
         // Construir HTML para sesiones como instructor
         if (!userAlert.getInstructorSessions().isEmpty()) {
             instructorSessionsHtml.append("<div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 20px 0;'>");
-            instructorSessionsHtml.append("<h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 20px;'>👨‍🏫 Tus Sesiones como Instructor (" + userAlert.getInstructorSessions().size() + ")</h3>");
+            instructorSessionsHtml.append("<h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 20px;'>Tus Sesiones como Instructor (" + userAlert.getInstructorSessions().size() + ")</h3>");
 
             for (SessionAlertDTO session : userAlert.getInstructorSessions()) {
                 instructorSessionsHtml.append("<div style='background-color: #141414; padding: 20px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #aae16b;'>");
                 instructorSessionsHtml.append("<h4 style='color: #ffffff; margin: 0 0 10px 0; font-size: 18px;'>" + session.getSessionTitle() + "</h4>");
                 instructorSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>Skill:</strong> " + session.getSkillName() + "</p>");
-                instructorSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>📅 Fecha:</strong> " + dateFormat.format(session.getScheduledDatetime()) + "</p>");
-                instructorSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>⏱️ Duración:</strong> " + session.getDurationMinutes() + " minutos</p>");
+                instructorSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>Fecha:</strong> " + dateFormat.format(session.getScheduledDatetime()) + "</p>");
+                instructorSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>Duración:</strong> " + session.getDurationMinutes() + " minutos</p>");
                 if (session.getVideoCallLink() != null && !session.getVideoCallLink().isEmpty()) {
                     instructorSessionsHtml.append("<p style='margin: 15px 0 0 0;'><a href='" + session.getVideoCallLink() + "' style='display: inline-block; background-color: #504ab7; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-size: 14px;'>🎥 Unirse a la Videollamada</a></p>");
                 }
@@ -169,17 +169,17 @@ public class AlertEmailService {
         // Construir HTML para sesiones como learner
         if (!userAlert.getLearnerSessions().isEmpty()) {
             learnerSessionsHtml.append("<div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 20px 0;'>");
-            learnerSessionsHtml.append("<h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 20px;'>📚 Sesiones en las que Participas (" + userAlert.getLearnerSessions().size() + ")</h3>");
+            learnerSessionsHtml.append("<h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 20px;'>Sesiones en las que Participas (" + userAlert.getLearnerSessions().size() + ")</h3>");
 
             for (SessionAlertDTO session : userAlert.getLearnerSessions()) {
                 learnerSessionsHtml.append("<div style='background-color: #141414; padding: 20px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #504ab7;'>");
                 learnerSessionsHtml.append("<h4 style='color: #ffffff; margin: 0 0 10px 0; font-size: 18px;'>" + session.getSessionTitle() + "</h4>");
                 learnerSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>Skill:</strong> " + session.getSkillName() + "</p>");
-                learnerSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>👨‍🏫 Instructor:</strong> " + session.getInstructorName() + "</p>");
-                learnerSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>📅 Fecha:</strong> " + dateFormat.format(session.getScheduledDatetime()) + "</p>");
-                learnerSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>⏱️ Duración:</strong> " + session.getDurationMinutes() + " minutos</p>");
+                learnerSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>Instructor:</strong> " + session.getInstructorName() + "</p>");
+                learnerSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>Fecha:</strong> " + dateFormat.format(session.getScheduledDatetime()) + "</p>");
+                learnerSessionsHtml.append("<p style='color: #b0b0b0; margin: 5px 0; font-size: 14px;'><strong style='color: #aae16b;'>Duración:</strong> " + session.getDurationMinutes() + " minutos</p>");
                 if (session.getVideoCallLink() != null && !session.getVideoCallLink().isEmpty()) {
-                    learnerSessionsHtml.append("<p style='margin: 15px 0 0 0;'><a href='" + session.getVideoCallLink() + "' style='display: inline-block; background-color: #504ab7; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-size: 14px;'>🎥 Unirse a la Videollamada</a></p>");
+                    learnerSessionsHtml.append("<p style='margin: 15px 0 0 0;'><a href='" + session.getVideoCallLink() + "' style='display: inline-block; background-color: #504ab7; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-size: 14px;'>Unirse a la Videollamada</a></p>");
                 }
                 learnerSessionsHtml.append("</div>");
             }

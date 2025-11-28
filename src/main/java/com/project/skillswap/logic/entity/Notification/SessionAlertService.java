@@ -43,9 +43,12 @@ public class SessionAlertService {
     /**
      * Procesa y envía alertas de sesiones próximas (próximos 7 días)
      */
+    /**
+     * Procesa y envía alertas de sesiones SIN verificar duplicados (para testing)
+     */
     @Transactional
     public void processAndSendSessionAlerts() {
-        System.out.println("🔍 Buscando sesiones programadas para esta semana...");
+        System.out.println("[TESTING] Buscando sesiones programadas para esta semana...");
 
         // Calcular rango de fechas (hoy + 7 días)
         Date startDate = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
@@ -55,8 +58,8 @@ public class SessionAlertService {
         List<LearningSession> sessions = learningSessionRepository.findScheduledSessionsInDateRange(startDate, endDate);
         List<Booking> bookings = bookingRepository.findActiveBookingsInDateRange(startDate, endDate);
 
-        System.out.println("📊 Sesiones encontradas: " + sessions.size());
-        System.out.println("📊 Bookings encontrados: " + bookings.size());
+        System.out.println("Sesiones encontradas: " + sessions.size());
+        System.out.println("Bookings encontrados: " + bookings.size());
 
         // Agrupar por usuario
         Map<Long, UserSessionAlertDTO> userAlertsMap = new HashMap<>();
@@ -116,18 +119,18 @@ public class SessionAlertService {
                     alertEmailService.sendSessionAlert(userAlert);
                     saveNotification(userAlert);
                     successCount++;
-                    System.out.println("✅ Alerta de sesiones enviada a: " + userAlert.getFullName());
+                    System.out.println("Alerta de sesiones enviada a: " + userAlert.getFullName());
                 } catch (MessagingException e) {
                     errorCount++;
-                    System.err.println("❌ Error al enviar alerta a " + userAlert.getFullName() + ": " + e.getMessage());
+                    System.err.println("Error al enviar alerta a " + userAlert.getFullName() + ": " + e.getMessage());
                 } catch (Exception e) {
                     errorCount++;
-                    System.err.println("❌ Error inesperado para " + userAlert.getFullName() + ": " + e.getMessage());
+                    System.err.println("Error inesperado para " + userAlert.getFullName() + ": " + e.getMessage());
                 }
             }
         }
 
-        System.out.println("📈 Resumen: " + successCount + " exitosas, " + errorCount + " fallidas");
+        System.out.println("Resumen: " + successCount + " exitosas, " + errorCount + " fallidas");
     }
 
     /**
