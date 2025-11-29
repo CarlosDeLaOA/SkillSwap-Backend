@@ -122,11 +122,11 @@ public class WeeklyReportEmailService {
                 "                                Aquí está tu resumen de actividad de esta semana en <strong style='color: #aae16b;'>SkillSwap</strong>." +
                 "                            </p>" +
                 "                            <div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0;'>" +
-                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 20px;'> Tu Actividad</h3>" +
+                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 20px;'>📊 Tu Actividad</h3>" +
                 "                                <table width='100%' cellpadding='0' cellspacing='0' style='margin-bottom: 15px;'>" +
                 "                                    <tr>" +
                 "                                        <td style='padding: 12px 0; border-bottom: 1px solid #504ab7;'>" +
-                "                                            <span style='color: #ffffff; font-size: 15px;'> Credenciales obtenidas:</span>" +
+                "                                            <span style='color: #ffffff; font-size: 15px;'>🏆 Credenciales obtenidas:</span>" +
                 "                                        </td>" +
                 "                                        <td align='right' style='padding: 12px 0; border-bottom: 1px solid #504ab7;'>" +
                 "                                            <span style='color: #aae16b; font-size: 18px; font-weight: bold;'>" + data.getCredentialsObtained() + "</span>" +
@@ -134,7 +134,7 @@ public class WeeklyReportEmailService {
                 "                                    </tr>" +
                 "                                    <tr>" +
                 "                                        <td style='padding: 12px 0; border-bottom: 1px solid #504ab7;'>" +
-                "                                            <span style='color: #ffffff; font-size: 15px;'> Sesiones asistidas:</span>" +
+                "                                            <span style='color: #ffffff; font-size: 15px;'>📚 Sesiones asistidas:</span>" +
                 "                                        </td>" +
                 "                                        <td align='right' style='padding: 12px 0; border-bottom: 1px solid #504ab7;'>" +
                 "                                            <span style='color: #aae16b; font-size: 18px; font-weight: bold;'>" + data.getSessionsAttended() + "</span>" +
@@ -142,7 +142,7 @@ public class WeeklyReportEmailService {
                 "                                    </tr>" +
                 "                                    <tr>" +
                 "                                        <td style='padding: 12px 0;'>" +
-                "                                            <span style='color: #ffffff; font-size: 15px;'> Skillcoins invertidos:</span>" +
+                "                                            <span style='color: #ffffff; font-size: 15px;'>💰 Skillcoins invertidos:</span>" +
                 "                                        </td>" +
                 "                                        <td align='right' style='padding: 12px 0;'>" +
                 "                                            <span style='color: #aae16b; font-size: 18px; font-weight: bold;'>" + data.getSkillcoinsInvested() + "</span>" +
@@ -151,7 +151,7 @@ public class WeeklyReportEmailService {
                 "                                </table>" +
                 "                            </div>" +
                 "                            <div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0;'>" +
-                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 15px;'> Recomendaciones para la Próxima Semana</h3>" +
+                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 15px;'>💡 Recomendaciones para la Próxima Semana</h3>" +
                 "                                <p style='color: #b0b0b0; font-size: 14px; margin-bottom: 15px;'>Basado en tu idioma preferido y tus habilidades seleccionadas:</p>" +
                 "                                <ul style='color: #ffffff; font-size: 15px; line-height: 1.8; padding-left: 20px; margin: 0;'>" +
                 recommendationsHtml +
@@ -219,11 +219,11 @@ public class WeeklyReportEmailService {
                 "                                Aquí está tu resumen de enseñanza de esta semana en <strong style='color: #aae16b;'>SkillSwap</strong>." +
                 "                            </p>" +
                 "                            <div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0;'>" +
-                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 20px;'> Tu Desempeño</h3>" +
+                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 20px;'>📊 Tu Desempeño</h3>" +
                 "                                <table width='100%' cellpadding='0' cellspacing='0' style='margin-bottom: 15px;'>" +
                 "                                    <tr>" +
                 "                                        <td style='padding: 12px 0; border-bottom: 1px solid #504ab7;'>" +
-                "                                            <span style='color: #ffffff; font-size: 15px;'> Sesiones impartidas:</span>" +
+                "                                            <span style='color: #ffffff; font-size: 15px;'>👨‍🏫 Sesiones impartidas:</span>" +
                 "                                        </td>" +
                 "                                        <td align='right' style='padding: 12px 0; border-bottom: 1px solid #504ab7;'>" +
                 "                                            <span style='color: #aae16b; font-size: 18px; font-weight: bold;'>" + data.getSessionsTaught() + "</span>" +
@@ -231,7 +231,7 @@ public class WeeklyReportEmailService {
                 "                                    </tr>" +
                 "                                    <tr>" +
                 "                                        <td style='padding: 12px 0; border-bottom: 1px solid #504ab7;'>" +
-                "                                            <span style='color: #ffffff; font-size: 15px;'>️ Horas de enseñanza:</span>" +
+                "                                            <span style='color: #ffffff; font-size: 15px;'>⏱️ Horas de enseñanza:</span>" +
                 "                                        </td>" +
                 "                                        <td align='right' style='padding: 12px 0; border-bottom: 1px solid #504ab7;'>" +
                 "                                            <span style='color: #aae16b; font-size: 18px; font-weight: bold;'>" + data.getTotalHoursTaught() + "h</span>" +
@@ -239,7 +239,7 @@ public class WeeklyReportEmailService {
                 "                                    </tr>" +
                 "                                    <tr>" +
                 "                                        <td style='padding: 12px 0; border-bottom: 1px solid #504ab7;'>" +
-                "                                            <span style='color: #ffffff; font-size: 15px;'> Skillcoins ganados:</span>" +
+                "                                            <span style='color: #ffffff; font-size: 15px;'>💰 Skillcoins ganados:</span>" +
                 "                                        </td>" +
                 "                                        <td align='right' style='padding: 12px 0; border-bottom: 1px solid #504ab7;'>" +
                 "                                            <span style='color: #aae16b; font-size: 18px; font-weight: bold;'>" + data.getSkillcoinsEarned() + "</span>" +
@@ -247,7 +247,7 @@ public class WeeklyReportEmailService {
                 "                                    </tr>" +
                 "                                    <tr>" +
                 "                                        <td style='padding: 12px 0;'>" +
-                "                                            <span style='color: #ffffff; font-size: 15px;'> Reseñas recibidas:</span>" +
+                "                                            <span style='color: #ffffff; font-size: 15px;'>📝 Reseñas recibidas:</span>" +
                 "                                        </td>" +
                 "                                        <td align='right' style='padding: 12px 0;'>" +
                 "                                            <span style='color: #aae16b; font-size: 18px; font-weight: bold;'>" + data.getTotalReviews() + "</span>" +
@@ -256,7 +256,7 @@ public class WeeklyReportEmailService {
                 "                                </table>" +
                 "                            </div>" +
                 "                            <div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0; text-align: center;'>" +
-                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 15px;'> Calificación Promedio de la Semana</h3>" +
+                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 20px; margin-bottom: 15px;'>⭐ Calificación Promedio de la Semana</h3>" +
                 "                                <div style='font-size: 32px; margin: 15px 0;'>" + ratingStars + "</div>" +
                 "                                <p style='color: #ffffff; font-size: 24px; font-weight: bold; margin: 10px 0;'>" + String.format("%.1f", data.getAverageRating()) + " / 5.0</p>" +
                 "                                <p style='color: #b0b0b0; font-size: 14px; margin: 10px 0;'>Basado en " + data.getTotalReviews() + " reseña(s)</p>" +

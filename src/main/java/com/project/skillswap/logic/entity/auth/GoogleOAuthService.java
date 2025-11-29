@@ -5,7 +5,6 @@ import com.project.skillswap.logic.entity.Person.PersonRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -30,7 +29,6 @@ import java.time.ZoneId;
 import java.util.Date;
 
 @Service
-@ConditionalOnProperty(name = "google.oauth.enabled", havingValue = "true")
 public class GoogleOAuthService {
     //#region Properties
     private static final String GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
