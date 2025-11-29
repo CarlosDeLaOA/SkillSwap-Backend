@@ -28,7 +28,7 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             "LEFT JOIN FETCH ls.bookings b " +
             "WHERE (ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
             "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo) " +
-            "ORDER BY ls.scheduledDatetime ASC")
+            "ORDER BY ls. scheduledDatetime ASC")
     List<LearningSession> findAvailableSessions(
             @Param("currentDate") Date currentDate,
             @Param("fiveMinutesAgo") Date fiveMinutesAgo
@@ -44,10 +44,10 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             "LEFT JOIN FETCH i.person p " +
             "LEFT JOIN FETCH ls.skill s " +
             "LEFT JOIN FETCH s.knowledgeArea ka " +
-            "LEFT JOIN FETCH ls.bookings b " +
+            "LEFT JOIN FETCH ls. bookings b " +
             "WHERE ((ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
-            "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo)) " +
-            "AND ka.id = :categoryId " +
+            "OR (ls.status = 'ACTIVE' AND ls. scheduledDatetime >= :fiveMinutesAgo)) " +
+            "AND ka. id = :categoryId " +
             "ORDER BY ls.scheduledDatetime ASC")
     List<LearningSession> findSessionsByCategory(
             @Param("currentDate") Date currentDate,
@@ -65,7 +65,7 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             "LEFT JOIN FETCH s.knowledgeArea ka " +
             "LEFT JOIN FETCH ls.bookings b " +
             "WHERE ((ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
-            "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo)) " +
+            "OR (ls.status = 'ACTIVE' AND ls. scheduledDatetime >= :fiveMinutesAgo)) " +
             "AND ls.language = :language " +
             "ORDER BY ls.scheduledDatetime ASC")
     List<LearningSession> findSessionsByLanguage(
@@ -84,7 +84,7 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             "LEFT JOIN FETCH s.knowledgeArea ka " +
             "LEFT JOIN FETCH ls.bookings b " +
             "WHERE ((ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
-            "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo)) " +
+            "OR (ls.status = 'ACTIVE' AND ls. scheduledDatetime >= :fiveMinutesAgo)) " +
             "AND ka.id = :categoryId " +
             "AND ls.language = :language " +
             "ORDER BY ls.scheduledDatetime ASC")
@@ -93,6 +93,60 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             @Param("fiveMinutesAgo") Date fiveMinutesAgo,
             @Param("categoryId") Long categoryId,
             @Param("language") String language
+    );
+    //</editor-fold>
+
+    //<editor-fold desc="Schedule Conflict Queries">
+    /**
+     * Busca todas las sesiones de un instructor en un rango de tiempo específico
+     * Utilizado para detectar conflictos de horario
+     * Validar disponibilidad del SkillSwapper
+     * NOTA: Usa SQL nativo porque DATE_ADD no está soportado en HQL
+     */
+    @Query(value = "SELECT * FROM learning_session ls " +
+            "WHERE ls.instructor_id = :instructorId " +
+            "AND ls.status IN ('SCHEDULED', 'ACTIVE') " +
+            "AND ls.scheduled_datetime < :endTime " +
+            "AND DATE_ADD(ls.scheduled_datetime, INTERVAL ls.duration_minutes MINUTE) > :startTime",
+            nativeQuery = true)
+    List<LearningSession> findConflictingSessions(
+            @Param("instructorId") Long instructorId,
+            @Param("startTime") Date startTime,
+            @Param("endTime") Date endTime
+    );
+
+    /**
+     * Busca todas las sesiones ocupadas de un instructor en un rango de fechas
+     * Utilizado para sugerir horarios alternativos
+     * Sugerir horarios alternos
+     */
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.instructor.id = :instructorId " +
+            "AND ls.status IN ('SCHEDULED', 'ACTIVE') " +
+            "AND ls.scheduledDatetime >= :startDate " +
+            "AND ls.scheduledDatetime <= :endDate " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findInstructorScheduledSessions(
+            @Param("instructorId") Long instructorId,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
+    );
+    //</editor-fold>
+
+    //<editor-fold desc="Reminder Queries">
+    /**
+     * Busca sesiones programadas dentro de un rango de fechas
+     * Utilizado para encontrar sesiones próximas a 24 horas
+     * Recordatorio automático 24 horas antes vía email
+     */
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.status IN ('SCHEDULED', 'ACTIVE') " +
+            "AND ls.scheduledDatetime >= :startDate " +
+            "AND ls.scheduledDatetime <= :endDate " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findScheduledSessionsInDateRange(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
     );
     //</editor-fold>
 
@@ -154,11 +208,9 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             @Param("instructorId") Long instructorId
     );
 
-
     /**
      * Obtiene el historial de sesiones para un SkillSeeker (estudiante).
      * Retorna sesiones completadas o canceladas en las que el estudiante participó.
-     *
      */
     @Query("""
         SELECT DISTINCT ls FROM LearningSession ls
@@ -166,24 +218,27 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
         WHERE b.learner.id = :learnerId
         ORDER BY ls.scheduledDatetime DESC
         """)
-    Page<LearningSession> findHistoricalSessionsByLearnerId(@Param("learnerId") Long learnerId, Pageable pageable);
+    Page<LearningSession> findHistoricalSessionsByLearnerId(
+            @Param("learnerId") Long learnerId,
+            Pageable pageable
+    );
+    //</editor-fold>
+
+    //<editor-fold desc="Suggestion Queries">
+    /**
+     * Encuentra todas las sesiones por estado
+     */
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.status IN :statuses " +
+            "AND ls.scheduledDatetime > CURRENT_TIMESTAMP " +
+            "ORDER BY ls.scheduledDatetime ASC")
+    List<LearningSession> findByStatusIn(@Param("statuses") List<SessionStatus> statuses);
 
     /**
-     * Encuentra sesiones programadas en un rango de fechas (para alertas semanales)
+     * Encuentra todas las sesiones de un instructor
      */
-    @Query("""
-    SELECT ls
-    FROM LearningSession ls
-    JOIN FETCH ls.instructor i
-    JOIN FETCH i.person ip
-    JOIN FETCH ls.skill s
-    WHERE ls.status = 'SCHEDULED'
-    AND ls.scheduledDatetime BETWEEN :startDate AND :endDate
-    ORDER BY ls.scheduledDatetime ASC
-""")
-    List<LearningSession> findScheduledSessionsInDateRange(
-            @Param("startDate") Date startDate,
-            @Param("endDate") Date endDate
-    );
+    @Query("SELECT ls FROM LearningSession ls " +
+            "WHERE ls.instructor.id = :instructorId")
+    List<LearningSession> findByInstructorId(@Param("instructorId") Long instructorId);
     //</editor-fold>
 }
