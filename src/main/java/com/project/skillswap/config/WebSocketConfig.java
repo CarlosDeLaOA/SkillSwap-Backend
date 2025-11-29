@@ -6,16 +6,40 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+/**
+ * Configuración general para WebSockets en SkillSwap.
+ * Define brokers, endpoints STOMP y reglas de conexión.
+ */
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    //#region Message Broker Configuration
+
+    /**
+     * Configura el message broker interno y los prefijos utilizados
+     * por los clientes para enviar y recibir mensajes.
+     *
+     * @param registry Registro del broker
+     */
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic");
-        registry.setApplicationDestinationPrefixes("/app");
+        registry.enableSimpleBroker("/topic");      // Prefijo de mensajes emitidos
+        registry.setApplicationDestinationPrefixes("/app"); // Prefijo de mensajes entrantes
     }
 
+    //#endregion
+
+
+
+    //#region STOMP Endpoints Registration
+
+    /**
+     * Registra los endpoints WebSocket/STOMP disponibles para los clientes.
+     * Incluye soporte SockJS para fallback.
+     *
+     * @param registry Registro de endpoints STOMP
+     */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
 
@@ -26,13 +50,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws-chat")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
-
-        System.out.println("========================================");
-        System.out.println("   WebSocket endpoints registrados");
-        System.out.println("   - /ws-documents");
-        System.out.println("   - /ws-chat");
-        System.out.println("   Allowed origins: localhost:4200, localhost:8080 (documents)");
-        System.out.println("   Allowed origins: * (chat)");
-        System.out.println("========================================");
     }
+
+    //#endregion
 }

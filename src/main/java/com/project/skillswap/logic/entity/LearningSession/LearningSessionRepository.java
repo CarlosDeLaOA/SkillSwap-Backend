@@ -167,5 +167,23 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
         ORDER BY ls.scheduledDatetime DESC
         """)
     Page<LearningSession> findHistoricalSessionsByLearnerId(@Param("learnerId") Long learnerId, Pageable pageable);
+
+    /**
+     * Encuentra sesiones programadas en un rango de fechas (para alertas semanales)
+     */
+    @Query("""
+    SELECT ls
+    FROM LearningSession ls
+    JOIN FETCH ls.instructor i
+    JOIN FETCH i.person ip
+    JOIN FETCH ls.skill s
+    WHERE ls.status = 'SCHEDULED'
+    AND ls.scheduledDatetime BETWEEN :startDate AND :endDate
+    ORDER BY ls.scheduledDatetime ASC
+""")
+    List<LearningSession> findScheduledSessionsInDateRange(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
+    );
     //</editor-fold>
 }

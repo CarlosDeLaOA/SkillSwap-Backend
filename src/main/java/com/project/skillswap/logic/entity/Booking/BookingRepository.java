@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -79,5 +80,28 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * @return true si el estudiante tiene un booking en la sesión
      */
     boolean existsByLearningSessionIdAndLearnerId(Long sessionId, Long learnerId);
+
+
+    /**
+     * Encuentra bookings activos en un rango de fechas
+     */
+    @Query("""
+    SELECT b
+    FROM Booking b
+    JOIN FETCH b.learningSession ls
+    JOIN FETCH b.learner l
+    JOIN FETCH l.person p
+    JOIN FETCH ls.skill s
+    JOIN FETCH ls.instructor i
+    JOIN FETCH i.person ip
+    WHERE b.status = 'CONFIRMED'
+    AND ls.status = 'SCHEDULED'
+    AND ls.scheduledDatetime BETWEEN :startDate AND :endDate
+    ORDER BY ls.scheduledDatetime ASC
+""")
+    List<Booking> findActiveBookingsInDateRange(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
+    );
 
 }
