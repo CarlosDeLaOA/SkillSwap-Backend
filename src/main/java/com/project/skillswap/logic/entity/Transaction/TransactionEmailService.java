@@ -1,9 +1,11 @@
 package com.project.skillswap.logic.entity.Transaction;
 
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -12,13 +14,21 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 /**
- * Service for sending transaction-related emails
+ * Servicio para enviar emails relacionados con transacciones de SkillCoins.
+ * Incluye notificaciones de compra exitosa con comprobante PDF adjunto
+ * y notificaciones de fallos en el procesamiento de pagos.
+ *
+ * @author Equipo de Desarrollo SkillSwap
+ * @version 1.0
  */
 @Service
 public class TransactionEmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+
+    @Autowired
+    private PurchaseReceiptPdfService purchaseReceiptPdfService;
 
     @Value("${spring.mail.username:noreply@skillswap.com}")
     private String fromEmail;
@@ -27,52 +37,73 @@ public class TransactionEmailService {
     private String appName;
 
     /**
-     * Sends a purchase confirmation email to the user
-     * @param userEmail recipient email
-     * @param userName recipient name
-     * @param transactionId transaction ID
-     * @param packageType package purchased (BASIC, MEDIUM, LARGE, PREMIUM)
-     * @param coinsAdded coins added to account
-     * @param usdAmount amount paid in USD
-     * @param newBalance new total balance
-     * @param paypalReference PayPal order ID
+     * Envía email de confirmación de compra con comprobante PDF adjunto.
+     * El email incluye detalles de la transacción y el PDF se genera automáticamente.
+     *
+     * @param userEmail email del destinatario
+     * @param userName nombre del destinatario
+     * @param transaction transacción completada
+     * @param packageType tipo de paquete comprado
+     * @param coinsAdded monedas agregadas a la cuenta
+     * @param usdAmount monto pagado en USD
+     * @param newBalance nuevo balance total
+     * @param paypalReference referencia de PayPal
      */
     public void sendPurchaseConfirmation(
             String userEmail,
             String userName,
-            Long transactionId,
-            String packageType,
+            Transaction transaction,
+            CoinPackageType packageType,
             BigDecimal coinsAdded,
             BigDecimal usdAmount,
             BigDecimal newBalance,
             String paypalReference
     ) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(userEmail);
-            message.setSubject("Confirmación de Compra - " + appName);
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(userEmail);
+            helper.setSubject("Confirmación de Compra - " + appName);
 
             String emailBody = buildPurchaseConfirmationEmail(
-                    userName, transactionId, packageType, coinsAdded,
+                    userName, transaction.getId(), packageType.name(), coinsAdded,
                     usdAmount, newBalance, paypalReference
             );
 
-            message.setText(emailBody);
+            helper.setText(emailBody);
+
+            byte[] pdfBytes = purchaseReceiptPdfService.generatePurchaseReceipt(
+                    transaction,
+                    transaction.getPerson(),
+                    packageType,
+                    newBalance
+            );
+
+            helper.addAttachment(
+                    "Comprobante_SkillSwap_" + transaction.getId() + ".pdf",
+                    new ByteArrayResource(pdfBytes)
+            );
 
             mailSender.send(message);
 
-            System.out.println("✅ Purchase confirmation email sent to: " + userEmail);
-
         } catch (Exception e) {
-            // Log error but don't fail the transaction
-            System.err.println("⚠️ Failed to send purchase confirmation email: " + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException("Failed to send purchase confirmation email: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Builds the email body for purchase confirmation
+     * Construye el cuerpo del email de confirmación de compra.
+     *
+     * @param userName nombre del usuario
+     * @param transactionId ID de la transacción
+     * @param packageType tipo de paquete
+     * @param coinsAdded monedas agregadas
+     * @param usdAmount monto en USD
+     * @param newBalance nuevo balance
+     * @param paypalReference referencia PayPal
+     * @return cuerpo del email formateado
      */
     private String buildPurchaseConfirmationEmail(
             String userName,
@@ -102,24 +133,14 @@ public class TransactionEmailService {
             Referencia PayPal:    %s
             Fecha y Hora:         %s
             
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            BALANCE DE LA CUENTA
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            
-            Nuevo Balance:        %s coins
-            
-            ¡Tus SkillCoins ya están disponibles para reservar sesiones premium con nuestros instructores expertos!
-            
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            ¿NECESITAS AYUDA?
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            COMPROBANTE ADJUNTO
+            Hemos adjuntado tu comprobante de compra en formato PDF para tus registros.
             
             Si tienes alguna pregunta sobre tu compra, por favor contacta a nuestro equipo de soporte.
             
             Saludos cordiales,
             El Equipo de SkillSwap
             
-            ---
             Este es un mensaje automático. Por favor no respondas a este correo.
             """,
                 userName,
@@ -134,11 +155,12 @@ public class TransactionEmailService {
     }
 
     /**
-     * Sends a failed transaction notification email
-     * @param userEmail recipient email
-     * @param userName recipient name
-     * @param packageType package attempted to purchase
-     * @param errorMessage error description
+     * Envía email de notificación de fallo en la transacción.
+     *
+     * @param userEmail email del destinatario
+     * @param userName nombre del destinatario
+     * @param packageType tipo de paquete que se intentó comprar
+     * @param errorMessage descripción del error
      */
     public void sendPurchaseFailedNotification(
             String userEmail,
@@ -147,10 +169,12 @@ public class TransactionEmailService {
             String errorMessage
     ) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(userEmail);
-            message.setSubject(" Pago Fallido - " + appName);
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(userEmail);
+            helper.setSubject("⚠️ Pago Fallido - " + appName);
 
             String emailBody = String.format("""
                 Hola %s,
@@ -184,14 +208,11 @@ public class TransactionEmailService {
                     errorMessage
             );
 
-            message.setText(emailBody);
+            helper.setText(emailBody);
             mailSender.send(message);
 
-            System.out.println("✅ Failed purchase notification sent to: " + userEmail);
-
         } catch (Exception e) {
-            System.err.println("⚠️ Failed to send failure notification email: " + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException("Failed to send failure notification email: " + e.getMessage(), e);
         }
     }
 }

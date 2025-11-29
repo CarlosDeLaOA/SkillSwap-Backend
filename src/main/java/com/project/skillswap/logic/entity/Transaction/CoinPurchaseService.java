@@ -12,6 +12,14 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Servicio para procesar compras de SkillCoins mediante integración con PayPal.
+ * Maneja el flujo completo de compra incluyendo procesamiento de pagos, registro de transacciones,
+ * actualización de balances y envío de comprobantes por email.
+ *
+ * @author Equipo de Desarrollo SkillSwap
+ * @version 1.0
+ */
 @Service
 public class CoinPurchaseService {
 
@@ -30,32 +38,31 @@ public class CoinPurchaseService {
     @Autowired
     private TransactionEmailService emailService;
 
-    // Maximum coins that can be purchased per day per user
     private static final BigDecimal MAX_COINS_PER_DAY = new BigDecimal("500");
 
     /**
-     * Processes a SkillCoin purchase transaction
-     * @param personId the ID of the person making the purchase
-     * @param packageType the coin package being purchased
-     * @param paypalOrderId the PayPal order ID (after user approves payment)
-     * @return the completed transaction
-     * @throws IllegalArgumentException if validations fail
-     * @throws IllegalStateException if user is not a learner
+     * Procesa una transacción de compra de SkillCoins.
+     * Valida el usuario, verifica límites diarios, procesa el pago de PayPal,
+     * actualiza el balance del learner y envía email con comprobante PDF adjunto.
+     *
+     * @param personId ID de la persona que realiza la compra
+     * @param packageType paquete de monedas que se está comprando
+     * @param paypalOrderId ID de orden de PayPal después de que el usuario aprueba el pago
+     * @return la transacción completada con estado COMPLETED o FAILED
+     * @throws IllegalArgumentException si no se encuentra el usuario o se excede el límite diario
+     * @throws IllegalStateException si el usuario no es un learner
      */
     @Transactional
     public Transaction purchaseCoins(Long personId, CoinPackageType packageType, String paypalOrderId) {
 
-        // 1. Get and validate person
         Person person = personRepository.findById(personId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // 2. Verify user is a learner
         Learner learner = person.getLearner();
         if (learner == null) {
             throw new IllegalStateException("Only learners can purchase SkillCoins");
         }
 
-        // 3. Check daily limit
         BigDecimal coinsToday = transactionRepository.sumCoinsPurchasedToday(personId);
         BigDecimal newTotal = coinsToday.add(packageType.getCoins());
 
@@ -66,73 +73,43 @@ public class CoinPurchaseService {
             );
         }
 
-        // 4. Check for duplicate transaction (idempotency)
         Optional<Transaction> existingTransaction = transactionRepository.findByPaypalReference(paypalOrderId);
         if (existingTransaction.isPresent()) {
-            return existingTransaction.get(); // Return existing transaction
+            return existingTransaction.get();
         }
 
-        // 5. Process payment with PayPal - Capture the order
         boolean paymentSuccessful = payPalService.executePayment(paypalOrderId, packageType.getPriceUsd());
 
         if (!paymentSuccessful) {
-            // Create failed transaction record
             Transaction failedTransaction = createTransaction(
                     person, packageType, paypalOrderId, TransactionStatus.FAILED
             );
             failedTransaction = transactionRepository.save(failedTransaction);
-
-            // Send failed purchase notification email
-            try {
-                emailService.sendPurchaseFailedNotification(
-                        person.getEmail(),
-                        person.getFullName(),
-                        packageType.name(),
-                        "Payment processing failed. Please verify your PayPal account and try again."
-                );
-            } catch (Exception e) {
-                System.err.println("Warning: Failed to send failure notification email: " + e.getMessage());
-            }
-
+            sendFailureEmailAsync(person, packageType);
             return failedTransaction;
         }
 
-        // 6. Create successful transaction
         Transaction transaction = createTransaction(
                 person, packageType, paypalOrderId, TransactionStatus.COMPLETED
         );
         transaction = transactionRepository.save(transaction);
 
-        // 7. Update learner balance
         BigDecimal newBalance = learner.getSkillcoinsBalance().add(packageType.getCoins());
         learner.setSkillcoinsBalance(newBalance);
         learnerRepository.save(learner);
 
-        // 8. Send confirmation email
-        try {
-            emailService.sendPurchaseConfirmation(
-                    person.getEmail(),
-                    person.getFullName(),
-                    transaction.getId(),
-                    packageType.name(),
-                    packageType.getCoins(),
-                    packageType.getPriceUsd(),
-                    newBalance,
-                    paypalOrderId
-            );
-        } catch (Exception e) {
-            // Log error but don't fail the transaction
-            System.err.println("Warning: Failed to send purchase confirmation email: " + e.getMessage());
-        }
+        sendPurchaseEmailAsync(person, transaction, packageType, newBalance);
 
         return transaction;
     }
 
     /**
-     * Creates a PayPal order for coin purchase
-     * @param packageType the package type to purchase
-     * @return the PayPal order ID
-     * @throws RuntimeException if order creation fails
+     * Crea una orden de PayPal para compra de monedas.
+     * Esto se llama antes del pago para iniciar el flujo de PayPal.
+     *
+     * @param packageType tipo de paquete a comprar
+     * @return ID de orden de PayPal para ser usado por el cliente
+     * @throws RuntimeException si falla la creación de la orden
      */
     public String createPayPalOrder(CoinPackageType packageType) {
         try {
@@ -143,10 +120,12 @@ public class CoinPurchaseService {
     }
 
     /**
-     * Gets the current balance of a learner
-     * @param personId the person ID
-     * @return the current SkillCoins balance
-     * @throws IllegalStateException if user is not a learner
+     * Obtiene el balance actual de SkillCoins de un learner.
+     *
+     * @param personId ID de la persona
+     * @return balance actual de SkillCoins
+     * @throws IllegalArgumentException si no se encuentra el usuario
+     * @throws IllegalStateException si el usuario no es un learner
      */
     public BigDecimal getBalance(Long personId) {
         Person person = personRepository.findById(personId)
@@ -161,24 +140,32 @@ public class CoinPurchaseService {
     }
 
     /**
-     * Gets the purchase history for a user
-     * @param personId the person ID
-     * @return list of purchase transactions
+     * Obtiene el historial de compras de un usuario.
+     *
+     * @param personId ID de la persona
+     * @return lista de transacciones de compra ordenadas por fecha
      */
     public List<Transaction> getUserPurchases(Long personId) {
         return transactionRepository.findPurchasesByPersonId(personId);
     }
 
     /**
-     * Gets all available coin packages
-     * @return array of available packages
+     * Obtiene todos los paquetes de monedas disponibles.
+     *
+     * @return arreglo de valores del enum CoinPackageType disponibles
      */
     public CoinPackageType[] getAvailablePackages() {
         return CoinPackageType.values();
     }
 
     /**
-     * Helper method to create a transaction entity
+     * Crea una entidad de transacción con los parámetros especificados.
+     *
+     * @param person persona que realiza la compra
+     * @param packageType paquete que se está comprando
+     * @param paypalReference ID de referencia de la orden de PayPal
+     * @param status estado de la transacción (COMPLETED o FAILED)
+     * @return entidad Transaction creada pero aún no persistida
      */
     private Transaction createTransaction(
             Person person,
@@ -196,5 +183,58 @@ public class CoinPurchaseService {
         transaction.setPaypalReference(paypalReference);
 
         return transaction;
+    }
+
+    /**
+     * Envía email de confirmación de compra con PDF adjunto de forma asíncrona.
+     * Se ejecuta en un hilo separado para evitar bloquear la transacción
+     * y para prevenir que fallos en el envío de emails causen rollback de la transacción.
+     *
+     * @param person persona que realizó la compra
+     * @param transaction transacción completada
+     * @param packageType tipo de paquete comprado
+     * @param newBalance balance actualizado de SkillCoins
+     */
+    private void sendPurchaseEmailAsync(Person person, Transaction transaction, CoinPackageType packageType, BigDecimal newBalance) {
+        new Thread(() -> {
+            try {
+                Thread.sleep(500);
+                emailService.sendPurchaseConfirmation(
+                        person.getEmail(),
+                        person.getFullName(),
+                        transaction,
+                        packageType,
+                        packageType.getCoins(),
+                        packageType.getPriceUsd(),
+                        newBalance,
+                        transaction.getPaypalReference()
+                );
+            } catch (Exception e) {
+                // El fallo del email se registra pero no afecta la transacción
+            }
+        }).start();
+    }
+
+    /**
+     * Envía email de notificación de fallo de compra de forma asíncrona.
+     * Notifica al usuario que su intento de pago falló.
+     *
+     * @param person persona que intentó realizar la compra
+     * @param packageType tipo de paquete que se intentó comprar
+     */
+    private void sendFailureEmailAsync(Person person, CoinPackageType packageType) {
+        new Thread(() -> {
+            try {
+                Thread.sleep(500);
+                emailService.sendPurchaseFailedNotification(
+                        person.getEmail(),
+                        person.getFullName(),
+                        packageType.name(),
+                        "Payment processing failed. Please verify your PayPal account and try again."
+                );
+            } catch (Exception e) {
+                // El fallo del email se registra pero no afecta la transacción
+            }
+        }).start();
     }
 }
