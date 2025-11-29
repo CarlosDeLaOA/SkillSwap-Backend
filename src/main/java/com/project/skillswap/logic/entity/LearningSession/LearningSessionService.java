@@ -37,16 +37,16 @@ public class LearningSessionService {
     //#endregion
 
     //#region Constants
-    private static final int MIN_TITLE_LENGTH = 5;
-    private static final int MIN_DESCRIPTION_LENGTH = 20;
-    private static final int MIN_DURATION_MINUTES = 15;
-    private static final int MAX_DURATION_MINUTES = 240;
-    private static final int MIN_CAPACITY = 1;
-    private static final int MAX_CAPACITY = 50;
-    private static final String DEFAULT_LANGUAGE = "es";
-    private static final Set<String> VALID_LANGUAGES = Set.of("es", "en");
-    private static final long IMMEDIATE_SESSION_THRESHOLD_MINUTES = 30;
-    private static final double MAX_EDIT_CHANGE_PERCENTAGE = 0.50;
+    private static final int MIN_TITLE_LENGTH=5;
+    private static final int MIN_DESCRIPTION_LENGTH=20;
+    private static final int MIN_DURATION_MINUTES=15;
+    private static final int MAX_DURATION_MINUTES=240;
+    private static final int MIN_CAPACITY=1;
+    private static final int MAX_CAPACITY=50;
+    private static final String DEFAULT_LANGUAGE="es";
+    private static final Set<String> VALID_LANGUAGES=Set.of("es", "en");
+    private static final long IMMEDIATE_SESSION_THRESHOLD_MINUTES=30;
+    private static final double MAX_EDIT_CHANGE_PERCENTAGE=0.50;
     //#endregion
 
     //#region Public Methods - Query
@@ -55,10 +55,10 @@ public class LearningSessionService {
      *
      * @return Lista de sesiones disponibles
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly=true)
     public List<LearningSession> getAvailableSessions() {
-        Date currentDate = new Date();
-        Date fiveMinutesAgo = getFiveMinutesAgo(currentDate);
+        Date currentDate=new Date();
+        Date fiveMinutesAgo=getFiveMinutesAgo(currentDate);
 
         return learningSessionRepository.findAvailableSessions(currentDate, fiveMinutesAgo);
     }
@@ -70,24 +70,24 @@ public class LearningSessionService {
      * @param language Idioma de la sesión (opcional)
      * @return Lista de sesiones filtradas
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly=true)
     public List<LearningSession> getFilteredSessions(Long categoryId, String language) {
-        Date currentDate = new Date();
-        Date fiveMinutesAgo = getFiveMinutesAgo(currentDate);
+        Date currentDate=new Date();
+        Date fiveMinutesAgo=getFiveMinutesAgo(currentDate);
 
-        if (categoryId != null && language != null && !language.isEmpty()) {
+        if (categoryId!=null&&language!=null&&!language.isEmpty()) {
             return learningSessionRepository.findSessionsByCategoryAndLanguage(
                     currentDate, fiveMinutesAgo, categoryId, language
             );
         }
 
-        if (categoryId != null) {
+        if (categoryId!=null) {
             return learningSessionRepository.findSessionsByCategory(
                     currentDate, fiveMinutesAgo, categoryId
             );
         }
 
-        if (language != null && !language.isEmpty()) {
+        if (language!=null&&!language.isEmpty()) {
             return learningSessionRepository.findSessionsByLanguage(
                     currentDate, fiveMinutesAgo, language
             );
@@ -97,28 +97,26 @@ public class LearningSessionService {
     }
 
     /**
-     * Obtiene una sesión por ID con validación de propiedad
+     * Obtiene una sesión por ID - Cualquier usuario autenticado puede verla
      *
      * @param sessionId ID de la sesión
      * @param authenticatedPerson Persona autenticada
      * @return Sesión encontrada
-     * @throws IllegalArgumentException Si la sesión no existe o no pertenece al instructor
+     * @throws IllegalArgumentException Si la sesión no existe
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly=true)
     public LearningSession getSessionById(Long sessionId, Person authenticatedPerson) {
-        Optional<LearningSession> sessionOptional = learningSessionRepository.findById(sessionId);
+        Optional<LearningSession> sessionOptional=learningSessionRepository.findById(sessionId);
 
         if (sessionOptional.isEmpty()) {
             throw new IllegalArgumentException("La sesión no existe");
         }
 
-        LearningSession session = sessionOptional.get();
-
-        if (!session.getInstructor().getId().equals(authenticatedPerson.getInstructor().getId())) {
-            throw new IllegalArgumentException("No tienes permiso para acceder a esta sesión");
+        if (authenticatedPerson==null) {
+            throw new IllegalArgumentException("Debes estar autenticado");
         }
 
-        return session;
+        return sessionOptional.get();
     }
     //#endregion
 
@@ -136,7 +134,7 @@ public class LearningSessionService {
     public LearningSession createSession(LearningSession session, Person authenticatedPerson) {
         validateInstructorRole(authenticatedPerson);
 
-        Instructor instructor = authenticatedPerson.getInstructor();
+        Instructor instructor=authenticatedPerson.getInstructor();
 
         validateTitle(session.getTitle());
         validateDescription(session.getDescription());
@@ -144,10 +142,10 @@ public class LearningSessionService {
         validateCapacity(session.getMaxCapacity());
         validateScheduledDatetime(session.getScheduledDatetime());
 
-        String language = validateAndNormalizeLanguage(session.getLanguage());
+        String language=validateAndNormalizeLanguage(session.getLanguage());
         session.setLanguage(language);
 
-        Skill skill = validateAndGetSkill(session.getSkill());
+        Skill skill=validateAndGetSkill(session.getSkill());
         validateInstructorHasExpertSkill(authenticatedPerson.getId(), skill);
 
         session.setInstructor(instructor);
@@ -156,18 +154,18 @@ public class LearningSessionService {
         session.setStatus(SessionStatus.DRAFT);
 
 
-        LearningSession savedSession = learningSessionRepository.save(session);
+        LearningSession savedSession=learningSessionRepository.save(session);
 
-        System.out.println("📝 [LearningSessionService] Session created with ID: " + savedSession.getId());
+        System.out.println("📝 [LearningSessionService] Session created with ID: "+savedSession.getId());
 
 
-        String videoCallLink = frontendBaseUrl + "/app/video-call/" + savedSession.getId();
+        String videoCallLink=frontendBaseUrl+"/app/video-call/"+savedSession.getId();
         savedSession.setVideoCallLink(videoCallLink);
 
 
-        savedSession = learningSessionRepository.save(savedSession);
+        savedSession=learningSessionRepository.save(savedSession);
 
-        System.out.println("🔗 [LearningSessionService] Video call link assigned: " + videoCallLink);
+        System.out.println("🔗 [LearningSessionService] Video call link assigned: "+videoCallLink);
 
         return savedSession;
     }
@@ -187,33 +185,31 @@ public class LearningSessionService {
     public LearningSession publishSession(Long sessionId, Person authenticatedPerson, Map<String, String> minorEdits) {
         validateInstructorRole(authenticatedPerson);
 
-        LearningSession session = getSessionById(sessionId, authenticatedPerson);
+        LearningSession session=getSessionById(sessionId, authenticatedPerson);
 
         validateSessionIsComplete(session);
 
-        if (minorEdits != null) {
+        if (minorEdits!=null) {
             applyMinorEdits(session, minorEdits);
         }
 
-        SessionStatus newStatus = determinePublishStatus(session.getScheduledDatetime());
+        SessionStatus newStatus=determinePublishStatus(session.getScheduledDatetime());
         session.setStatus(newStatus);
 
-        LearningSession publishedSession = learningSessionRepository.save(session);
+        LearningSession publishedSession=learningSessionRepository.save(session);
 
-        //  Si  no tiene link, generarlo
-        if (publishedSession.getVideoCallLink() == null ||
+        if (publishedSession.getVideoCallLink()==null||
                 publishedSession.getVideoCallLink().trim().isEmpty()) {
 
-            String videoCallLink = frontendBaseUrl + "/app/video-call/" + publishedSession.getId();
+            String videoCallLink=frontendBaseUrl+"/app/video-call/"+publishedSession.getId();
             publishedSession.setVideoCallLink(videoCallLink);
-            publishedSession = learningSessionRepository.save(publishedSession);
+            publishedSession=learningSessionRepository.save(publishedSession);
 
-            System.out.println(" [LearningSessionService] Video call link was missing, assigned: " + videoCallLink);
+            System.out.println(" [LearningSessionService] Video call link was missing, assigned: "+videoCallLink);
         }
 
-        // Enviar email de confirmación
         try {
-            boolean emailSent = sessionEmailService.sendSessionCreationEmail(
+            boolean emailSent=sessionEmailService.sendSessionCreationEmail(
                     publishedSession,
                     authenticatedPerson
             );
@@ -224,7 +220,7 @@ public class LearningSessionService {
                 System.out.println(" [LearningSessionService] Email no enviado (validación fallida)");
             }
         } catch (Exception e) {
-            System.err.println(" [LearningSessionService] Error enviando email: " + e.getMessage());
+            System.err.println(" [LearningSessionService] Error enviando email: "+e.getMessage());
         }
 
         return publishedSession;
@@ -246,28 +242,28 @@ public class LearningSessionService {
     public LearningSession cancelSession(Long sessionId, Person authenticatedPerson, String reason) {
         validateInstructorRole(authenticatedPerson);
 
-        LearningSession session = getSessionById(sessionId, authenticatedPerson);
+        LearningSession session=getSessionById(sessionId, authenticatedPerson);
 
         validateSessionCanBeCancelled(session);
         validateIsSessionOwner(session, authenticatedPerson);
 
-        if (session.getStatus() == SessionStatus.ACTIVE) {
+        if (session.getStatus()==SessionStatus.ACTIVE) {
             System.out.println("️ [WARNING] Cancelling ACTIVE session - requires additional confirmation");
         }
 
-        List<String> participantEmails = session.getBookings().stream()
-                .map(booking -> booking.getLearner().getPerson().getEmail())
-                .filter(email -> email != null && !email.isEmpty())
+        List<String> participantEmails=session.getBookings().stream()
+                .map(booking->booking.getLearner().getPerson().getEmail())
+                .filter(email->email!=null&&!email.isEmpty())
                 .toList();
 
-        int participantsCount = participantEmails.size();
+        int participantsCount=participantEmails.size();
 
         session.setStatus(SessionStatus.CANCELLED);
-        session.setCancellationReason(reason != null ? reason.trim() : "Sin razón especificada");
+        session.setCancellationReason(reason!=null? reason.trim():"Sin razón especificada");
         session.setCancellationDate(new Date());
         session.setCancelledByInstructorId(authenticatedPerson.getInstructor().getId());
 
-        LearningSession cancelledSession = learningSessionRepository.save(session);
+        LearningSession cancelledSession=learningSessionRepository.save(session);
 
         System.out.println(String.format(
                 " [SUCCESS] Session %d cancelled by instructor %d. Participants to notify: %d",
@@ -276,9 +272,9 @@ public class LearningSessionService {
                 participantsCount
         ));
 
-        if (!participantEmails.isEmpty()) {
+        if (! participantEmails.isEmpty()) {
             try {
-                int emailsSent = sessionNotificationService.sendCancellationNotifications(
+                int emailsSent=sessionNotificationService.sendCancellationNotifications(
                         cancelledSession,
                         participantEmails
                 );
@@ -288,7 +284,7 @@ public class LearningSessionService {
                         participantsCount
                 ));
             } catch (Exception e) {
-                System.err.println(" [ERROR] Failed to send some notification emails: " + e.getMessage());
+                System.err.println(" [ERROR] Failed to send some notification emails: "+e.getMessage());
             }
         }
 
@@ -304,7 +300,7 @@ public class LearningSessionService {
      * @throws IllegalStateException Si no es instructor
      */
     private void validateInstructorRole(Person person) {
-        if (person.getInstructor() == null) {
+        if (person.getInstructor()==null) {
             throw new IllegalStateException("rol no autorizado");
         }
     }
@@ -316,11 +312,11 @@ public class LearningSessionService {
      * @throws IllegalArgumentException Si el título no cumple los requisitos
      */
     private void validateTitle(String title) {
-        if (title == null || title.trim().isEmpty()) {
+        if (title==null||title.trim().isEmpty()) {
             throw new IllegalArgumentException("El título es obligatorio");
         }
 
-        if (title.trim().length() < MIN_TITLE_LENGTH) {
+        if (title.trim().length()<MIN_TITLE_LENGTH) {
             throw new IllegalArgumentException(
                     String.format("El título debe tener al menos %d caracteres", MIN_TITLE_LENGTH)
             );
@@ -334,11 +330,11 @@ public class LearningSessionService {
      * @throws IllegalArgumentException Si la descripción no cumple los requisitos
      */
     private void validateDescription(String description) {
-        if (description == null || description.trim().isEmpty()) {
+        if (description==null||description.trim().isEmpty()) {
             throw new IllegalArgumentException("La descripción es obligatoria");
         }
 
-        if (description.trim().length() < MIN_DESCRIPTION_LENGTH) {
+        if (description.trim().length()<MIN_DESCRIPTION_LENGTH) {
             throw new IllegalArgumentException(
                     String.format("La descripción debe tener al menos %d caracteres", MIN_DESCRIPTION_LENGTH)
             );
@@ -352,11 +348,11 @@ public class LearningSessionService {
      * @throws IllegalArgumentException Si la duración está fuera del rango permitido
      */
     private void validateDuration(Integer durationMinutes) {
-        if (durationMinutes == null || durationMinutes <= 0) {
+        if (durationMinutes==null||durationMinutes<=0) {
             throw new IllegalArgumentException("La duración debe ser un valor positivo");
         }
 
-        if (durationMinutes < MIN_DURATION_MINUTES || durationMinutes > MAX_DURATION_MINUTES) {
+        if (durationMinutes<MIN_DURATION_MINUTES||durationMinutes>MAX_DURATION_MINUTES) {
             throw new IllegalArgumentException(
                     String.format("La duración debe estar entre %d y %d minutos",
                             MIN_DURATION_MINUTES, MAX_DURATION_MINUTES)
@@ -371,11 +367,11 @@ public class LearningSessionService {
      * @throws IllegalArgumentException Si la capacidad está fuera del rango permitido
      */
     private void validateCapacity(Integer maxCapacity) {
-        if (maxCapacity == null || maxCapacity <= 0) {
+        if (maxCapacity==null||maxCapacity<=0) {
             throw new IllegalArgumentException("La capacidad máxima debe ser un valor positivo");
         }
 
-        if (maxCapacity < MIN_CAPACITY || maxCapacity > MAX_CAPACITY) {
+        if (maxCapacity<MIN_CAPACITY||maxCapacity>MAX_CAPACITY) {
             throw new IllegalArgumentException(
                     String.format("La capacidad máxima debe estar entre %d y %d participantes",
                             MIN_CAPACITY, MAX_CAPACITY)
@@ -390,11 +386,11 @@ public class LearningSessionService {
      * @throws IllegalArgumentException Si la fecha es nula o en el pasado
      */
     private void validateScheduledDatetime(Date scheduledDatetime) {
-        if (scheduledDatetime == null) {
+        if (scheduledDatetime==null) {
             throw new IllegalArgumentException("La fecha y hora de la sesión son obligatorias");
         }
 
-        Date now = new Date();
+        Date now=new Date();
         if (scheduledDatetime.before(now)) {
             throw new IllegalArgumentException("La fecha y hora de la sesión no pueden estar en el pasado");
         }
@@ -407,13 +403,13 @@ public class LearningSessionService {
      * @return Idioma validado o español por defecto
      */
     private String validateAndNormalizeLanguage(String language) {
-        if (language == null || language.trim().isEmpty()) {
+        if (language==null||language.trim().isEmpty()) {
             return DEFAULT_LANGUAGE;
         }
 
-        String normalizedLanguage = language.trim().toLowerCase();
+        String normalizedLanguage=language.trim().toLowerCase();
 
-        if (!VALID_LANGUAGES.contains(normalizedLanguage)) {
+        if (! VALID_LANGUAGES.contains(normalizedLanguage)) {
             return DEFAULT_LANGUAGE;
         }
 
@@ -428,19 +424,19 @@ public class LearningSessionService {
      * @throws IllegalArgumentException Si el skill no existe o no está activo
      */
     private Skill validateAndGetSkill(Skill skill) {
-        if (skill == null || skill.getId() == null) {
+        if (skill==null||skill.getId()==null) {
             throw new IllegalArgumentException("La habilidad es obligatoria");
         }
 
-        Optional<Skill> skillOptional = skillRepository.findById(skill.getId());
+        Optional<Skill> skillOptional=skillRepository.findById(skill.getId());
 
         if (skillOptional.isEmpty()) {
             throw new IllegalArgumentException("La habilidad seleccionada no existe");
         }
 
-        Skill dbSkill = skillOptional.get();
+        Skill dbSkill=skillOptional.get();
 
-        if (!dbSkill.getActive()) {
+        if (! dbSkill.getActive()) {
             throw new IllegalArgumentException("La habilidad seleccionada no está activa");
         }
 
@@ -455,10 +451,10 @@ public class LearningSessionService {
      * @throws IllegalArgumentException Si el instructor no tiene la skill
      */
     private void validateInstructorHasExpertSkill(Long personId, Skill skill) {
-        List<UserSkill> userSkills = userSkillRepository.findActiveUserSkillsByPersonId(personId);
+        List<UserSkill> userSkills=userSkillRepository.findActiveUserSkillsByPersonId(personId);
 
-        boolean hasSkill = userSkills.stream()
-                .anyMatch(us -> us.getSkill().getId().equals(skill.getId()));
+        boolean hasSkill=userSkills.stream()
+                .anyMatch(us->us.getSkill().getId().equals(skill.getId()));
 
         if (!hasSkill) {
             throw new IllegalArgumentException(
@@ -476,30 +472,30 @@ public class LearningSessionService {
      * @throws IllegalArgumentException Si falta algún campo obligatorio
      */
     private void validateSessionIsComplete(LearningSession session) {
-        List<String> missingFields = new ArrayList<>();
+        List<String> missingFields=new ArrayList<>();
 
-        if (session.getTitle() == null || session.getTitle().trim().isEmpty()) {
+        if (session.getTitle()==null||session.getTitle().trim().isEmpty()) {
             missingFields.add("título");
         }
-        if (session.getDescription() == null || session.getDescription().trim().isEmpty()) {
+        if (session.getDescription()==null||session.getDescription().trim().isEmpty()) {
             missingFields.add("descripción");
         }
-        if (session.getSkill() == null) {
+        if (session.getSkill()==null) {
             missingFields.add("habilidad");
         }
-        if (session.getScheduledDatetime() == null) {
+        if (session.getScheduledDatetime()==null) {
             missingFields.add("fecha y hora");
         }
-        if (session.getDurationMinutes() == null) {
+        if (session.getDurationMinutes()==null) {
             missingFields.add("duración");
         }
-        if (session.getMaxCapacity() == null) {
+        if (session.getMaxCapacity()==null) {
             missingFields.add("capacidad");
         }
 
-        if (!missingFields.isEmpty()) {
+        if (! missingFields.isEmpty()) {
             throw new IllegalArgumentException(
-                    "La sesión está incompleta. Campos pendientes: " + String.join(", ", missingFields)
+                    "La sesión está incompleta. Campos pendientes: "+String.join(", ", missingFields)
             );
         }
     }
@@ -514,16 +510,16 @@ public class LearningSessionService {
      * @throws IllegalArgumentException Si las ediciones exceden el 50% de cambio
      */
     private void applyMinorEdits(LearningSession session, Map<String, String> minorEdits) {
-        String newTitle = minorEdits.get("title");
-        String newDescription = minorEdits.get("description");
+        String newTitle=minorEdits.get("title");
+        String newDescription=minorEdits.get("description");
 
-        if (newTitle != null && !newTitle.trim().isEmpty()) {
+        if (newTitle!=null&&!newTitle.trim().isEmpty()) {
             validateMinorEdit(session.getTitle(), newTitle, "título");
             validateTitle(newTitle);
             session.setTitle(newTitle.trim());
         }
 
-        if (newDescription != null && !newDescription.trim().isEmpty()) {
+        if (newDescription!=null&&!newDescription.trim().isEmpty()) {
             validateMinorEdit(session.getDescription(), newDescription, "descripción");
             validateDescription(newDescription);
             session.setDescription(newDescription.trim());
@@ -539,12 +535,12 @@ public class LearningSessionService {
      * @throws IllegalArgumentException Si el cambio excede el 50%
      */
     private void validateMinorEdit(String original, String edited, String fieldName) {
-        int originalLength = original.length();
-        int editedLength = edited.length();
+        int originalLength=original.length();
+        int editedLength=edited.length();
 
-        double changePercentage = Math.abs(editedLength - originalLength) / (double) originalLength;
+        double changePercentage=Math.abs(editedLength-originalLength)/(double)originalLength;
 
-        if (changePercentage > MAX_EDIT_CHANGE_PERCENTAGE) {
+        if (changePercentage>MAX_EDIT_CHANGE_PERCENTAGE) {
             throw new IllegalArgumentException(
                     String.format("El cambio en %s excede el 50%% permitido. " +
                             "Considera esto como una edición mayor.", fieldName)
@@ -561,11 +557,11 @@ public class LearningSessionService {
      * @throws IllegalArgumentException Si la sesión ya está cancelada o finalizada
      */
     private void validateSessionCanBeCancelled(LearningSession session) {
-        if (session.getStatus() == SessionStatus.CANCELLED) {
+        if (session.getStatus()==SessionStatus.CANCELLED) {
             throw new IllegalArgumentException("La sesión ya está cancelada");
         }
 
-        if (session.getStatus() == SessionStatus.FINISHED) {
+        if (session.getStatus()==SessionStatus.FINISHED) {
             throw new IllegalArgumentException("No se puede cancelar una sesión que ya finalizó");
         }
     }
@@ -578,7 +574,7 @@ public class LearningSessionService {
      * @throws IllegalStateException Si el usuario no es el creador
      */
     private void validateIsSessionOwner(LearningSession session, Person authenticatedPerson) {
-        if (!session.getInstructor().getId().equals(authenticatedPerson.getInstructor().getId())) {
+        if (! session.getInstructor().getId().equals(authenticatedPerson.getInstructor().getId())) {
             throw new IllegalStateException("Solo el creador de la sesión puede cancelarla");
         }
     }
@@ -592,11 +588,11 @@ public class LearningSessionService {
      * @return Estado de la sesión (ACTIVE o SCHEDULED)
      */
     private SessionStatus determineSessionStatus(Date scheduledDatetime) {
-        Date now = new Date();
-        long diffInMillis = scheduledDatetime.getTime() - now.getTime();
-        long diffInMinutes = diffInMillis / (60 * 1000);
+        Date now=new Date();
+        long diffInMillis=scheduledDatetime.getTime()-now.getTime();
+        long diffInMinutes=diffInMillis/(60*1000);
 
-        if (diffInMinutes <= IMMEDIATE_SESSION_THRESHOLD_MINUTES) {
+        if (diffInMinutes<=IMMEDIATE_SESSION_THRESHOLD_MINUTES) {
             return SessionStatus.ACTIVE;
         }
 
@@ -620,7 +616,7 @@ public class LearningSessionService {
      * @return Fecha de hace 5 minutos
      */
     private Date getFiveMinutesAgo(Date currentDate) {
-        Calendar calendar = Calendar.getInstance();
+        Calendar calendar=Calendar.getInstance();
         calendar.setTime(currentDate);
         calendar.add(Calendar.MINUTE, -5);
         return calendar.getTime();

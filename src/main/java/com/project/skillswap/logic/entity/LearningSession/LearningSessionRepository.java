@@ -20,14 +20,14 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
      * o que están activas y comenzaron hace menos de 5 minutos
      * INCLUYE: instructor, person, skill, knowledgeArea y bookings
      */
-    @Query("SELECT DISTINCT ls FROM LearningSession ls " +
-            "LEFT JOIN FETCH ls.instructor i " +
-            "LEFT JOIN FETCH i.person p " +
-            "LEFT JOIN FETCH ls.skill s " +
-            "LEFT JOIN FETCH s.knowledgeArea ka " +
-            "LEFT JOIN FETCH ls.bookings b " +
-            "WHERE (ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
-            "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo) " +
+    @Query("SELECT DISTINCT ls FROM LearningSession ls "+
+            "LEFT JOIN FETCH ls.instructor i "+
+            "LEFT JOIN FETCH i.person p "+
+            "LEFT JOIN FETCH ls.skill s "+
+            "LEFT JOIN FETCH s.knowledgeArea ka "+
+            "LEFT JOIN FETCH ls.bookings b "+
+            "WHERE (ls.status='SCHEDULED' AND ls.scheduledDatetime>:currentDate) "+
+            "OR (ls.status='ACTIVE' AND ls.scheduledDatetime>=:fiveMinutesAgo) "+
             "ORDER BY ls.scheduledDatetime ASC")
     List<LearningSession> findAvailableSessions(
             @Param("currentDate") Date currentDate,
@@ -39,15 +39,15 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     /**
      * Filtra sesiones disponibles por categoría (KnowledgeArea)
      */
-    @Query("SELECT DISTINCT ls FROM LearningSession ls " +
-            "LEFT JOIN FETCH ls.instructor i " +
-            "LEFT JOIN FETCH i.person p " +
-            "LEFT JOIN FETCH ls.skill s " +
-            "LEFT JOIN FETCH s.knowledgeArea ka " +
-            "LEFT JOIN FETCH ls.bookings b " +
-            "WHERE ((ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
-            "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo)) " +
-            "AND ka.id = :categoryId " +
+    @Query("SELECT DISTINCT ls FROM LearningSession ls "+
+            "LEFT JOIN FETCH ls.instructor i "+
+            "LEFT JOIN FETCH i.person p "+
+            "LEFT JOIN FETCH ls.skill s "+
+            "LEFT JOIN FETCH s.knowledgeArea ka "+
+            "LEFT JOIN FETCH ls.bookings b "+
+            "WHERE ((ls.status='SCHEDULED' AND ls.scheduledDatetime>:currentDate) "+
+            "OR (ls.status='ACTIVE' AND ls.scheduledDatetime>=:fiveMinutesAgo)) "+
+            "AND ka.id=:categoryId "+
             "ORDER BY ls.scheduledDatetime ASC")
     List<LearningSession> findSessionsByCategory(
             @Param("currentDate") Date currentDate,
@@ -58,15 +58,15 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     /**
      * Filtra sesiones disponibles por idioma
      */
-    @Query("SELECT DISTINCT ls FROM LearningSession ls " +
-            "LEFT JOIN FETCH ls.instructor i " +
-            "LEFT JOIN FETCH i.person p " +
-            "LEFT JOIN FETCH ls.skill s " +
-            "LEFT JOIN FETCH s.knowledgeArea ka " +
-            "LEFT JOIN FETCH ls.bookings b " +
-            "WHERE ((ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
-            "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo)) " +
-            "AND ls.language = :language " +
+    @Query("SELECT DISTINCT ls FROM LearningSession ls "+
+            "LEFT JOIN FETCH ls.instructor i "+
+            "LEFT JOIN FETCH i.person p "+
+            "LEFT JOIN FETCH ls.skill s "+
+            "LEFT JOIN FETCH s.knowledgeArea ka "+
+            "LEFT JOIN FETCH ls.bookings b "+
+            "WHERE ((ls.status='SCHEDULED' AND ls.scheduledDatetime>:currentDate) "+
+            "OR (ls.status='ACTIVE' AND ls.scheduledDatetime>=:fiveMinutesAgo)) "+
+            "AND ls.language=:language "+
             "ORDER BY ls.scheduledDatetime ASC")
     List<LearningSession> findSessionsByLanguage(
             @Param("currentDate") Date currentDate,
@@ -77,16 +77,16 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     /**
      * Filtra sesiones disponibles por categoría Y idioma
      */
-    @Query("SELECT DISTINCT ls FROM LearningSession ls " +
-            "LEFT JOIN FETCH ls.instructor i " +
-            "LEFT JOIN FETCH i.person p " +
-            "LEFT JOIN FETCH ls.skill s " +
-            "LEFT JOIN FETCH s.knowledgeArea ka " +
-            "LEFT JOIN FETCH ls.bookings b " +
-            "WHERE ((ls.status = 'SCHEDULED' AND ls.scheduledDatetime > :currentDate) " +
-            "OR (ls.status = 'ACTIVE' AND ls.scheduledDatetime >= :fiveMinutesAgo)) " +
-            "AND ka.id = :categoryId " +
-            "AND ls.language = :language " +
+    @Query("SELECT DISTINCT ls FROM LearningSession ls "+
+            "LEFT JOIN FETCH ls.instructor i "+
+            "LEFT JOIN FETCH i.person p "+
+            "LEFT JOIN FETCH ls.skill s "+
+            "LEFT JOIN FETCH s.knowledgeArea ka "+
+            "LEFT JOIN FETCH ls.bookings b "+
+            "WHERE ((ls.status='SCHEDULED' AND ls.scheduledDatetime>:currentDate) "+
+            "OR (ls.status='ACTIVE' AND ls.scheduledDatetime>=:fiveMinutesAgo)) "+
+            "AND ka.id=:categoryId "+
+            "AND ls.language=:language "+
             "ORDER BY ls.scheduledDatetime ASC")
     List<LearningSession> findSessionsByCategoryAndLanguage(
             @Param("currentDate") Date currentDate,
@@ -123,11 +123,11 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     FROM LearningSession ls
     INNER JOIN ls.skill s
     INNER JOIN ls.instructor i
-    LEFT JOIN Booking b ON b.learningSession.id = ls.id AND b.status = 'CONFIRMED'
-    WHERE i.id = :instructorId
-    AND (:status IS NULL OR ls.status = :status)
-    GROUP BY ls.id, ls.title, ls.description, ls.scheduledDatetime, 
-             ls.durationMinutes, ls.status, ls.videoCallLink, s.name, 
+    LEFT JOIN Booking b ON b.learningSession.id=ls.id AND b.status='CONFIRMED'
+    WHERE i.id=:instructorId
+    AND (:status IS NULL OR ls.status=:status)
+    GROUP BY ls.id, ls.title, ls.description, ls.scheduledDatetime,
+             ls.durationMinutes, ls.status, ls.videoCallLink, s.name,
              ls.maxCapacity, ls.isPremium, ls.creationDate
     ORDER BY ls.scheduledDatetime DESC
 """)
@@ -146,24 +146,22 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
      */
     @Query("""
         SELECT ls FROM LearningSession ls
-        WHERE ls.id = :sessionId
-        AND ls.instructor.id = :instructorId
+        WHERE ls.id=:sessionId
+        AND ls.instructor.id=:instructorId
     """)
     Optional<LearningSession> findByIdAndInstructor(
             @Param("sessionId") Long sessionId,
             @Param("instructorId") Long instructorId
     );
 
-
     /**
      * Obtiene el historial de sesiones para un SkillSeeker (estudiante).
      * Retorna sesiones completadas o canceladas en las que el estudiante participó.
-     *
      */
     @Query("""
         SELECT DISTINCT ls FROM LearningSession ls
-        INNER JOIN Booking b ON b.learningSession.id = ls.id
-        WHERE b.learner.id = :learnerId
+        INNER JOIN Booking b ON b.learningSession.id=ls.id
+        WHERE b.learner.id=:learnerId
         ORDER BY ls.scheduledDatetime DESC
         """)
     Page<LearningSession> findHistoricalSessionsByLearnerId(@Param("learnerId") Long learnerId, Pageable pageable);
@@ -177,7 +175,7 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
     JOIN FETCH ls.instructor i
     JOIN FETCH i.person ip
     JOIN FETCH ls.skill s
-    WHERE ls.status = 'SCHEDULED'
+    WHERE ls.status='SCHEDULED'
     AND ls.scheduledDatetime BETWEEN :startDate AND :endDate
     ORDER BY ls.scheduledDatetime ASC
 """)
@@ -185,5 +183,22 @@ public interface LearningSessionRepository extends JpaRepository<LearningSession
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate
     );
+    //</editor-fold>
+
+    //<editor-fold desc="Suggestions Queries">
+    /**
+     * Encuentra sesiones por estado(s)
+     */
+    @Query("""
+        SELECT ls FROM LearningSession ls
+        WHERE ls.status IN :statuses
+        ORDER BY ls.scheduledDatetime DESC
+    """)
+    List<LearningSession> findByStatusIn(@Param("statuses") List<SessionStatus> statuses);
+
+    /**
+     * Encuentra sesiones de un instructor
+     */
+    List<LearningSession> findByInstructorId(Long instructorId);
     //</editor-fold>
 }
