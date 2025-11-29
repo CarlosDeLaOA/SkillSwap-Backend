@@ -39,7 +39,7 @@ public class AuthRestController {
     public AuthRestController(
             JwtService jwtService,
             AuthenticationService authenticationService,
-            @Autowired(required = false) GoogleOAuthService googleOAuthService) {
+            GoogleOAuthService googleOAuthService) {
         this.jwtService = jwtService;
         this.authenticationService = authenticationService;
         this.googleOAuthService = googleOAuthService;

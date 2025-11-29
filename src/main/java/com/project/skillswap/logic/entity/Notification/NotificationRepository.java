@@ -12,7 +12,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     /**
      * Cuenta las notificaciones de un tipo específico enviadas después de una fecha.
-
      */
     @Query("SELECT COUNT(n) FROM Notification n WHERE n.person = :person AND n.type = :type AND n.sendDate >= :date")
     long countByPersonAndTypeAndSendDateAfter(
