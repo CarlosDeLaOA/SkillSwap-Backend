@@ -2,6 +2,7 @@ package com.project.skillswap.logic.entity.Question;
 
 import com.project.skillswap.logic.entity.Quiz.Quiz;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Table(name = "question", indexes = {
         @Index(name = "idx_question_quiz", columnList = "quiz_id")
@@ -16,6 +17,7 @@ public class Question {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", referencedColumnName = "id", nullable = false)
     private Quiz quiz;
