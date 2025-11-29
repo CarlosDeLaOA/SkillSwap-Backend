@@ -69,10 +69,10 @@ public class VideoCallRestController {
 //  TRANSCRIPTION ENDPOINTS
 
     /**
-     *  ENDPOINT DE PRUEBA: Enviar email de transcripción manualmente
+     * ENDPOINT DE PRUEBA: Enviar email de transcripción manualmente
      * Usar: GET http://localhost:8080/videocall/test-transcription-email/1464
      *
-     *  ELIMINAR DESPUÉS DE CONFIRMAR QUE FUNCIONA
+     * ELIMINAR DESPUÉS DE CONFIRMAR QUE FUNCIONA
      */
     @GetMapping("/test-transcription-email/{sessionId}")
     public ResponseEntity<Map<String, Object>> testTranscriptionEmail(@PathVariable Long sessionId) {
@@ -132,7 +132,7 @@ public class VideoCallRestController {
     }
 
     /**
-     *  Inicia transcripción de audio de sesión
+     * Inicia transcripción de audio de sesión
      * Se ejecuta automáticamente después de detener la grabación
      */
     @PostMapping("/transcription/start/{sessionId}")
@@ -185,7 +185,7 @@ public class VideoCallRestController {
     }
 
     /**
-     *  Obtiene estado y resultado de transcripción
+     * Obtiene estado y resultado de transcripción
      */
     @GetMapping("/transcription/status/{sessionId}")
     public ResponseEntity<Map<String, Object>> getTranscriptionStatus(@PathVariable Long sessionId) {
@@ -264,7 +264,7 @@ public class VideoCallRestController {
             session.setProcessingDate(null);
             sessionRepository.save(session);
 
-            System.out.println("🗑 Transcripción eliminada para sesión " + sessionId);
+            System.out.println("Transcripción eliminada para sesión " + sessionId);
 
             return ResponseEntity.ok(Map.of(
                     "message", "Transcripción eliminada exitosamente",
@@ -278,7 +278,7 @@ public class VideoCallRestController {
     }
 
     /**
-     *  Cuenta palabras en texto
+     * Cuenta palabras en texto
      */
     private int countWords(String text) {
         if (text == null || text.isEmpty()) {
@@ -446,10 +446,25 @@ public class VideoCallRestController {
                         .body(Map.of("message", "Usuario no autenticado"));
             }
 
-            if (!isSessionInstructor(person, sessionId)) {
+            System.out.println("========================================");
+            System.out.println("VALIDANDO PERMISO DE GRABACIÓN");
+            System.out.println("   Person ID: " + person.getId());
+            System.out.println("   Person Email: " + person.getEmail());
+            System.out.println("   Person Name: " + person.getFullName());
+            System.out.println("   Session ID: " + sessionId);
+
+            boolean isInstructor = isSessionInstructor(person, sessionId);
+
+            System.out.println("   Es instructor: " + isInstructor);
+            System.out.println("========================================");
+
+            if (!isInstructor) {
+                System.out.println("DENEGADO: Solo el instructor puede iniciar la grabación");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "Solo el instructor puede iniciar la grabación"));
             }
+
+            System.out.println("PERMITIDO: Iniciando grabación");
 
             Map<String, Object> result = recordingService.startRecording(sessionId, person.getId());
 
@@ -560,10 +575,10 @@ public class VideoCallRestController {
     }
 
     /**
-     *  Usuario sube grabación descargada de Jitsi
+     * Usuario sube grabación descargada de Jitsi
      */
     @PostMapping("/recording/upload-jitsi-file/{sessionId}")
-    public ResponseEntity<?> uploadJitsiFile(
+    public ResponseEntity<? > uploadJitsiFile(
             @PathVariable Long sessionId,
             @RequestParam("file") MultipartFile file) {
 
@@ -588,7 +603,7 @@ public class VideoCallRestController {
 
             // Validar que es un archivo de video
             String contentType = file.getContentType();
-            if (contentType == null || (!contentType.startsWith("video/") && !contentType.equals("application/octet-stream"))) {
+            if (contentType == null || (! contentType.startsWith("video/") && !contentType.equals("application/octet-stream"))) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "El archivo debe ser un video"));
             }
@@ -629,7 +644,7 @@ public class VideoCallRestController {
     }
 
     /**
-     *  Procesa grabación de Jitsi: extrae audio y convierte a MP3
+     * Procesa grabación de Jitsi: extrae audio y convierte a MP3
      */
     private void processJitsiRecording(Long sessionId, String videoPathStr) {
         try {
@@ -657,11 +672,11 @@ public class VideoCallRestController {
             ProcessBuilder pb = new ProcessBuilder(
                     "ffmpeg",
                     "-i", videoPath.toString(),
-                    "-vn",  // Sin video
+                    "-vn",
                     "-acodec", "libmp3lame",
                     "-ab", "128k",
                     "-ar", "44100",
-                    "-y",  // Sobrescribir si existe
+                    "-y",
                     audioPath.toString()
             );
 
@@ -700,7 +715,7 @@ public class VideoCallRestController {
 
             } else {
                 System.err.println(" Error en FFmpeg (exit code: " + exitCode + ")");
-                System.err.println("   ¿El archivo existe? " + Files.exists(audioPath));
+                System.err.println("   Archivo existe: " + Files.exists(audioPath));
             }
 
         } catch (Exception e) {
@@ -762,21 +777,19 @@ public class VideoCallRestController {
     }
 
     /**
-     *  Obtiene la transcripción de una sesión (solo instructores)
+     * Obtiene la transcripción de una sesión (solo instructores)
      */
     @GetMapping("/transcription/{sessionId}")
-    public ResponseEntity<?> getTranscription(@PathVariable Long sessionId) {
+    public ResponseEntity<? > getTranscription(@PathVariable Long sessionId) {
         try {
             System.out.println("========================================");
             System.out.println(" SOLICITUD DE TRANSCRIPCIÓN");
             System.out.println("   Session ID: " + sessionId);
             System.out.println("========================================");
 
-            //  Obtener la sesión
             LearningSession session = sessionRepository.findById(sessionId)
                     .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-            //  Validar que existe transcripción
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
                 System.out.println(" No hay transcripción disponible para esta sesión");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -786,7 +799,6 @@ public class VideoCallRestController {
                         ));
             }
 
-            //  Calcular estadísticas
             String fullText = session.getFullText();
             int wordCount = fullText.split("\\s+").length;
             int durationSeconds = session.getDurationSeconds() != null ? session.getDurationSeconds() : 0;
@@ -795,7 +807,6 @@ public class VideoCallRestController {
             System.out.println("   Palabras: " + wordCount);
             System.out.println("   Duración: " + durationSeconds + " segundos");
             System.out.println("   Caracteres: " + fullText.length());
-
 
             Map<String, Object> transcriptionData = new HashMap<>();
             transcriptionData.put("transcription", fullText);
@@ -820,8 +831,6 @@ public class VideoCallRestController {
                     ));
         }
     }
-
-
 
     @GetMapping("/transcription/{sessionId}/download-txt")
     public ResponseEntity<?> downloadTranscriptionTxt(@PathVariable Long sessionId) {
@@ -895,9 +904,8 @@ public class VideoCallRestController {
         }
     }
 
-
     /**
-     *  Descarga directa de archivo PDF
+     * Descarga directa de archivo PDF
      */
     @GetMapping("/transcription/{sessionId}/download-pdf")
     public ResponseEntity<?> downloadTranscriptionPdf(@PathVariable Long sessionId) {
@@ -916,7 +924,6 @@ public class VideoCallRestController {
                         .body("No hay transcripción disponible para esta sesión".getBytes());
             }
 
-            // Generar PDF usando el servicio
             TranscriptionPdfService pdfService = new TranscriptionPdfService();
             byte[] pdfBytes = pdfService.generateTranscriptionPdf(session);
 
@@ -1010,7 +1017,7 @@ public class VideoCallRestController {
     }
 
     @GetMapping("/sessions/{sessionId}/documents/{documentId}/download")
-    public ResponseEntity<?> downloadDocument(
+    public ResponseEntity<? > downloadDocument(
             @PathVariable Long sessionId,
             @PathVariable Long documentId) {
         try {
@@ -1068,22 +1075,47 @@ public class VideoCallRestController {
 
     private boolean isSessionInstructor(Person person, Long sessionId) {
         try {
-            if (!isInstructor(person)) {
-                return false;
-            }
+            System.out.println("========================================");
+            System.out.println("VALIDANDO SI ES INSTRUCTOR");
+            System.out.println("   Person ID: " + person.getId());
+            System.out.println("   Person Email: " + person.getEmail());
+            System.out.println("   Session ID: " + sessionId);
 
             LearningSession session = sessionRepository.findById(sessionId).orElse(null);
             if (session == null) {
+                System.out.println("   NO - Sesión no encontrada");
+                System.out.println("========================================");
+                return false;
+            }
+
+            if (person.getInstructor() == null || person.getInstructor().getId() == null) {
+                System.out.println("   NO - El usuario NO es instructor");
+                System.out.println("========================================");
                 return false;
             }
 
             Long sessionInstructorId = session.getInstructor().getId();
             Long personInstructorId = person.getInstructor().getId();
 
-            return sessionInstructorId.equals(personInstructorId);
+            System.out.println("   Instructor de ESTA sesión: " + sessionInstructorId);
+            System.out.println("   Instructor del USUARIO: " + personInstructorId);
+            System.out.println("   Coinciden: " + sessionInstructorId.equals(personInstructorId));
+            System.out.println("========================================");
+
+            boolean isInstructor = sessionInstructorId.equals(personInstructorId);
+
+            if (isInstructor) {
+                System.out.println("PERMITIDO: Es instructor de ESTA sesión");
+            } else {
+                System.out.println("DENEGADO: NO es instructor de ESTA sesión");
+            }
+
+            return isInstructor;
 
         } catch (Exception e) {
             System.err.println("Error al verificar instructor: " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("========================================");
             return false;
         }
     }
@@ -1098,13 +1130,12 @@ public class VideoCallRestController {
         return String.format("%.2f MB", bytes / (1024.0 * 1024.0));
     }
 
-
-// ========================================
-// SUMMARY ENDPOINTS (RESÚMENES CON IA)
-// ========================================
+    /**
+     * RESÚMENES CON IA
+     */
 
     /**
-     * 🤖 Genera resumen de sesión con IA y lo envía por email a participantes
+     * Genera resumen de sesión con IA y lo envía por email a participantes
      * POST /videocall/summary/generate/{sessionId}
      */
     @PostMapping("/summary/generate/{sessionId}")
@@ -1122,29 +1153,25 @@ public class VideoCallRestController {
             }
 
             System.out.println("========================================");
-            System.out.println("🤖 GENERANDO RESUMEN DE SESIÓN");
+            System.out.println("GENERANDO RESUMEN DE SESIÓN");
             System.out.println("   Session ID: " + sessionId);
             System.out.println("   Solicitado por: " + person.getFullName());
             System.out.println("========================================");
 
-            // 1. Obtener sesión
             LearningSession session = sessionRepository.findById(sessionId)
                     .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-            // 2. Validar que tenga transcripción
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of(
                                 "success", false,
-                                "message", "La sesión no tiene transcripción. Genera primero la transcripción."
+                                "message", "La sesión no tiene transcripción Genera primero la transcripción."
                         ));
             }
 
-            // 3. Generar resumen con IA
             String summary = summaryService.generateSummary(session);
 
-            // 4. Validar resumen
-            if (!summaryService.validateSummary(summary)) {
+            if (! summaryService.validateSummary(summary)) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(Map.of(
                                 "success", false,
@@ -1152,10 +1179,8 @@ public class VideoCallRestController {
                         ));
             }
 
-            // 5. Generar PDF del resumen
             byte[] summaryPdf = summaryPdfService.generateSummaryPdf(session, summary);
 
-            // 6. Enviar a todos los participantes
             boolean emailsSent = summaryEmailService.sendSummaryToParticipants(session, summaryPdf, summary);
 
             Map<String, Object> response = new HashMap<>();
@@ -1168,17 +1193,17 @@ public class VideoCallRestController {
             response.put("emailsSent", emailsSent);
 
             System.out.println("========================================");
-            System.out.println("✅ PROCESO COMPLETADO");
-            System.out.println("   Resumen generado: ✓");
-            System.out.println("   PDF creado: ✓");
-            System.out.println("   Emails enviados: " + (emailsSent ? "✓" : "✗"));
+            System.out.println("PROCESO COMPLETADO");
+            System.out.println("   Resumen generado: SI");
+            System.out.println("   PDF creado: SI");
+            System.out.println("   Emails enviados: " + (emailsSent ? "SI" : "NO"));
             System.out.println("========================================");
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             System.err.println("========================================");
-            System.err.println("❌ ERROR GENERANDO RESUMEN");
+            System.err.println("ERROR GENERANDO RESUMEN");
             System.err.println("   Error: " + e.getMessage());
             System.err.println("========================================");
             e.printStackTrace();
@@ -1206,7 +1231,6 @@ public class VideoCallRestController {
 
             LearningSession session = sessionRepository.findById(sessionId)
                     .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
-
 
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -1243,10 +1267,10 @@ public class VideoCallRestController {
      * GET /videocall/summary/{sessionId}/download-pdf
      */
     @GetMapping("/summary/{sessionId}/download-pdf")
-    public ResponseEntity<?> downloadSummaryPdf(@PathVariable Long sessionId) {
+    public ResponseEntity<? > downloadSummaryPdf(@PathVariable Long sessionId) {
         try {
             System.out.println("========================================");
-            System.out.println("📥 DESCARGA DE RESUMEN PDF");
+            System.out.println("DESCARGA DE RESUMEN PDF");
             System.out.println("   Session ID: " + sessionId);
             System.out.println("========================================");
 
@@ -1264,10 +1288,8 @@ public class VideoCallRestController {
                         .body("No hay transcripción disponible".getBytes());
             }
 
-            // Generar resumen
             String summary = summaryService.generateSummary(session);
 
-            // Generar PDF
             byte[] pdfBytes = summaryPdfService.generateSummaryPdf(session, summary);
 
             String fileName = "resumen_sesion_" + session.getId() + "_" +
@@ -1284,7 +1306,7 @@ public class VideoCallRestController {
                             java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"));
 
             System.out.println("========================================");
-            System.out.println("✅ PDF DE RESUMEN LISTO");
+            System.out.println("PDF DE RESUMEN LISTO");
             System.out.println("   Archivo: " + fileName);
             System.out.println("========================================");
 
@@ -1294,7 +1316,7 @@ public class VideoCallRestController {
 
         } catch (Exception e) {
             System.err.println("========================================");
-            System.err.println("❌ ERROR DESCARGANDO PDF");
+            System.err.println("ERROR DESCARGANDO PDF");
             System.err.println("   Error: " + e.getMessage());
             System.err.println("========================================");
             e.printStackTrace();
@@ -1318,7 +1340,7 @@ public class VideoCallRestController {
                         .body(Map.of("message", "Usuario no autenticado"));
             }
 
-            if (!isSessionInstructor(person, sessionId)) {
+            if (! isSessionInstructor(person, sessionId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "Solo el instructor puede reenviar resúmenes"));
             }
@@ -1334,11 +1356,9 @@ public class VideoCallRestController {
                         ));
             }
 
-            // Generar resumen y PDF
             String summary = summaryService.generateSummary(session);
             byte[] summaryPdf = summaryPdfService.generateSummaryPdf(session, summary);
 
-            // Reenviar emails
             boolean emailsSent = summaryEmailService.sendSummaryToParticipants(session, summaryPdf, summary);
 
             return ResponseEntity.ok(Map.of(
