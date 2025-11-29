@@ -62,11 +62,11 @@ public class TransactionEmailService {
 
             mailSender.send(message);
 
-            System.out.println(" Purchase confirmation email sent to: " + userEmail);
+            System.out.println("✅ Purchase confirmation email sent to: " + userEmail);
 
         } catch (Exception e) {
             // Log error but don't fail the transaction
-            System.err.println(" Failed to send purchase confirmation email: " + e.getMessage());
+            System.err.println("⚠️ Failed to send purchase confirmation email: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -187,10 +187,10 @@ public class TransactionEmailService {
             message.setText(emailBody);
             mailSender.send(message);
 
-            System.out.println(" Failed purchase notification sent to: " + userEmail);
+            System.out.println("✅ Failed purchase notification sent to: " + userEmail);
 
         } catch (Exception e) {
-            System.err.println(" Failed to send failure notification email: " + e.getMessage());
+            System.err.println("⚠️ Failed to send failure notification email: " + e.getMessage());
             e.printStackTrace();
         }
     }

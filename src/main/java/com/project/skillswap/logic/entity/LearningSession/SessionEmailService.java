@@ -11,8 +11,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -44,7 +42,7 @@ public class SessionEmailService {
      */
     public boolean sendSessionCreationEmail(LearningSession session, Person instructor) {
         try {
-            System.out.println("[SessionEmailService] Iniciando envío para: " + instructor.getEmail());
+            System.out.println(" [SessionEmailService] Iniciando envío para: " + instructor.getEmail());
 
             MimeMessage msg = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(msg, "UTF-8");
@@ -59,11 +57,11 @@ public class SessionEmailService {
             mailSender.send(msg);
 
             registerSuccessfulNotification(instructor, session, "SESSION_CREATED");
-            System.out.println("[SessionEmailService] Email enviado exitosamente");
+            System.out.println(" [SessionEmailService] Email enviado exitosamente");
             return true;
 
         } catch (Exception e) {
-            System.err.println("[SessionEmailService] Error: " + e.getMessage());
+            System.err.println(" [SessionEmailService] Error: " + e.getMessage());
             e.printStackTrace();
             registerFailedNotification(instructor, "SESSION_CREATED", "Error: " + e.getMessage());
             return false;
@@ -81,6 +79,7 @@ public class SessionEmailService {
             System.out.println("   Instructor: " + instructor.getEmail());
             System.out.println("========================================");
 
+            // Validar que hay transcripción
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
                 System.err.println(" No hay texto de transcripción para enviar");
                 return false;
@@ -91,7 +90,7 @@ public class SessionEmailService {
 
             helper.setFrom(from);
             helper.setTo(instructor.getEmail());
-            helper.setSubject(" Transcripción Disponible - " + session.getTitle());
+            helper.setSubject("Transcripción Disponible - " + session.getTitle());
 
             String htmlContent = buildTranscriptionReadyTemplate(session, instructor);
             helper.setText(htmlContent, true);
@@ -126,12 +125,6 @@ public class SessionEmailService {
         String editLink = frontendUrl + "/app/sessions/" + session.getId() + "/edit";
         String sessionLink = frontendUrl + "/app/sessions/" + session.getId();
 
-        String videoCallLink = session.getVideoCallLink() != null && !session.getVideoCallLink().isEmpty()
-                ? session.getVideoCallLink()
-                : frontendUrl + "/app/video-call/" + session.getId();
-
-        String googleCalendarLink = buildGoogleCalendarLink(session);
-
         return """
 <!DOCTYPE html>
 <html lang='es'>
@@ -147,7 +140,7 @@ public class SessionEmailService {
                 <table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
                     <tr>
                         <td style='background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); padding: 40px 20px; text-align: center;'>
-                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'> SkillSwap</h1>
+                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1>
                         </td>
                     </tr>
                     <tr>
@@ -165,55 +158,49 @@ public class SessionEmailService {
                                 <hr style='border: none; border-top: 1px solid #504ab7; margin: 20px 0;'>
                                 <table width='100%%' cellpadding='5' cellspacing='0' style='font-size: 14px;'>
                                     <tr>
-                                        <td style='color: #aae16b; width: 40%%;'><strong> Fecha:</strong></td>
+                                        <td style='color: #aae16b; width: 40%%;'><strong>ID de Sesión:</strong></td>
+                                        <td style='color: #ffffff;'>#%d</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='color: #aae16b;'><strong>Fecha:</strong></td>
                                         <td style='color: #ffffff;'>%s</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong> Hora:</strong></td>
+                                        <td style='color: #aae16b;'><strong>Hora:</strong></td>
                                         <td style='color: #ffffff;'>%s</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong> Duración:</strong></td>
+                                        <td style='color: #aae16b;'><strong>Duración:</strong></td>
                                         <td style='color: #ffffff;'>%d minutos</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong> Habilidad:</strong></td>
+                                        <td style='color: #aae16b;'><strong>Habilidad:</strong></td>
                                         <td style='color: #ffffff;'>%s</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong> Categoría:</strong></td>
+                                        <td style='color: #aae16b;'><strong>Categoría:</strong></td>
                                         <td style='color: #ffffff;'>%s</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong> Idioma:</strong></td>
+                                        <td style='color: #aae16b;'><strong>Idioma:</strong></td>
                                         <td style='color: #ffffff;'>%s</td>
                                     </tr>
                                     <tr>
-                                        <td style='color: #aae16b;'><strong> Capacidad:</strong></td>
+                                        <td style='color: #aae16b;'><strong>Capacidad:</strong></td>
                                         <td style='color: #ffffff;'>%d participantes</td>
                                     </tr>
                                 </table>
                             </div>
-
-                            <div style='background-color: #39434b; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4285F4;'>
-                                <h4 style='color: #4285F4; margin-top: 0; margin-bottom: 10px; font-size: 16px;'> Agregar a Google Calendar</h4>
-                                <p style='margin: 0 0 15px 0; font-size: 14px; color: #ffffff;'>
-                                    Haz clic para agregar esta sesión a tu calendario de Google.
-                                </p>
-                                <a href='%s' style='display: inline-block; background-color: #4285F4; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-size: 14px; font-weight: bold;'>Agregar a Google Calendar</a>
-                            </div>
-
                             <table width='100%%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>
                                 <tr>
                                     <td align='center'>
                                         <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; margin-right: 10px;'>Ver Sesión</a>
-                                        <a href='%s' style='display: inline-block; background-color: #39434b; color: #aae16b; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; border: 2px solid #aae16b;'> Unirse a Videollamada</a>
+                                        <a href='%s' style='display: inline-block; background-color: #39434b; color: #aae16b; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; border: 2px solid #aae16b;'>Unirse a Videollamada</a>
                                     </td>
                                 </tr>
                             </table>
-
                             <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #504ab7;'>
-                                <h4 style='color: #aae16b; margin-top: 0; font-size: 16px;'> Consejos para tu sesión:</h4>
+                                <h4 style='color: #aae16b; margin-top: 0; font-size: 16px;'>Consejos para tu sesión:</h4>
                                 <ul style='color: #ffffff; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 10px 0;'>
                                     <li>Prepara tu material con anticipación</li>
                                     <li>Verifica tu conexión y equipo antes de comenzar</li>
@@ -240,6 +227,7 @@ public class SessionEmailService {
                 instructor.getFullName(),
                 session.getTitle(),
                 session.getDescription(),
+                session.getId(),
                 formattedDate,
                 formattedTime,
                 session.getDurationMinutes(),
@@ -247,51 +235,23 @@ public class SessionEmailService {
                 session.getSkill().getKnowledgeArea().getName(),
                 getLanguageName(session.getLanguage()),
                 session.getMaxCapacity(),
-                googleCalendarLink,
                 sessionLink,
-                videoCallLink
+                session.getVideoCallLink()
         );
     }
 
-    /**
-     *  Construye el link de Google Calendar
-     */
-    private String buildGoogleCalendarLink(LearningSession session) {
-        try {
-            String title = URLEncoder.encode(session.getTitle(), StandardCharsets.UTF_8.toString());
-            String description = URLEncoder.encode(
-                    session.getDescription() != null ? session.getDescription() : "",
-                    StandardCharsets.UTF_8.toString()
-            );
-
-            Date startDate = session.getScheduledDatetime();
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(startDate);
-            cal.add(Calendar.MINUTE, session.getDurationMinutes());
-            Date endDate = cal.getTime();
-
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
-            String start = sdf.format(startDate);
-            String end = sdf.format(endDate);
-
-            return String.format(
-                    "https://calendar.google.com/calendar/render?action=TEMPLATE&text=%s&dates=%s/%s&details=%s",
-                    title, start, end, description
-            );
-        } catch (Exception e) {
-            System.err.println("Error construyendo Google Calendar link: " + e.getMessage());
-            return "https://calendar.google.com";
-        }
-    }
 
     private String buildTranscriptionReadyTemplate(LearningSession session, Person instructor) {
+        //  Links de descarga
         String downloadTxtLink = "http://localhost:8080/videocall/transcription/" + session.getId() + "/download-txt";
         String downloadPdfLink = "http://localhost:8080/videocall/transcription/" + session.getId() + "/download-pdf";
 
+        // Calcular estadísticas
         int wordCount = session.getFullText() != null ? session.getFullText().split("\\s+").length : 0;
         int charCount = session.getFullText() != null ? session.getFullText().length() : 0;
         int durationMinutes = session.getDurationSeconds() != null ? session.getDurationSeconds() / 60 : 0;
 
+        // Preview de las primeras 300 caracteres
         String preview = "";
         if (session.getFullText() != null) {
             preview = session.getFullText().length() > 300
@@ -313,28 +273,35 @@ public class SessionEmailService {
             <td align='center'>
                 <table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
                     
+                    <!-- Header -->
                     <tr>
                         <td style='background: linear-gradient(135deg, #504ab7 0%%, #aae16b 100%%); padding: 40px 20px; text-align: center;'>
-                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'> SkillSwap</h1>
+                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1>
                         </td>
                     </tr>
                     
+                    <!-- Contenido -->
                     <tr>
                         <td style='padding: 40px 30px; color: #ffffff;'>
                             
+                            <!-- Título -->
                             <h2 style='color: #aae16b; margin-top: 0; font-size: 24px; text-align: center;'>Transcripción Disponible</h2>
                             
+                            <!-- Saludo -->
                             <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0; text-align: center;'>
                                 Estimado/a <strong style='color: #aae16b;'>%s</strong>
                             </p>
                             
+                            <!-- Mensaje principal -->
                             <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0; text-align: center;'>
                                 La transcripción automática de su sesión ha sido procesada exitosamente<br>y está disponible para su revisión y descarga.
                             </p>
                             
+                            <!-- Información de la sesión -->
                             <div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #aae16b;'>
                                 <h3 style='color: #aae16b; margin-top: 0; font-size: 18px; text-align: center;'>%s</h3>
                                 
+                                <!-- Estadísticas -->
                                 <table width='100%%' cellpadding='8' cellspacing='0' style='font-size: 14px; margin-top: 15px;'>
                                     <tr>
                                         <td style='color: #aae16b; width: 40%%; font-weight: 600;'>Estadísticas:</td>
@@ -355,6 +322,7 @@ public class SessionEmailService {
                                 </table>
                             </div>
                             
+                            <!-- Vista previa -->
                             <div style='background-color: #1e1e1e; padding: 20px; border-radius: 8px; margin: 25px 0; border: 1px solid #504ab7;'>
                                 <h4 style='color: #aae16b; margin-top: 0; font-size: 14px; font-weight: 600;'>Vista Previa del Contenido:</h4>
                                 <p style='color: #b0b0b0; font-size: 13px; line-height: 1.6; font-style: italic; margin: 10px 0;'>
@@ -362,13 +330,16 @@ public class SessionEmailService {
                                 </p>
                             </div>
                             
+                            <!-- Botones de descarga -->
                             <table width='100%%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>
                                 <tr>
                                     <td align='center'>
+                                        <!-- Botón TXT -->
                                         <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #141414; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4); margin: 0 5px;'>
                                              Descargar TXT
                                         </a>
                                         
+                                        <!-- Botón PDF -->
                                         <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #6b63d8 100%%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(80, 74, 183, 0.4); margin: 0 5px;'>
                                              Descargar PDF
                                         </a>
@@ -376,6 +347,7 @@ public class SessionEmailService {
                                 </tr>
                             </table>
                             
+                            <!-- Información adicional -->
                             <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #504ab7;'>
                                 <h4 style='color: #aae16b; margin-top: 0; font-size: 16px; font-weight: 600;'>Usos Recomendados</h4>
                                 <ul style='color: #ffffff; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 10px 0;'>
@@ -389,6 +361,7 @@ public class SessionEmailService {
                         </td>
                     </tr>
                     
+                    <!-- Footer -->
                     <tr>
                         <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>
                             <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>
@@ -423,7 +396,7 @@ public class SessionEmailService {
             Notification notification = new Notification();
             notification.setPerson(person);
             notification.setType(NotificationType.EMAIL);
-            notification.setTitle( eventType + " - " + session.getTitle());
+            notification.setTitle(eventType + " - " + session.getTitle());
             notification.setMessage("Email enviado exitosamente para la sesión #" + session.getId());
             notification.setRead(false);
             notificationRepository.save(notification);
@@ -437,7 +410,7 @@ public class SessionEmailService {
             Notification notification = new Notification();
             notification.setPerson(person);
             notification.setType(NotificationType.EMAIL);
-            notification.setTitle(" Email no enviado - " + eventType);
+            notification.setTitle("Email no enviado - " + eventType);
             notification.setMessage("Razón: " + reason);
             notification.setRead(false);
             notificationRepository.save(notification);
