@@ -45,7 +45,7 @@ public class NotificationEmailService {
      */
     public void sendMemberJoinedEmail(Person recipient, LearningCommunity community,
                                       Person newMember) throws MessagingException {
-        String subject = " Nuevo miembro en " + community.getName();
+        String subject = "👋 Nuevo miembro en " + community.getName();
         String htmlContent = buildMemberJoinedTemplate(recipient, community, newMember);
         sendHtmlEmail(recipient.getEmail(), subject, htmlContent);
     }
@@ -65,7 +65,7 @@ public class NotificationEmailService {
      */
     public void sendAchievementEarnedEmail(Person recipient, LearningCommunity community,
                                            Person achiever, String achievementName) throws MessagingException {
-        String subject = achiever.getFullName() + " obtuvo certificación";
+        String subject = "🏆" + achiever.getFullName() + " obtuvo certificación";
         String htmlContent = buildAchievementEarnedTemplate(recipient, community, achiever, achievementName);
         sendHtmlEmail(recipient.getEmail(), subject, htmlContent);
     }

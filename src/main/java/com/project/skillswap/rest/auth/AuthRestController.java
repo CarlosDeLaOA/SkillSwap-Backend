@@ -38,7 +38,7 @@ public class AuthRestController {
     //#endregion
 
     //#region Constructor
-    public AuthRestController(
+   public AuthRestController(
             JwtService jwtService,
             AuthenticationService authenticationService) {
         this.jwtService = jwtService;
