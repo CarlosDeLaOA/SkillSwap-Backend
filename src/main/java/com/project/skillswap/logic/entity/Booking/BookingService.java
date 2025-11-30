@@ -12,11 +12,9 @@ import com.project.skillswap.logic.entity.LearningSession.LearningSessionReposit
 import com.project.skillswap.logic.entity.LearningSession.SessionStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
-import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -39,6 +37,10 @@ public class BookingService {
 
     @Autowired
     private CommunityMemberRepository communityMemberRepository;
+
+    //  Servicio de pagos de sesiones
+    @Autowired
+    private SessionPaymentService sessionPaymentService;
 
     /**
      * Crea un booking individual
@@ -87,6 +89,18 @@ public class BookingService {
         // 7. Validar que la sesión tenga un video_call_link configurado
         if (session.getVideoCallLink() == null || session.getVideoCallLink().isEmpty()) {
             throw new RuntimeException("La sesión no tiene un enlace de videollamada configurado");
+        }
+
+        //  AGREGADO: Procesar pago de sesión premium ANTES de crear el booking
+        try {
+            sessionPaymentService.processSessionPayment(learner, session);
+        } catch (IllegalStateException e) {
+            // Error de balance insuficiente
+            System.err.println("[BOOKING]  Pago fallido: " + e.getMessage());
+            throw new RuntimeException(e.getMessage());
+        } catch (Exception e) {
+            System.err.println("[BOOKING]  Error procesando pago: " + e.getMessage());
+            throw new RuntimeException("Error al procesar el pago. Por favor intenta nuevamente.");
         }
 
         // 8. Crear el booking
@@ -248,6 +262,7 @@ public class BookingService {
 
         return createdBookings;
     }
+
     /**
      * Obtiene todos los bookings de un usuario por email
      */
@@ -264,7 +279,6 @@ public class BookingService {
         return bookingRepository.findByLearnerId(learner.getId());
     }
 
-
     /**
      * Genera un enlace único de acceso
      * se mantiene solo para compatibilidad con lista de espera
@@ -273,9 +287,6 @@ public class BookingService {
         return "https://skillswap.com/session/join/" + UUID.randomUUID().toString();
     }
 
-    /**
-     * Une a un usuario a la lista de espera de una sesión
-     */
     /**
      * Une a un usuario a la lista de espera de una sesión
      */
@@ -346,7 +357,7 @@ public class BookingService {
                 waitlistBooking.setStatus(BookingStatus.WAITING);
                 waitlistBooking.setBookingDate(new Date());
                 waitlistBooking.setAccessLink(null);
-                System.out.println("♻️ [WAITLIST] Reutilizando booking CANCELLED existente");
+                System.out.println(" [WAITLIST] Reutilizando booking CANCELLED existente");
                 break;
             }
         }
@@ -440,7 +451,6 @@ public class BookingService {
 
         System.out.println("[WAITLIST] Procesamiento completado. " + spotsToFill + " usuarios promovidos.");
     }
-
 
     /**
      * Permite que un usuario salga voluntariamente de la lista de espera
@@ -540,6 +550,14 @@ public class BookingService {
 
         System.out.println("[BOOKING_CANCEL] Cancelando booking individual: " + booking.getId());
 
+        //  AGREGADO: Procesar reembolso de sesión premium
+        try {
+            sessionPaymentService.refundSessionPayment(booking.getLearner(), session);
+        } catch (Exception e) {
+            System.err.println("[BOOKING_CANCEL]  Error al procesar reembolso: " + e.getMessage());
+            // No lanzar excepción - permitir que la cancelación continúe
+        }
+
         // Cancelar el booking
         booking.setStatus(BookingStatus.CANCELLED);
         Booking cancelledBooking = bookingRepository.save(booking);
@@ -549,7 +567,7 @@ public class BookingService {
         // Enviar notificaciones
         sendCancellationNotifications(cancelledBooking, person, session, false, 1);
 
-        // AGREGAR: Procesar lista de espera automáticamente
+        // Procesar lista de espera automáticamente
         System.out.println("[WAITLIST] Procesando lista de espera después de cancelación...");
         try {
             processWaitlist(session.getId());
@@ -593,7 +611,7 @@ public class BookingService {
         // Enviar notificaciones
         sendCancellationNotifications(booking, person, session, true, cancelledCount);
 
-        // AGREGAR: Procesar lista de espera automáticamente
+        // Procesar lista de espera automáticamente
         System.out.println("[WAITLIST] Procesando lista de espera después de cancelación grupal...");
         try {
             processWaitlist(session.getId());
@@ -633,5 +651,4 @@ public class BookingService {
             // No lanzamos excepción para que la cancelación se complete
         }
     }
-
 }
