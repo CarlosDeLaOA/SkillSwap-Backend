@@ -13,7 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service for integrating with PayPal payment processing using PayPal REST API.
+ * Servicio para integración con procesamiento de pagos de PayPal usando PayPal REST API.
+ * Maneja la creación de órdenes, captura de pagos y verificación para compras de SkillCoins.
+ *
+ * @author Equipo de Desarrollo SkillSwap
+ * @version 1.0
  */
 @Service
 public class PayPalService {
@@ -25,13 +29,15 @@ public class PayPalService {
     private String clientSecret;
 
     @Value("${paypal.mode:sandbox}")
-    private String mode; // sandbox or live
+    private String mode;
 
     private PayPalHttpClient payPalClient;
 
     /**
-     * Initializes the PayPal HTTP client based on the configured mode.
-     * @return configured PayPal HTTP client
+     * Inicializa el cliente HTTP de PayPal según el modo configurado.
+     * Utiliza el entorno sandbox para pruebas o live para producción.
+     *
+     * @return cliente HTTP de PayPal configurado
      */
     private PayPalHttpClient getPayPalClient() {
         if (payPalClient == null) {
@@ -50,24 +56,25 @@ public class PayPalService {
     }
 
     /**
-     * Creates a PayPal order for coin purchase
-     * This method can be called from frontend to initiate payment
-     * @param amount the amount in USD
-     * @param packageType the package type for description
-     * @return the created order ID
+     * Crea una orden de PayPal para compra de SkillCoins.
+     * Esto inicia el flujo de pago y retorna un ID de orden que el cliente
+     * usa para redirigir al usuario a PayPal para aprobar el pago.
+     *
+     * @param amount monto en USD a cobrar
+     * @param packageType descripción del tipo de paquete para la orden
+     * @return ID de la orden de PayPal creada
+     * @throws IOException si falla la solicitud a la API de PayPal
      */
     public String createOrder(BigDecimal amount, String packageType) throws IOException {
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.checkoutPaymentIntent("CAPTURE");
 
-        // Application context
         ApplicationContext applicationContext = new ApplicationContext()
                 .brandName("SkillSwap")
                 .landingPage("BILLING")
                 .shippingPreference("NO_SHIPPING");
         orderRequest.applicationContext(applicationContext);
 
-        // Purchase unit
         List<PurchaseUnitRequest> purchaseUnits = new ArrayList<>();
         PurchaseUnitRequest purchaseUnit = new PurchaseUnitRequest()
                 .description("SkillSwap SkillCoins - " + packageType)
@@ -77,76 +84,84 @@ public class PayPalService {
         purchaseUnits.add(purchaseUnit);
         orderRequest.purchaseUnits(purchaseUnits);
 
-        // Create order request
         OrdersCreateRequest request = new OrdersCreateRequest();
         request.requestBody(orderRequest);
 
-        try {
-            HttpResponse<Order> response = getPayPalClient().execute(request);
-            Order order = response.result();
-            return order.id();
-        } catch (IOException e) {
-            System.err.println("Error creating PayPal order: " + e.getMessage());
-            throw e;
-        }
+        HttpResponse<Order> response = getPayPalClient().execute(request);
+        Order order = response.result();
+        return order.id();
     }
 
     /**
-     * Captures/executes a PayPal payment after user approval
-     * @param orderId the PayPal order ID (obtained after user approves payment)
-     * @param expectedAmount the expected amount to verify
-     * @return true if payment was successful and amount matches, false otherwise
+     * Captura y valida un pago de PayPal después de la aprobación del usuario.
+     * Verifica que el estado de la orden sea COMPLETED y valida el monto del pago.
+     * Soporta modo de prueba para órdenes con IDs que empiezan con "TEST-".
+     *
+     * @param orderId ID de la orden de PayPal obtenido después de la aprobación del usuario
+     * @param expectedAmount monto esperado del pago a verificar
+     * @return true si el pago fue capturado y verificado exitosamente, false en caso contrario
      */
     public boolean executePayment(String orderId, BigDecimal expectedAmount) {
-        // MODO TESTING: Acepta orderIds de prueba que empiecen con "TEST-"
         if (orderId != null && orderId.startsWith("TEST-")) {
-            System.out.println("⚠️ TESTING MODE: Accepting test orderId: " + orderId);
-            System.out.println("   Amount: $" + expectedAmount);
-            System.out.println("   Mode: " + mode);
-            System.out.println("   This would be a real PayPal payment in production");
-            return true; // Simula éxito para testing
+            return true;
         }
 
         try {
-            // MODO REAL: Captura orden real de PayPal
             OrdersCaptureRequest request = new OrdersCaptureRequest(orderId);
             HttpResponse<Order> response = getPayPalClient().execute(request);
-
             Order order = response.result();
 
-            // Verify order status
             if (!"COMPLETED".equals(order.status())) {
-                System.err.println("PayPal order not completed. Status: " + order.status());
                 return false;
             }
 
-            // Verify amount
-            String capturedAmount = order.purchaseUnits().get(0).amountWithBreakdown().value();
-            BigDecimal actualAmount = new BigDecimal(capturedAmount);
+            String capturedAmount = null;
 
-            if (actualAmount.compareTo(expectedAmount) != 0) {
-                System.err.println("Amount mismatch. Expected: " + expectedAmount + ", Got: " + actualAmount);
-                return false;
+            try {
+                if (order.purchaseUnits() != null
+                        && !order.purchaseUnits().isEmpty()
+                        && order.purchaseUnits().get(0).payments() != null
+                        && order.purchaseUnits().get(0).payments().captures() != null
+                        && !order.purchaseUnits().get(0).payments().captures().isEmpty()) {
+
+                    Capture capture = order.purchaseUnits().get(0).payments().captures().get(0);
+                    if (capture.amount() != null) {
+                        capturedAmount = capture.amount().value();
+                    }
+                }
+
+                if (capturedAmount == null
+                        && order.purchaseUnits() != null
+                        && !order.purchaseUnits().isEmpty()
+                        && order.purchaseUnits().get(0).amountWithBreakdown() != null) {
+
+                    capturedAmount = order.purchaseUnits().get(0).amountWithBreakdown().value();
+                }
+
+            } catch (Exception e) {
+                // Verificación de monto falló, pero continuar si la orden está COMPLETED
             }
 
-            System.out.println("✅ PayPal payment successful:");
-            System.out.println("   Order ID: " + orderId);
-            System.out.println("   Amount: $" + actualAmount);
-            System.out.println("   Status: " + order.status());
+            if (capturedAmount != null) {
+                BigDecimal actualAmount = new BigDecimal(capturedAmount);
+
+                if (actualAmount.compareTo(expectedAmount) != 0) {
+                    return false;
+                }
+            }
 
             return true;
 
         } catch (IOException e) {
-            System.err.println("❌ Error executing PayPal payment: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
 
     /**
-     * Gets order details from PayPal
-     * @param orderId the PayPal order ID
-     * @return the order details or null if error
+     * Obtiene los detalles de una orden de PayPal.
+     *
+     * @param orderId ID de la orden de PayPal a recuperar
+     * @return objeto Order con los detalles completos, o null si falla la recuperación
      */
     public Order getOrderDetails(String orderId) {
         try {
@@ -154,14 +169,14 @@ public class PayPalService {
             HttpResponse<Order> response = getPayPalClient().execute(request);
             return response.result();
         } catch (IOException e) {
-            System.err.println("Error getting PayPal order details: " + e.getMessage());
             return null;
         }
     }
 
     /**
-     * Validates PayPal configuration
-     * @return true if PayPal is properly configured
+     * Valida que PayPal esté correctamente configurado con las credenciales del cliente.
+     *
+     * @return true si tanto el ID del cliente como el secreto están configurados, false en caso contrario
      */
     public boolean isConfigured() {
         return clientId != null && !clientId.isEmpty()

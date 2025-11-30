@@ -14,6 +14,14 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.*;
 
+/**
+ * Controlador REST para gestionar compras de SkillCoins.
+ * Expone endpoints para comprar monedas, consultar balance, obtener paquetes disponibles
+ * y revisar el historial de transacciones.
+ *
+ * @author Equipo de Desarrollo SkillSwap
+ * @version 1.0
+ */
 @RestController
 @RequestMapping("/api/coins")
 @CrossOrigin(origins = "*")
@@ -29,20 +37,20 @@ public class CoinPurchaseController {
     private PersonRepository personRepository;
 
     /**
-     * Purchase SkillCoins using PayPal
-     * POST /api/coins/purchase
-     * Header: Authorization: Bearer <token>
-     * Body: { "packageType": "BASIC", "paypalOrderId": "PAYPAL-ORDER-123" }
+     * Compra SkillCoins usando PayPal.
+     *
+     * @param authHeader header de autorización con el token JWT
+     * @param request cuerpo de la solicitud con packageType y paypalOrderId
+     * @return ResponseEntity con los detalles de la transacción o mensaje de error
      */
     @PostMapping("/purchase")
     public ResponseEntity<?> purchaseCoins(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody Map<String, String> request) {
+
         try {
-            // Get authenticated user ID from JWT token
             Long userId = getAuthenticatedUserId(authHeader);
 
-            // Parse request
             String packageTypeStr = request.get("packageType");
             String paypalOrderId = request.get("paypalOrderId");
 
@@ -51,12 +59,16 @@ public class CoinPurchaseController {
                         .body(Map.of("error", "Missing required fields: packageType and paypalOrderId"));
             }
 
-            CoinPackageType packageType = CoinPackageType.valueOf(packageTypeStr);
+            CoinPackageType packageType;
+            try {
+                packageType = CoinPackageType.valueOf(packageTypeStr);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Invalid package type: " + packageTypeStr));
+            }
 
-            // Process purchase
             Transaction transaction = coinPurchaseService.purchaseCoins(userId, packageType, paypalOrderId);
 
-            // Build response
             Map<String, Object> response = new HashMap<>();
             response.put("success", transaction.getStatus().toString().equals("COMPLETED"));
             response.put("transactionId", transaction.getId());
@@ -70,19 +82,25 @@ public class CoinPurchaseController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
+
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("error", e.getMessage()));
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "An error occurred processing your purchase"));
+                    .body(Map.of(
+                            "error", "An error occurred processing your purchase",
+                            "details", e.getMessage() != null ? e.getMessage() : "Unknown error"
+                    ));
         }
     }
 
     /**
-     * Get current SkillCoin balance
-     * GET /api/coins/balance
-     * Header: Authorization: Bearer <token>
+     * Obtiene el balance actual de SkillCoins del usuario.
+     *
+     * @param authHeader header de autorización con el token JWT
+     * @return ResponseEntity con el balance actual o mensaje de error
      */
     @GetMapping("/balance")
     public ResponseEntity<?> getBalance(@RequestHeader("Authorization") String authHeader) {
@@ -102,8 +120,9 @@ public class CoinPurchaseController {
     }
 
     /**
-     * Get all available coin packages
-     * GET /api/coins/packages
+     * Obtiene todos los paquetes de monedas disponibles para compra.
+     *
+     * @return ResponseEntity con la lista de paquetes disponibles
      */
     @GetMapping("/packages")
     public ResponseEntity<?> getAvailablePackages() {
@@ -128,18 +147,18 @@ public class CoinPurchaseController {
     }
 
     /**
-     * Create a PayPal order for coin purchase (optional endpoint)
-     * POST /api/coins/create-order
-     * Header: Authorization: Bearer <token>
-     * Body: { "packageType": "BASIC" }
-     * Returns: { "orderId": "PAYPAL-ORDER-123" }
+     * Crea una orden de PayPal para compra de monedas.
+     * Este endpoint se llama antes de que el usuario apruebe el pago en PayPal.
+     *
+     * @param authHeader header de autorización con el token JWT
+     * @param request cuerpo de la solicitud con packageType
+     * @return ResponseEntity con el orderId de PayPal o mensaje de error
      */
     @PostMapping("/create-order")
     public ResponseEntity<?> createPayPalOrder(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody Map<String, String> request) {
         try {
-            // Validate user is authenticated
             getAuthenticatedUserId(authHeader);
 
             String packageTypeStr = request.get("packageType");
@@ -163,9 +182,10 @@ public class CoinPurchaseController {
     }
 
     /**
-     * Get purchase history for current user
-     * GET /api/coins/transactions
-     * Header: Authorization: Bearer <token>
+     * Obtiene el historial de compras del usuario actual.
+     *
+     * @param authHeader header de autorización con el token JWT
+     * @return ResponseEntity con la lista de transacciones o mensaje de error
      */
     @GetMapping("/transactions")
     public ResponseEntity<?> getTransactions(@RequestHeader("Authorization") String authHeader) {
@@ -182,37 +202,28 @@ public class CoinPurchaseController {
     }
 
     /**
-     * Helper method to get authenticated user ID from JWT token
-     * @param authHeader the Authorization header containing "Bearer {token}"
-     * @return the user's numeric ID
+     * Método auxiliar para obtener el ID del usuario autenticado desde el token JWT.
+     * Extrae el email del token, busca la persona en la base de datos y retorna su ID.
+     *
+     * @param authHeader header de autorización que contiene "Bearer {token}"
+     * @return ID numérico del usuario
+     * @throws IllegalStateException si el header es inválido o el usuario no se encuentra
      */
     private Long getAuthenticatedUserId(String authHeader) {
-        try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                throw new IllegalStateException("Missing or invalid Authorization header");
-            }
-
-            // Extract token from "Bearer {token}"
-            String token = authHeader.substring(7);
-
-            // Extract username (email) from token using extractUsername()
-            // This uses Claims.getSubject() which is always present in JWT
-            String email = jwtService.extractUsername(token);
-
-            if (email == null || email.isEmpty()) {
-                throw new IllegalStateException("Invalid token: email not found");
-            }
-
-            // Find person by email and get their numeric ID
-            Person person = personRepository.findByEmail(email)
-                    .orElseThrow(() -> new IllegalStateException("User not found: " + email));
-
-            return person.getId();
-
-        } catch (Exception e) {
-            System.err.println("Error extracting user ID from token: " + e.getMessage());
-            e.printStackTrace();
-            throw new IllegalStateException("Authentication error: " + e.getMessage());
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalStateException("Missing or invalid Authorization header");
         }
+
+        String token = authHeader.substring(7);
+        String email = jwtService.extractUsername(token);
+
+        if (email == null || email.isEmpty()) {
+            throw new IllegalStateException("Invalid token: email not found");
+        }
+
+        Person person = personRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("User not found: " + email));
+
+        return person.getId();
     }
 }
