@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Credential;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Skill.Skill;
@@ -19,6 +20,7 @@ import java.util.Date;
 })
 @Entity
 public class Credential {
+    private static final Logger logger = LoggerFactory.getLogger(Credential.class);
 
     //<editor-fold desc="Fields">
     @Id

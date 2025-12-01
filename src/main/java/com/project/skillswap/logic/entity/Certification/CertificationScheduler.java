@@ -40,7 +40,7 @@ public class CertificationScheduler {
     @Scheduled(cron = "0 * * * * *")
     public void checkPendingCertifications() {
         logger.info("╔════════════════════════════════════════════════════════════╗");
-        logger.info("║  🎓 VERIFICACIÓN DE CERTIFICACIONES PROGRAMADA            ║");
+        logger.info("║   VERIFICACIÓN DE CERTIFICACIONES PROGRAMADA            ║");
         logger.info("╚════════════════════════════════════════════════════════════╝");
 
         try {
@@ -56,14 +56,14 @@ public class CertificationScheduler {
                     certificatesGenerated += generated;
                     learnersProcessed++;
                 } catch (Exception e) {
-                    logger.error("✗ Error procesando learner {}: {}",
+                    logger.error(" Error procesando learner {}: {}",
                             learner.getId(), e.getMessage());
                 }
             }
 
             logger.info("");
             logger.info("╔════════════════════════════════════════════════════════════╗");
-            logger.info("║  ✅ VERIFICACIÓN COMPLETADA                               ║");
+            logger.info("║   VERIFICACIÓN COMPLETADA                               ║");
             logger.info("╠════════════════════════════════════════════════════════════╣");
             logger.info("║  Learners procesados: {:<35} ║", learnersProcessed);
             logger.info("║  Certificados generados: {:<32} ║", certificatesGenerated);
@@ -71,7 +71,7 @@ public class CertificationScheduler {
 
         } catch (Exception e) {
             logger.error("╔════════════════════════════════════════════════════════════╗");
-            logger.error("║  ❌ ERROR EN VERIFICACIÓN                                 ║");
+            logger.error("║   ERROR EN VERIFICACIÓN                                 ║");
             logger.error("╠════════════════════════════════════════════════════════════╣");
             logger.error("║  Error: {}", e.getMessage());
             logger.error("╚════════════════════════════════════════════════════════════╝");
@@ -100,7 +100,7 @@ public class CertificationScheduler {
                     long credentialCount = credentialRepository.countByLearnerAndSkill(learner, skill);
 
                     if (credentialCount >= CREDENTIALS_REQUIRED) {
-                        logger.info("    ⭐ Learner {} tiene {} credenciales en skill '{}' (ID: {})",
+                        logger.info(" Learner {} tiene {} credenciales en skill '{}' (ID: {})",
                                 learner.getId(),
                                 credentialCount,
                                 skill.getName(),
@@ -110,26 +110,26 @@ public class CertificationScheduler {
                         boolean alreadyCertified = certificationService.existsByLearnerAndSkill(learner, skill);
 
                         if (!alreadyCertified) {
-                            logger.info("    🎓 Generando certificado para Learner {} en skill '{}'...",
+                            logger.info("     Generando certificado para Learner {} en skill '{}'...",
                                     learner.getId(),
                                     skill.getName());
 
                             certificationService.checkAndGenerateCertificate(learner, skill);
                             certificatesGenerated++;
 
-                            logger.info("    ✅ Certificado generado exitosamente");
-                            logger.info("    📧 Email enviado a: {}", learner.getPerson().getEmail());
+                            logger.info("     Certificado generado exitosamente");
+                            logger.info("     Email enviado a: {}", learner.getPerson().getEmail());
                         } else {
-                            logger.debug("    ℹ️  Ya tiene certificado en skill '{}'", skill.getName());
+                            logger.debug(" Ya tiene certificado en skill '{}'", skill.getName());
                         }
                     }
                 } catch (Exception e) {
-                    logger.error("    ✗ Error procesando skill {}: {}", skill.getName(), e.getMessage());
+                    logger.error("     Error procesando skill {}: {}", skill.getName(), e.getMessage());
                 }
             }
 
         } catch (Exception e) {
-            logger.error("  ✗ Error obteniendo skills del learner {}: {}", learner.getId(), e.getMessage());
+            logger.error("   Error obteniendo skills del learner {}: {}", learner.getId(), e.getMessage());
         }
 
         return certificatesGenerated;

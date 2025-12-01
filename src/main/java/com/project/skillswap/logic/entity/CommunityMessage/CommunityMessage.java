@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.CommunityMessage;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunity;
 import com.project.skillswap.logic.entity.Person.Person;
@@ -19,6 +20,7 @@ import java.util.Date;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class CommunityMessage {
+    private static final Logger logger = LoggerFactory.getLogger(CommunityMessage.class);
 
     //#region Fields
     @Id

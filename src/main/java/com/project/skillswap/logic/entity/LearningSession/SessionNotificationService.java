@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.LearningSession;
 
+package com.project.skillswap.logic.entity.LearningSession;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Booking.Booking;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -18,6 +20,7 @@ import java.util.List;
  */
 @Service
 public class SessionNotificationService {
+    private static final Logger logger = LoggerFactory.getLogger(SessionNotificationService.class);
 
     //#region Dependencies
     private final JavaMailSender mailSender;
@@ -48,10 +51,10 @@ public class SessionNotificationService {
             try {
                 sendCancellationEmail(email, session);
                 emailsSent++;
-                System.out.println(" [EMAIL] Cancellation notification sent to: " + email);
+                logger.info(" [EMAIL] Cancellation notification sent to: " + email);
             } catch (MessagingException e) {
-                System.err.println(" [ERROR] Failed to send cancellation email to: " + email);
-                System.err.println(" Error: " + e.getMessage());
+                logger.info(" [ERROR] Failed to send cancellation email to: " + email);
+                logger.info(" Error: " + e.getMessage());
             }
         }
 

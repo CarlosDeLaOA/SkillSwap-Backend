@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Credential;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Certification.CertificationService;
 import com.project.skillswap.logic.entity.Quiz.Quiz;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
  */
 @Service
 public class CredentialService {
+    private static final Logger logger = LoggerFactory.getLogger(CredentialService.class);
 
     //#region Dependencies
     private final CredentialRepository credentialRepository;

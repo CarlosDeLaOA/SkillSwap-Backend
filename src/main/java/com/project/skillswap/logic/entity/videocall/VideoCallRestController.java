@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.videocall;
 
+package com.project.skillswap.logic.entity.videocall;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
 import com.project.skillswap.logic.entity.LearningSession.SessionEmailService;
@@ -30,6 +32,7 @@ import java.text.SimpleDateFormat;
 @RequestMapping("/videocall")
 @CrossOrigin(origins = "http://localhost:4200")
 public class VideoCallRestController {
+    private static final Logger logger = LoggerFactory.getLogger(VideoCallRestController.class);
 
     //#region Dependencies
 
@@ -76,10 +79,10 @@ public class VideoCallRestController {
      */
     @GetMapping("/test-transcription-email/{sessionId}")
     public ResponseEntity<Map<String, Object>> testTranscriptionEmail(@PathVariable Long sessionId) {
-        System.out.println("========================================");
-        System.out.println(" TEST EMAIL - Iniciando prueba manual");
-        System.out.println("   Session ID: " + sessionId);
-        System.out.println("========================================");
+        logger.info("========================================");
+        logger.info(" TEST EMAIL - Iniciando prueba manual");
+        logger.info("   Session ID: " + sessionId);
+        logger.info("========================================");
 
         try {
             // Obtener sesión
@@ -89,8 +92,8 @@ public class VideoCallRestController {
             // Obtener instructor
             Person instructor = session.getInstructor().getPerson();
 
-            System.out.println(" Instructor: " + instructor.getEmail());
-            System.out.println(" Tiene transcripción: " + (session.getFullText() != null));
+            logger.info(" Instructor: " + instructor.getEmail());
+            logger.info(" Tiene transcripción: " + (session.getFullText() != null));
 
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -110,17 +113,17 @@ public class VideoCallRestController {
             response.put("instructorEmail", instructor.getEmail());
             response.put("transcriptionLength", session.getFullText().length());
 
-            System.out.println("========================================");
-            System.out.println(emailSent ? " TEST EXITOSO" : " TEST FALLIDO");
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(emailSent ? " TEST EXITOSO" : " TEST FALLIDO");
+            logger.info("========================================");
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("========================================");
-            System.err.println(" ERROR EN TEST DE EMAIL");
-            System.err.println("   Error: " + e.getMessage());
-            System.err.println("========================================");
+            logger.info("========================================");
+            logger.info(" ERROR EN TEST DE EMAIL");
+            logger.info("   Error: " + e.getMessage());
+            logger.info("========================================");
             e.printStackTrace();
 
             return ResponseEntity.status(500).body(Map.of(
@@ -149,19 +152,19 @@ public class VideoCallRestController {
                         .body(Map.of("message", "Solo el instructor puede iniciar la transcripción"));
             }
 
-            System.out.println("========================================");
-            System.out.println(" INICIANDO PROCESO DE TRANSCRIPCIÓN");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("   Solicitado por: " + person.getFullName());
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" INICIANDO PROCESO DE TRANSCRIPCIÓN");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("   Solicitado por: " + person.getFullName());
+            logger.info("========================================");
 
             // Iniciar transcripción asíncrona
             transcriptionService.transcribeSessionAudio(sessionId)
                     .thenAccept(result -> {
                         if (result.isSuccess()) {
-                            System.out.println(" Transcripción completada para sesión " + sessionId);
+                            logger.info(" Transcripción completada para sesión " + sessionId);
                         } else {
-                            System.err.println(" Transcripción falló para sesión " + sessionId + ": " + result.getErrorMessage());
+                            logger.info(" Transcripción falló para sesión " + sessionId + ": " + result.getErrorMessage());
                         }
                     });
 
@@ -174,7 +177,7 @@ public class VideoCallRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" Error al iniciar transcripción: " + e.getMessage());
+            logger.info(" Error al iniciar transcripción: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
@@ -264,7 +267,7 @@ public class VideoCallRestController {
             session.setProcessingDate(null);
             sessionRepository.save(session);
 
-            System.out.println("🗑 Transcripción eliminada para sesión " + sessionId);
+            logger.info(" Transcripción eliminada para sesión " + sessionId);
 
             return ResponseEntity.ok(Map.of(
                     "message", "Transcripción eliminada exitosamente",
@@ -319,13 +322,13 @@ public class VideoCallRestController {
 
             boolean isModerator = isSessionInstructor(person, sessionId);
 
-            System.out.println("========================================");
-            System.out.println(" DETERMINANDO ROL DE USUARIO");
-            System.out.println("   Usuario: " + person.getFullName());
-            System.out.println("   Email: " + person.getEmail());
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("   Es instructor de ESTA sesión: " + isModerator);
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" DETERMINANDO ROL DE USUARIO");
+            logger.info("   Usuario: " + person.getFullName());
+            logger.info("   Email: " + person.getEmail());
+            logger.info("   Session ID: " + sessionId);
+            logger.info("   Es instructor de ESTA sesión: " + isModerator);
+            logger.info("========================================");
 
             Map<String, Object> videoCallData = videoCallService.generateVideoCallToken(sessionId, person, isModerator);
 
@@ -536,10 +539,10 @@ public class VideoCallRestController {
                         .body(Map.of("message", "Solo el instructor puede subir grabaciones"));
             }
 
-            System.out.println(" Recibiendo archivo de audio...");
-            System.out.println("   Nombre: " + audioFile.getOriginalFilename());
-            System.out.println("   Tamaño: " + audioFile.getSize() + " bytes");
-            System.out.println("   Tipo: " + audioFile.getContentType());
+            logger.info(" Recibiendo archivo de audio...");
+            logger.info("   Nombre: " + audioFile.getOriginalFilename());
+            logger.info("   Tamaño: " + audioFile.getSize() + " bytes");
+            logger.info("   Tipo: " + audioFile.getContentType());
 
             Map<String, Object> result = recordingService.saveRecordingFile(sessionId, audioFile);
 
@@ -579,12 +582,12 @@ public class VideoCallRestController {
                         .body(Map.of("error", "Solo el instructor puede subir grabaciones"));
             }
 
-            System.out.println("========================================");
-            System.out.println(" RECIBIENDO ARCHIVO DE JITSI");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("   Archivo: " + file.getOriginalFilename());
-            System.out.println("   Tamaño: " + formatFileSize(file.getSize()));
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" RECIBIENDO ARCHIVO DE JITSI");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("   Archivo: " + file.getOriginalFilename());
+            logger.info("   Tamaño: " + formatFileSize(file.getSize()));
+            logger.info("========================================");
 
             // Validar que es un archivo de video
             String contentType = file.getContentType();
@@ -606,8 +609,8 @@ public class VideoCallRestController {
 
             Files.copy(file.getInputStream(), videoPath, StandardCopyOption.REPLACE_EXISTING);
 
-            System.out.println(" Video temporal guardado");
-            System.out.println("   Ruta: " + videoPath.toAbsolutePath());
+            logger.info(" Video temporal guardado");
+            logger.info("   Ruta: " + videoPath.toAbsolutePath());
 
             // Procesar en segundo plano
             CompletableFuture.runAsync(() -> {
@@ -621,7 +624,7 @@ public class VideoCallRestController {
             ));
 
         } catch (Exception e) {
-            System.err.println(" Error: " + e.getMessage());
+            logger.info(" Error: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
@@ -633,10 +636,10 @@ public class VideoCallRestController {
      */
     private void processJitsiRecording(Long sessionId, String videoPathStr) {
         try {
-            System.out.println("========================================");
-            System.out.println(" PROCESANDO GRABACIÓN DE JITSI");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" PROCESANDO GRABACIÓN DE JITSI");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("========================================");
 
             Path videoPath = Paths.get(videoPathStr);
             String recordingsDir = "recordings/audio/";
@@ -649,9 +652,9 @@ public class VideoCallRestController {
             String audioFileName = "session_" + sessionId + "_jitsi_" + System.currentTimeMillis() + ".mp3";
             Path audioPath = Paths.get(recordingsDir + audioFileName);
 
-            System.out.println(" Extrayendo audio del video con FFmpeg...");
-            System.out.println("   Video origen: " + videoPath.getFileName());
-            System.out.println("   Audio destino: " + audioFileName);
+            logger.info(" Extrayendo audio del video con FFmpeg...");
+            logger.info("   Video origen: " + videoPath.getFileName());
+            logger.info("   Audio destino: " + audioFileName);
 
             // Ejecutar FFmpeg
             ProcessBuilder pb = new ProcessBuilder(
@@ -674,7 +677,7 @@ public class VideoCallRestController {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     if (line.contains("Duration") || line.contains("time=") || line.contains("error")) {
-                        System.out.println("   FFmpeg: " + line);
+                        logger.info("   FFmpeg: " + line);
                     }
                 }
             }
@@ -684,30 +687,30 @@ public class VideoCallRestController {
             if (exitCode == 0 && Files.exists(audioPath)) {
                 long audioSize = Files.size(audioPath);
 
-                System.out.println("========================================");
-                System.out.println(" AUDIO EXTRAÍDO EXITOSAMENTE");
-                System.out.println("   Archivo: " + audioFileName);
-                System.out.println("   Tamaño: " + formatFileSize(audioSize));
-                System.out.println("   Ruta: " + audioPath.toAbsolutePath());
-                System.out.println("========================================");
+                logger.info("========================================");
+                logger.info(" AUDIO EXTRAÍDO EXITOSAMENTE");
+                logger.info("   Archivo: " + audioFileName);
+                logger.info("   Tamaño: " + formatFileSize(audioSize));
+                logger.info("   Ruta: " + audioPath.toAbsolutePath());
+                logger.info("========================================");
 
                 // Guardar URL del audio
                 recordingService.saveRecordingUrl(sessionId, audioFileName);
 
                 // Eliminar video temporal
                 Files.deleteIfExists(videoPath);
-                System.out.println(" Video temporal eliminado");
+                logger.info(" Video temporal eliminado");
 
             } else {
-                System.err.println(" Error en FFmpeg (exit code: " + exitCode + ")");
-                System.err.println("   ¿El archivo existe? " + Files.exists(audioPath));
+                logger.info(" Error en FFmpeg (exit code: " + exitCode + ")");
+                logger.info("   ¿El archivo existe? " + Files.exists(audioPath));
             }
 
         } catch (Exception e) {
-            System.err.println("========================================");
-            System.err.println(" ERROR PROCESANDO GRABACIÓN");
-            System.err.println("   Error: " + e.getMessage());
-            System.err.println("========================================");
+            logger.info("========================================");
+            logger.info(" ERROR PROCESANDO GRABACIÓN");
+            logger.info("   Error: " + e.getMessage());
+            logger.info("========================================");
             e.printStackTrace();
         }
     }
@@ -767,10 +770,10 @@ public class VideoCallRestController {
     @GetMapping("/transcription/{sessionId}")
     public ResponseEntity<?> getTranscription(@PathVariable Long sessionId) {
         try {
-            System.out.println("========================================");
-            System.out.println(" SOLICITUD DE TRANSCRIPCIÓN");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" SOLICITUD DE TRANSCRIPCIÓN");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("========================================");
 
             //  Obtener la sesión
             LearningSession session = sessionRepository.findById(sessionId)
@@ -778,7 +781,7 @@ public class VideoCallRestController {
 
             //  Validar que existe transcripción
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
-                System.out.println(" No hay transcripción disponible para esta sesión");
+                logger.info(" No hay transcripción disponible para esta sesión");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of(
                                 "success", false,
@@ -791,10 +794,10 @@ public class VideoCallRestController {
             int wordCount = fullText.split("\\s+").length;
             int durationSeconds = session.getDurationSeconds() != null ? session.getDurationSeconds() : 0;
 
-            System.out.println(" Transcripción encontrada");
-            System.out.println("   Palabras: " + wordCount);
-            System.out.println("   Duración: " + durationSeconds + " segundos");
-            System.out.println("   Caracteres: " + fullText.length());
+            logger.info(" Transcripción encontrada");
+            logger.info("   Palabras: " + wordCount);
+            logger.info("   Duración: " + durationSeconds + " segundos");
+            logger.info("   Caracteres: " + fullText.length());
 
 
             Map<String, Object> transcriptionData = new HashMap<>();
@@ -810,7 +813,7 @@ public class VideoCallRestController {
             ));
 
         } catch (Exception e) {
-            System.err.println(" Error al obtener transcripción: " + e.getMessage());
+            logger.info(" Error al obtener transcripción: " + e.getMessage());
             e.printStackTrace();
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -826,10 +829,10 @@ public class VideoCallRestController {
     @GetMapping("/transcription/{sessionId}/download-txt")
     public ResponseEntity<?> downloadTranscriptionTxt(@PathVariable Long sessionId) {
         try {
-            System.out.println("========================================");
-            System.out.println(" DESCARGA DIRECTA TXT");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" DESCARGA DIRECTA TXT");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("========================================");
 
             LearningSession session = sessionRepository.findById(sessionId)
                     .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
@@ -881,14 +884,14 @@ public class VideoCallRestController {
                     "attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" +
                             java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"));
 
-            System.out.println(" Descarga TXT iniciada: " + fileName);
+            logger.info(" Descarga TXT iniciada: " + fileName);
 
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(contentBytes);
 
         } catch (Exception e) {
-            System.err.println(" Error descargando TXT: " + e.getMessage());
+            logger.info(" Error descargando TXT: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Error: " + e.getMessage()).getBytes());
@@ -902,16 +905,16 @@ public class VideoCallRestController {
     @GetMapping("/transcription/{sessionId}/download-pdf")
     public ResponseEntity<?> downloadTranscriptionPdf(@PathVariable Long sessionId) {
         try {
-            System.out.println("========================================");
-            System.out.println(" DESCARGA DE TRANSCRIPCIÓN PDF");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" DESCARGA DE TRANSCRIPCIÓN PDF");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("========================================");
 
             LearningSession session = sessionRepository.findById(sessionId)
                     .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
-                System.out.println(" No hay transcripción disponible");
+                logger.info(" No hay transcripción disponible");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("No hay transcripción disponible para esta sesión".getBytes());
             }
@@ -933,19 +936,19 @@ public class VideoCallRestController {
                     "attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" +
                             java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"));
 
-            System.out.println("========================================");
-            System.out.println(" PDF LISTO PARA DESCARGA");
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" PDF LISTO PARA DESCARGA");
+            logger.info("========================================");
 
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(pdfBytes);
 
         } catch (Exception e) {
-            System.err.println("========================================");
-            System.err.println(" ERROR AL DESCARGAR PDF");
-            System.err.println("   Error: " + e.getMessage());
-            System.err.println("========================================");
+            logger.info("========================================");
+            logger.info(" ERROR AL DESCARGAR PDF");
+            logger.info("   Error: " + e.getMessage());
+            logger.info("========================================");
             e.printStackTrace();
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -1083,7 +1086,7 @@ public class VideoCallRestController {
             return sessionInstructorId.equals(personInstructorId);
 
         } catch (Exception e) {
-            System.err.println("Error al verificar instructor: " + e.getMessage());
+            logger.info("Error al verificar instructor: " + e.getMessage());
             return false;
         }
     }
@@ -1104,7 +1107,7 @@ public class VideoCallRestController {
 // ========================================
 
     /**
-     * 🤖 Genera resumen de sesión con IA y lo envía por email a participantes
+     *  Genera resumen de sesión con IA y lo envía por email a participantes
      * POST /videocall/summary/generate/{sessionId}
      */
     @PostMapping("/summary/generate/{sessionId}")
@@ -1121,11 +1124,11 @@ public class VideoCallRestController {
                         .body(Map.of("message", "Solo el instructor puede generar resúmenes"));
             }
 
-            System.out.println("========================================");
-            System.out.println("🤖 GENERANDO RESUMEN DE SESIÓN");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("   Solicitado por: " + person.getFullName());
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" GENERANDO RESUMEN DE SESIÓN");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("   Solicitado por: " + person.getFullName());
+            logger.info("========================================");
 
             // 1. Obtener sesión
             LearningSession session = sessionRepository.findById(sessionId)
@@ -1167,20 +1170,20 @@ public class VideoCallRestController {
             response.put("summaryLength", summary.length());
             response.put("emailsSent", emailsSent);
 
-            System.out.println("========================================");
-            System.out.println("✅ PROCESO COMPLETADO");
-            System.out.println("   Resumen generado: ✓");
-            System.out.println("   PDF creado: ✓");
-            System.out.println("   Emails enviados: " + (emailsSent ? "✓" : "✗"));
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" PROCESO COMPLETADO");
+            logger.info("   Resumen generado: ");
+            logger.info("   PDF creado: ");
+            logger.info("   Emails enviados: " + (emailsSent ? "" : ""));
+            logger.info("========================================");
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("========================================");
-            System.err.println("❌ ERROR GENERANDO RESUMEN");
-            System.err.println("   Error: " + e.getMessage());
-            System.err.println("========================================");
+            logger.info("========================================");
+            logger.info(" ERROR GENERANDO RESUMEN");
+            logger.info("   Error: " + e.getMessage());
+            logger.info("========================================");
             e.printStackTrace();
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -1227,7 +1230,7 @@ public class VideoCallRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("Error obteniendo resumen: " + e.getMessage());
+            logger.info("Error obteniendo resumen: " + e.getMessage());
             e.printStackTrace();
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -1245,10 +1248,10 @@ public class VideoCallRestController {
     @GetMapping("/summary/{sessionId}/download-pdf")
     public ResponseEntity<?> downloadSummaryPdf(@PathVariable Long sessionId) {
         try {
-            System.out.println("========================================");
-            System.out.println("📥 DESCARGA DE RESUMEN PDF");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" DESCARGA DE RESUMEN PDF");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("========================================");
 
             Person person = getAuthenticatedPerson();
             if (person == null) {
@@ -1283,20 +1286,20 @@ public class VideoCallRestController {
                     "attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" +
                             java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"));
 
-            System.out.println("========================================");
-            System.out.println("✅ PDF DE RESUMEN LISTO");
-            System.out.println("   Archivo: " + fileName);
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" PDF DE RESUMEN LISTO");
+            logger.info("   Archivo: " + fileName);
+            logger.info("========================================");
 
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(pdfBytes);
 
         } catch (Exception e) {
-            System.err.println("========================================");
-            System.err.println("❌ ERROR DESCARGANDO PDF");
-            System.err.println("   Error: " + e.getMessage());
-            System.err.println("========================================");
+            logger.info("========================================");
+            logger.info(" ERROR DESCARGANDO PDF");
+            logger.info("   Error: " + e.getMessage());
+            logger.info("========================================");
             e.printStackTrace();
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -1350,7 +1353,7 @@ public class VideoCallRestController {
             ));
 
         } catch (Exception e) {
-            System.err.println("Error reenviando resumen: " + e.getMessage());
+            logger.info("Error reenviando resumen: " + e.getMessage());
             e.printStackTrace();
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

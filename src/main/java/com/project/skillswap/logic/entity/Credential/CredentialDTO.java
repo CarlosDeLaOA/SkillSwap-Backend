@@ -1,9 +1,11 @@
 package com.project.skillswap.logic.entity.Credential;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import java.math.BigDecimal;
 import java.util.Date;
 
 public class CredentialDTO {
+    private static final Logger logger = LoggerFactory.getLogger(CredentialDTO.class);
     private Long id;
     private LearnerDTO learner;
     private SkillDTO skill;

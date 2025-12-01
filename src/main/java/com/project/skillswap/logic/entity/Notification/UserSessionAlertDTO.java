@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,6 +9,7 @@ import java.util.List;
  * DTO que agrupa sesiones por usuario para el envío de alertas
  */
 public class UserSessionAlertDTO {
+    private static final Logger logger = LoggerFactory.getLogger(UserSessionAlertDTO.class);
     private Long personId;
     private String fullName;
     private String email;

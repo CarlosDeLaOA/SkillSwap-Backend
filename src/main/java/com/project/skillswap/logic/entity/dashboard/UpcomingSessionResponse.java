@@ -1,11 +1,13 @@
 package com.project.skillswap.logic.entity.dashboard;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import java.util.Date;
 
 /**
  * Response containing information about an upcoming session
  */
 public class UpcomingSessionResponse {
+    private static final Logger logger = LoggerFactory.getLogger(UpcomingSessionResponse.class);
 
     //#region Fields
     private Long id;
@@ -17,7 +19,7 @@ public class UpcomingSessionResponse {
     private String videoCallLink;
     private String skillName;
 
-    // ✅ NUEVOS CAMPOS para cancelación de bookings (solo para LEARNERS)
+    //  NUEVOS CAMPOS para cancelación de bookings (solo para LEARNERS)
     private Long bookingId;
     private String bookingType;  // INDIVIDUAL o GROUP
     //#endregion

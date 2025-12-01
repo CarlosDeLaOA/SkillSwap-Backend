@@ -466,12 +466,12 @@ public class CommunityRestController {
             @RequestHeader("Authorization") String authHeader,
             @RequestParam(required = false) Integer maxMembers) {
         try {
-            System.out.println("[COMMUNITIES] GET /api/communities/my-communities");
+            logger.info("[COMMUNITIES] GET /api/communities/my-communities");
 
             String token = authHeader.replace("Bearer ", "");
             String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("[COMMUNITIES] Usuario autenticado: " + userEmail);
+            logger.info("[COMMUNITIES] Usuario autenticado: " + userEmail);
 
             // Buscar persona por email
             Person person = personRepository.findByEmail(userEmail)
@@ -489,10 +489,10 @@ public class CommunityRestController {
                         learner.getId(),
                         maxMembers
                 );
-                System.out.println("[COMMUNITIES] Comunidades con máximo " + maxMembers + " miembros: " + communities.size());
+                logger.info("[COMMUNITIES] Comunidades con máximo " + maxMembers + " miembros: " + communities.size());
             } else {
                 communities = learningCommunityRepository.findCommunitiesByLearnerId(learner.getId());
-                System.out.println("[COMMUNITIES] Total de comunidades: " + communities.size());
+                logger.info("[COMMUNITIES] Total de comunidades: " + communities.size());
             }
 
             Map<String, Object> response = new HashMap<>();
@@ -503,7 +503,7 @@ public class CommunityRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("[COMMUNITIES] Error: " + e.getMessage());
+            logger.info("[COMMUNITIES] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();

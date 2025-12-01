@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.quiz;
 
+package com.project.skillswap.rest.quiz;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Quiz.Quiz;
 import com.project.skillswap.logic.entity.Quiz.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import java.util.Map;
 @RequestMapping("/api/quiz")
 @CrossOrigin(origins = "*")
 public class QuizRestController {
+    private static final Logger logger = LoggerFactory.getLogger(QuizRestController.class);
 
     //#region Dependencies
     private final QuizService quizService;

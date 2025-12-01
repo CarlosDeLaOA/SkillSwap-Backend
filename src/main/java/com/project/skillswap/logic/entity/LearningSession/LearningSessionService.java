@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.LearningSession;
 
+package com.project.skillswap.logic.entity.LearningSession;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Skill.Skill;
@@ -15,6 +17,7 @@ import java.util.*;
 
 @Service
 public class LearningSessionService {
+    private static final Logger logger = LoggerFactory.getLogger(LearningSessionService.class);
 
     //#region Dependencies
     @Autowired
@@ -158,7 +161,7 @@ public class LearningSessionService {
 
         LearningSession savedSession = learningSessionRepository.save(session);
 
-        System.out.println("📝 [LearningSessionService] Session created with ID: " + savedSession.getId());
+        logger.info(" [LearningSessionService] Session created with ID: " + savedSession.getId());
 
 
         String videoCallLink = frontendBaseUrl + "/app/video-call/" + savedSession.getId();
@@ -167,7 +170,7 @@ public class LearningSessionService {
 
         savedSession = learningSessionRepository.save(savedSession);
 
-        System.out.println("🔗 [LearningSessionService] Video call link assigned: " + videoCallLink);
+        logger.info(" [LearningSessionService] Video call link assigned: " + videoCallLink);
 
         return savedSession;
     }
@@ -208,7 +211,7 @@ public class LearningSessionService {
             publishedSession.setVideoCallLink(videoCallLink);
             publishedSession = learningSessionRepository.save(publishedSession);
 
-            System.out.println(" [LearningSessionService] Video call link was missing, assigned: " + videoCallLink);
+            logger.info(" [LearningSessionService] Video call link was missing, assigned: " + videoCallLink);
         }
 
         // Enviar email de confirmación
@@ -219,12 +222,12 @@ public class LearningSessionService {
             );
 
             if (emailSent) {
-                System.out.println(" [LearningSessionService] Email de confirmación enviado");
+                logger.info(" [LearningSessionService] Email de confirmación enviado");
             } else {
-                System.out.println(" [LearningSessionService] Email no enviado (validación fallida)");
+                logger.info(" [LearningSessionService] Email no enviado (validación fallida)");
             }
         } catch (Exception e) {
-            System.err.println(" [LearningSessionService] Error enviando email: " + e.getMessage());
+            logger.info(" [LearningSessionService] Error enviando email: " + e.getMessage());
         }
 
         return publishedSession;
@@ -252,7 +255,7 @@ public class LearningSessionService {
         validateIsSessionOwner(session, authenticatedPerson);
 
         if (session.getStatus() == SessionStatus.ACTIVE) {
-            System.out.println("️ [WARNING] Cancelling ACTIVE session - requires additional confirmation");
+            logger.info("️ [WARNING] Cancelling ACTIVE session - requires additional confirmation");
         }
 
         List<String> participantEmails = session.getBookings().stream()
@@ -269,7 +272,7 @@ public class LearningSessionService {
 
         LearningSession cancelledSession = learningSessionRepository.save(session);
 
-        System.out.println(String.format(
+        logger.info(String.format(
                 " [SUCCESS] Session %d cancelled by instructor %d. Participants to notify: %d",
                 sessionId,
                 authenticatedPerson.getInstructor().getId(),
@@ -282,13 +285,13 @@ public class LearningSessionService {
                         cancelledSession,
                         participantEmails
                 );
-                System.out.println(String.format(
-                        "📧 [EMAIL] Sent %d/%d cancellation notifications",
+                logger.info(String.format(
+                        " [EMAIL] Sent %d/%d cancellation notifications",
                         emailsSent,
                         participantsCount
                 ));
             } catch (Exception e) {
-                System.err.println(" [ERROR] Failed to send some notification emails: " + e.getMessage());
+                logger.info(" [ERROR] Failed to send some notification emails: " + e.getMessage());
             }
         }
 

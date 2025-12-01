@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.auth;
 
+package com.project.skillswap.logic.entity.auth;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
+    private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
 
     //#region Configuration
     @Value("${security.jwt.secret-key}")
@@ -71,8 +74,8 @@ public class JwtService {
 
         extraClaims.put("userId", userDetails.getUsername());
 
-        System.out.println("   - Email: " + userDetails.getUsername());
-        System.out.println("   - Roles: " + roles);
+        logger.info("   - Email: " + userDetails.getUsername());
+        logger.info("   - Roles: " + roles);
 
         return generateToken(extraClaims, userDetails);
     }

@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Notification.CredentialAlertDTO;
 import com.project.skillswap.logic.entity.Notification.SessionAlertDTO;
 import com.project.skillswap.logic.entity.Notification.UserSessionAlertDTO;
@@ -18,6 +20,7 @@ import java.util.Locale;
  */
 @Service
 public class AlertEmailService {
+    private static final Logger logger = LoggerFactory.getLogger(AlertEmailService.class);
 
     private final JavaMailSender mailSender;
 

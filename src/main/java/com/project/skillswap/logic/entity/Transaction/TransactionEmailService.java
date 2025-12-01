@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Transaction;
 
+package com.project.skillswap.logic.entity.Transaction;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +25,7 @@ import java.util.Locale;
  */
 @Service
 public class TransactionEmailService {
+    private static final Logger logger = LoggerFactory.getLogger(TransactionEmailService.class);
 
     @Autowired
     private JavaMailSender mailSender;
@@ -174,7 +177,7 @@ public class TransactionEmailService {
 
             helper.setFrom(fromEmail);
             helper.setTo(userEmail);
-            helper.setSubject("⚠️ Pago Fallido - " + appName);
+            helper.setSubject("️ Pago Fallido - " + appName);
 
             String emailBody = String.format("""
                 Hola %s,

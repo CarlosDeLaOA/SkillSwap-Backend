@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Summary;
 
+package com.project.skillswap.logic.entity.Summary;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Transcription.Transcription;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -11,6 +13,7 @@ import java.util.Date;
 })
 @Entity
 public class Summary {
+    private static final Logger logger = LoggerFactory.getLogger(Summary.class);
 
     //<editor-fold desc="Fields">
     @Id

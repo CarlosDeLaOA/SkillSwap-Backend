@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Person;
 
+package com.project.skillswap.logic.entity.Person;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -26,6 +28,7 @@ import java.util.List;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Person implements UserDetails {
+    private static final Logger logger = LoggerFactory.getLogger(Person.class);
 
     //#region Fields
     @Id

@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Learner;
 
+package com.project.skillswap.logic.entity.Learner;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -22,6 +24,7 @@ import java.util.List;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Learner {
+    private static final Logger logger = LoggerFactory.getLogger(Learner.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

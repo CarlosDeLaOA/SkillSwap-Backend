@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Attendancerecord;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import jakarta.persistence.*;
 
@@ -10,6 +11,7 @@ import java.util.Date;
 })
 @Entity
 public class AttendanceRecord {
+    private static final Logger logger = LoggerFactory.getLogger(AttendanceRecord.class);
 
     //<editor-fold desc="Fields">
     @Id

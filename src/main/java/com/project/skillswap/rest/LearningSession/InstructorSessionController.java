@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.LearningSession;
 
+package com.project.skillswap.rest.LearningSession;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.InstructorSessionService;
 import com.project.skillswap.logic.entity.LearningSession.SessionListResponse;
 import com.project.skillswap.logic.entity.LearningSession.SessionUpdateRequest;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/instructor/sessions")
 @CrossOrigin(origins = "http://localhost:4200")
 public class InstructorSessionController {
+    private static final Logger logger = LoggerFactory.getLogger(InstructorSessionController.class);
 
     @Autowired
     private InstructorSessionService sessionService;
@@ -38,7 +41,7 @@ public class InstructorSessionController {
             return ResponseEntity.ok(sessions);
 
         } catch (Exception e) {
-            System.err.println("❌ [ERROR] Error al listar sesiones: " + e.getMessage());
+            logger.info(" [ERROR] Error al listar sesiones: " + e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
@@ -61,7 +64,7 @@ public class InstructorSessionController {
             return ResponseEntity.ok(updatedSession);
 
         } catch (RuntimeException e) {
-            System.err.println("❌ [ERROR] Error al actualizar sesión: " + e.getMessage());
+            logger.info(" [ERROR] Error al actualizar sesión: " + e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }

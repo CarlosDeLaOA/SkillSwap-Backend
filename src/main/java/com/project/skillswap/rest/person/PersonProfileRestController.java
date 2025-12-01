@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.person;
 
+package com.project.skillswap.rest.person;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.config.CloudinaryService;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
@@ -24,6 +26,7 @@ import java.util.Optional;
 @RequestMapping("/persons")
 @CrossOrigin(origins = "*")
 public class PersonProfileRestController {
+    private static final Logger logger = LoggerFactory.getLogger(PersonProfileRestController.class);
 
     @Autowired
     private PersonRepository personRepository;
@@ -62,13 +65,13 @@ public class PersonProfileRestController {
                 );
             }
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println("Error getting user profile: " + e.getMessage());
+            logger.info("Error getting user profile: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error retrieving profile");
@@ -125,7 +128,7 @@ public class PersonProfileRestController {
             person.setPreferredLanguage(newLanguage);
             personRepository.save(person);
 
-            System.out.println(" Language updated for user " + person.getId() + ": " + newLanguage);
+            logger.info(" Language updated for user " + person.getId() + ": " + newLanguage);
 
             return new GlobalResponseHandler().handleResponse(
                     "Language updated successfully",
@@ -135,13 +138,13 @@ public class PersonProfileRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println("Error updating language: " + e.getMessage());
+            logger.info("Error updating language: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error updating language");
@@ -168,7 +171,7 @@ public class PersonProfileRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println("[PersonProfileController] Updating profile photo for user: " + authenticatedPerson.getId());
+            logger.info("[PersonProfileController] Updating profile photo for user: " + authenticatedPerson.getId());
 
             if (file.isEmpty()) {
                 Map<String, String> errorResponse = new HashMap<>();
@@ -214,7 +217,7 @@ public class PersonProfileRestController {
                         cloudinaryService.deleteImage(oldPublicId);
                     }
                 } catch (Exception e) {
-                    System.err.println(" Warning: Could not delete old profile photo: " + e.getMessage());
+                    logger.info(" Warning: Could not delete old profile photo: " + e.getMessage());
                 }
             }
 
@@ -225,7 +228,7 @@ public class PersonProfileRestController {
             person.setProfilePhotoUrl(newImageUrl);
             personRepository.save(person);
 
-            System.out.println(" Profile photo updated successfully for user " + person.getId());
+            logger.info(" Profile photo updated successfully for user " + person.getId());
 
             return new GlobalResponseHandler().handleResponse(
                     "Profile photo updated successfully",
@@ -235,20 +238,20 @@ public class PersonProfileRestController {
             );
 
         } catch (IOException e) {
-            System.err.println(" Error uploading image to Cloudinary: " + e.getMessage());
+            logger.info(" Error uploading image to Cloudinary: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Upload failed");
             errorResponse.put("message", "Error uploading image: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (ClassCastException e) {
-            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println(" Error updating profile photo: " + e.getMessage());
+            logger.info(" Error updating profile photo: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error updating profile photo");
@@ -272,7 +275,7 @@ public class PersonProfileRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println("[PersonProfileController] Deleting profile photo for user: " + authenticatedPerson.getId());
+            logger.info("[PersonProfileController] Deleting profile photo for user: " + authenticatedPerson.getId());
 
             Optional<Person> personOptional = personRepository.findById(authenticatedPerson.getId());
             if (personOptional.isEmpty()) {
@@ -298,13 +301,13 @@ public class PersonProfileRestController {
                     cloudinaryService.deleteImage(publicId);
                 }
             } catch (Exception e) {
-                System.err.println(" Warning: Could not delete photo from Cloudinary: " + e.getMessage());
+                logger.info(" Warning: Could not delete photo from Cloudinary: " + e.getMessage());
             }
 
             person.setProfilePhotoUrl(null);
             personRepository.save(person);
 
-            System.out.println(" Profile photo deleted successfully for user " + person.getId());
+            logger.info(" Profile photo deleted successfully for user " + person.getId());
 
             return new GlobalResponseHandler().handleResponse(
                     "Profile photo deleted successfully",
@@ -314,13 +317,13 @@ public class PersonProfileRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println(" Error deleting profile photo: " + e.getMessage());
+            logger.info(" Error deleting profile photo: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error deleting profile photo");

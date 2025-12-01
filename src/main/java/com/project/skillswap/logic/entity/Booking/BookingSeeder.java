@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Booking;
 
+package com.project.skillswap.logic.entity.Booking;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
 import com.project.skillswap.logic.entity.Learner.Learner;
@@ -19,6 +21,7 @@ import java.util.Optional;
 @Order(7)
 @Component
 public class BookingSeeder implements ApplicationListener<ContextRefreshedEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(BookingSeeder.class);
 
     //#region Dependencies
     private final BookingRepository bookingRepository;

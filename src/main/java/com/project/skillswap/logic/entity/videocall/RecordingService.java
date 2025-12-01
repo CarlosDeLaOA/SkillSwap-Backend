@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.videocall;
 
+package com.project.skillswap.logic.entity.videocall;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 public class RecordingService {
+    private static final Logger logger = LoggerFactory.getLogger(RecordingService.class);
 
     @Autowired
     private LearningSessionRepository sessionRepository;
@@ -40,7 +43,7 @@ public class RecordingService {
 
     public RecordingService() {
         activeRecordings.clear();
-        System.out.println("🎙️ Servicio de grabación inicializado");
+        logger.info("️ Servicio de grabación inicializado");
     }
 
     /**
@@ -48,8 +51,8 @@ public class RecordingService {
      */
     public Map<String, Object> startRecording(Long sessionId, Long instructorId) {
         if (activeRecordings.containsKey(sessionId)) {
-            System.out.println("️ Ya existe grabación activa para sesión " + sessionId);
-            System.out.println(" Deteniendo grabación anterior...");
+            logger.info("️ Ya existe grabación activa para sesión " + sessionId);
+            logger.info(" Deteniendo grabación anterior...");
             stopRecording(sessionId);
 
             try {
@@ -64,12 +67,12 @@ public class RecordingService {
         RecordingSession recording = new RecordingSession(sessionId, instructorId);
         activeRecordings.put(sessionId, recording);
 
-        System.out.println("========================================");
-        System.out.println("▶ GRABACIÓN INICIADA");
-        System.out.println("   Session ID: " + sessionId);
-        System.out.println("   Recording ID: " + recording.getRecordingId());
-        System.out.println("   Instructor ID: " + instructorId);
-        System.out.println("========================================");
+        logger.info("========================================");
+        logger.info("▶ GRABACIÓN INICIADA");
+        logger.info("   Session ID: " + sessionId);
+        logger.info("   Recording ID: " + recording.getRecordingId());
+        logger.info("   Instructor ID: " + instructorId);
+        logger.info("========================================");
 
         Map<String, Object> result = new HashMap<>();
         result.put("sessionId", sessionId);
@@ -88,7 +91,7 @@ public class RecordingService {
         RecordingSession recording = activeRecordings.get(sessionId);
 
         if (recording == null) {
-            System.out.println("ℹ No hay grabación activa para sesión: " + sessionId);
+            logger.info("ℹ No hay grabación activa para sesión: " + sessionId);
             Map<String, Object> result = new HashMap<>();
             result.put("message", "No hay grabación activa");
             result.put("status", "NO_RECORDING");
@@ -97,11 +100,11 @@ public class RecordingService {
 
         recording.stop();
 
-        System.out.println("========================================");
-        System.out.println("⏹ GRABACIÓN DETENIDA");
-        System.out.println("   Session ID: " + sessionId);
-        System.out.println("   Duración: " + recording.getDurationSeconds() + " segundos");
-        System.out.println("========================================");
+        logger.info("========================================");
+        logger.info("⏹ GRABACIÓN DETENIDA");
+        logger.info("   Session ID: " + sessionId);
+        logger.info("   Duración: " + recording.getDurationSeconds() + " segundos");
+        logger.info("========================================");
 
         Map<String, Object> result = new HashMap<>();
         result.put("sessionId", sessionId);
@@ -126,18 +129,18 @@ public class RecordingService {
 
             RecordingSession recording = activeRecordings.get(sessionId);
             if (recording == null) {
-                System.out.println(" No se encontró sesión de grabación, creando una nueva...");
+                logger.info(" No se encontró sesión de grabación, creando una nueva...");
                 recording = new RecordingSession(sessionId, 0L);
             }
 
-            System.out.println("========================================");
-            System.out.println(" RECIBIENDO ARCHIVO DE AUDIO");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("   Nombre original: " + audioFile.getOriginalFilename());
-            System.out.println("   Content-Type: " + audioFile.getContentType());
-            System.out.println("   Tamaño: " + formatFileSize(audioFile.getSize()));
-            System.out.println("   isEmpty: " + audioFile.isEmpty());
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" RECIBIENDO ARCHIVO DE AUDIO");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("   Nombre original: " + audioFile.getOriginalFilename());
+            logger.info("   Content-Type: " + audioFile.getContentType());
+            logger.info("   Tamaño: " + formatFileSize(audioFile.getSize()));
+            logger.info("   isEmpty: " + audioFile.isEmpty());
+            logger.info("========================================");
 
             if (audioFile.isEmpty() || audioFile.getSize() == 0) {
                 throw new RuntimeException(" El archivo está vacío. No se capturó audio.");
@@ -145,22 +148,22 @@ public class RecordingService {
 
             //  VALIDACIÓN 2: Tamaño mínimo
             if (audioFile.getSize() < 10000) { // 10KB
-                System.out.println("⚠ ADVERTENCIA: Archivo muy pequeño");
-                System.out.println("   Tamaño: " + audioFile.getSize() + " bytes");
-                System.out.println("   Esto puede indicar que no hay audio audible");
+                logger.info(" ADVERTENCIA: Archivo muy pequeño");
+                logger.info("   Tamaño: " + audioFile.getSize() + " bytes");
+                logger.info("   Esto puede indicar que no hay audio audible");
             }
 
             // Guardar archivo temporal WebM
             String tempFileName = "temp_" + sessionId + "_" + System.currentTimeMillis() + ".webm";
             Path tempFilePath = Paths.get(RECORDINGS_DIR + tempFileName);
 
-            System.out.println(" Guardando archivo temporal...");
+            logger.info(" Guardando archivo temporal...");
             Files.copy(audioFile.getInputStream(), tempFilePath, StandardCopyOption.REPLACE_EXISTING);
 
             long tempFileSize = Files.size(tempFilePath);
-            System.out.println(" Archivo temporal guardado");
-            System.out.println("   Ruta: " + tempFilePath.toAbsolutePath());
-            System.out.println("   Tamaño verificado: " + formatFileSize(tempFileSize));
+            logger.info(" Archivo temporal guardado");
+            logger.info("   Ruta: " + tempFilePath.toAbsolutePath());
+            logger.info("   Tamaño verificado: " + formatFileSize(tempFileSize));
 
             boolean hasAudio = verifyAudioContent(tempFilePath);
 
@@ -182,84 +185,84 @@ public class RecordingService {
             String mp3FileName = recording.getFileName();
             Path mp3FilePath = Paths.get(RECORDINGS_DIR + mp3FileName);
 
-            System.out.println("========================================");
-            System.out.println("🎵 INICIANDO CONVERSIÓN A MP3");
-            System.out.println("   Origen: " + tempFileName);
-            System.out.println("   Destino: " + mp3FileName);
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" INICIANDO CONVERSIÓN A MP3");
+            logger.info("   Origen: " + tempFileName);
+            logger.info("   Destino: " + mp3FileName);
+            logger.info("========================================");
 
             convertToMP3(tempFilePath, mp3FilePath);
 
             long mp3FileSize = Files.size(mp3FilePath);
 
-            System.out.println("========================================");
-            System.out.println(" CONVERSIÓN A MP3 COMPLETADA");
-            System.out.println("   Archivo MP3: " + mp3FileName);
-            System.out.println("   Tamaño WebM: " + formatFileSize(tempFileSize));
-            System.out.println("   Tamaño MP3: " + formatFileSize(mp3FileSize));
-            System.out.println("   Ruta: " + mp3FilePath.toAbsolutePath());
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" CONVERSIÓN A MP3 COMPLETADA");
+            logger.info("   Archivo MP3: " + mp3FileName);
+            logger.info("   Tamaño WebM: " + formatFileSize(tempFileSize));
+            logger.info("   Tamaño MP3: " + formatFileSize(mp3FileSize));
+            logger.info("   Ruta: " + mp3FilePath.toAbsolutePath());
+            logger.info("========================================");
 
             // Validar MP3
             if (mp3FileSize < 10240) {
-                System.out.println("️ ADVERTENCIA: MP3 muy pequeño (" + mp3FileSize + " bytes)");
+                logger.info("️ ADVERTENCIA: MP3 muy pequeño (" + mp3FileSize + " bytes)");
             }
 
             // Eliminar archivo temporal
             Files.deleteIfExists(tempFilePath);
-            System.out.println("️ Archivo temporal eliminado");
+            logger.info("️ Archivo temporal eliminado");
 
             //  GUARDAR RUTA EN BASE DE DATOS
             session.setAudioRecordingUrl(mp3FileName);
             sessionRepository.save(session);
 
-            System.out.println("========================================");
-            System.out.println(" NOMBRE DE ARCHIVO GUARDADO EN BD");
-            System.out.println("   Campo: audio_recording_url");
-            System.out.println("   Valor: " + mp3FileName);
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" NOMBRE DE ARCHIVO GUARDADO EN BD");
+            logger.info("   Campo: audio_recording_url");
+            logger.info("   Valor: " + mp3FileName);
+            logger.info("========================================");
 
             // Guardar URL en memoria también
             recordingUrls.put(sessionId, RECORDINGS_DIR + mp3FileName);
             activeRecordings.remove(sessionId);
 
-            System.out.println("========================================");
-            System.out.println(" PROCESO COMPLETADO EXITOSAMENTE");
-            System.out.println("   Estado: Listo para transcripción");
-            System.out.println("   Guardado en BD: ✓");
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" PROCESO COMPLETADO EXITOSAMENTE");
+            logger.info("   Estado: Listo para transcripción");
+            logger.info("   Guardado en BD: ");
+            logger.info("========================================");
 
             // ⭐⭐⭐ TRIGGER TRANSCRIPCIÓN AUTOMÁTICA (AQUÍ ES EL LUGAR CORRECTO) ⭐⭐⭐
-            System.out.println("========================================");
-            System.out.println("🤖 INICIANDO TRANSCRIPCIÓN AUTOMÁTICA");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("   Archivo MP3: " + mp3FileName);
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" INICIANDO TRANSCRIPCIÓN AUTOMÁTICA");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("   Archivo MP3: " + mp3FileName);
+            logger.info("========================================");
 
             try {
                 transcriptionService.transcribeSessionAudio(sessionId)
                         .thenAccept(transcriptionResult -> {
                             if (transcriptionResult.isSuccess()) {
-                                System.out.println("========================================");
-                                System.out.println("✅ TRANSCRIPCIÓN AUTOMÁTICA COMPLETADA");
-                                System.out.println("   Session ID: " + sessionId);
-                                System.out.println("========================================");
+                                logger.info("========================================");
+                                logger.info(" TRANSCRIPCIÓN AUTOMÁTICA COMPLETADA");
+                                logger.info("   Session ID: " + sessionId);
+                                logger.info("========================================");
                             } else {
-                                System.err.println("========================================");
-                                System.err.println("❌ ERROR EN TRANSCRIPCIÓN AUTOMÁTICA");
-                                System.err.println("   Session ID: " + sessionId);
-                                System.err.println("   Error: " + transcriptionResult.getErrorMessage());
-                                System.err.println("========================================");
+                                logger.info("========================================");
+                                logger.info(" ERROR EN TRANSCRIPCIÓN AUTOMÁTICA");
+                                logger.info("   Session ID: " + sessionId);
+                                logger.info("   Error: " + transcriptionResult.getErrorMessage());
+                                logger.info("========================================");
                             }
                         });
 
-                System.out.println("✅ Transcripción iniciada en segundo plano");
+                logger.info(" Transcripción iniciada en segundo plano");
 
             } catch (Exception e) {
-                System.err.println("========================================");
-                System.err.println("❌ ERROR AL INICIAR TRANSCRIPCIÓN");
-                System.err.println("   Error: " + e.getMessage());
-                System.err.println("========================================");
+                logger.info("========================================");
+                logger.info(" ERROR AL INICIAR TRANSCRIPCIÓN");
+                logger.info("   Error: " + e.getMessage());
+                logger.info("========================================");
                 e.printStackTrace();
             }
 
@@ -285,39 +288,39 @@ public class RecordingService {
      */
     private boolean verifyAudioContent(Path filePath) {
         try {
-            System.out.println("🔍 VERIFICANDO CONTENIDO DE AUDIO...");
+            logger.info(" VERIFICANDO CONTENIDO DE AUDIO...");
 
             MultimediaObject source = new MultimediaObject(filePath.toFile());
             ws.schild.jave.info.MultimediaInfo info = source.getInfo();
 
-            System.out.println(" Información del archivo:");
-            System.out.println("   Duración: " + (info.getDuration() / 1000.0) + " segundos");
-            System.out.println("   Formato: " + info.getFormat());
+            logger.info(" Información del archivo:");
+            logger.info("   Duración: " + (info.getDuration() / 1000.0) + " segundos");
+            logger.info("   Formato: " + info.getFormat());
 
             if (info.getAudio() == null) {
-                System.out.println(" NO TIENE PISTA DE AUDIO");
+                logger.info(" NO TIENE PISTA DE AUDIO");
                 return false;
             }
 
-            System.out.println(" Tiene pista de audio:");
-            System.out.println("   Codec: " + info.getAudio().getDecoder());
-            System.out.println("   Bitrate: " + info.getAudio().getBitRate() + " bps");
-            System.out.println("   Sample rate: " + info.getAudio().getSamplingRate() + " Hz");
-            System.out.println("   Canales: " + info.getAudio().getChannels());
+            logger.info(" Tiene pista de audio:");
+            logger.info("   Codec: " + info.getAudio().getDecoder());
+            logger.info("   Bitrate: " + info.getAudio().getBitRate() + " bps");
+            logger.info("   Sample rate: " + info.getAudio().getSamplingRate() + " Hz");
+            logger.info("   Canales: " + info.getAudio().getChannels());
 
             //  VALIDACIÓN MEJORADA: Solo verificar que tenga sample rate válido
             if (info.getAudio().getSamplingRate() == 0) {
-                System.out.println(" ADVERTENCIA: Sample rate es 0");
+                logger.info(" ADVERTENCIA: Sample rate es 0");
                 return false;
             }
 
             //  Permitir duraciones cortas o negativas (problema común con WebM)
             // El archivo será válido si tiene codec y sample rate correctos
-            System.out.println(" Archivo válido para conversión");
+            logger.info(" Archivo válido para conversión");
             return true;
 
         } catch (Exception e) {
-            System.err.println(" No se pudo verificar el contenido: " + e.getMessage());
+            logger.info(" No se pudo verificar el contenido: " + e.getMessage());
             //  En caso de error de análisis, permitir continuar
             return true;
         }
@@ -332,7 +335,7 @@ public class RecordingService {
             File source = inputPath.toFile();
             File target = outputPath.toFile();
 
-            System.out.println(" Configurando conversión...");
+            logger.info(" Configurando conversión...");
 
             AudioAttributes audio = new AudioAttributes();
             audio.setCodec("libmp3lame");
@@ -340,10 +343,10 @@ public class RecordingService {
             audio.setChannels(2);
             audio.setSamplingRate(44100);
 
-            System.out.println("   Codec: libmp3lame");
-            System.out.println("   Bitrate: 128 kbps");
-            System.out.println("   Sample rate: 44100 Hz");
-            System.out.println("   Canales: 2 (Stereo)");
+            logger.info("   Codec: libmp3lame");
+            logger.info("   Bitrate: 128 kbps");
+            logger.info("   Sample rate: 44100 Hz");
+            logger.info("   Canales: 2 (Stereo)");
 
             EncodingAttributes attrs = new EncodingAttributes();
             attrs.setOutputFormat("mp3");
@@ -351,7 +354,7 @@ public class RecordingService {
 
             Encoder encoder = new Encoder();
 
-            System.out.println(" Convirtiendo...");
+            logger.info(" Convirtiendo...");
             long startTime = System.currentTimeMillis();
 
             encoder.encode(new MultimediaObject(source), target, attrs);
@@ -359,19 +362,19 @@ public class RecordingService {
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
 
-            System.out.println(" Conversión exitosa en " + (duration / 1000.0) + " segundos");
+            logger.info(" Conversión exitosa en " + (duration / 1000.0) + " segundos");
 
         } catch (EncoderException e) {
-            System.err.println("========================================");
-            System.err.println(" ERROR EN CONVERSIÓN A MP3");
-            System.err.println("   Mensaje: " + e.getMessage());
+            logger.info("========================================");
+            logger.info(" ERROR EN CONVERSIÓN A MP3");
+            logger.info("   Mensaje: " + e.getMessage());
 
             if (e.getMessage().contains("Invalid data found")) {
-                System.err.println("\n POSIBLE CAUSA:");
-                System.err.println("   El archivo WebM no contiene audio válido");
+                logger.info("\n POSIBLE CAUSA:");
+                logger.info("   El archivo WebM no contiene audio válido");
             }
 
-            System.err.println("========================================");
+            logger.info("========================================");
             e.printStackTrace();
             throw new RuntimeException("Error en conversión a MP3: " + e.getMessage());
         }
@@ -390,13 +393,13 @@ public class RecordingService {
             session.setAudioRecordingUrl(absolutePath.toString());
             sessionRepository.save(session);
 
-            System.out.println(" URL de grabación guardada");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("   Archivo: " + fileName);
-            System.out.println("   Ruta BD: " + absolutePath);
+            logger.info(" URL de grabación guardada");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("   Archivo: " + fileName);
+            logger.info("   Ruta BD: " + absolutePath);
 
         } catch (Exception e) {
-            System.err.println(" Error guardando en BD: " + e.getMessage());
+            logger.info(" Error guardando en BD: " + e.getMessage());
         }
     }
 
@@ -422,7 +425,7 @@ public class RecordingService {
                 }
             }
         } catch (Exception e) {
-            System.err.println(" Error consultando BD: " + e.getMessage());
+            logger.info(" Error consultando BD: " + e.getMessage());
         }
 
         // Fallback: buscar en memoria
@@ -460,7 +463,7 @@ public class RecordingService {
                 return (int) (fileSizeMB * 60); // Convertir MB a segundos estimados
             }
         } catch (Exception e) {
-            System.err.println("Error estimando duración: " + e.getMessage());
+            logger.info("Error estimando duración: " + e.getMessage());
         }
         return 0;
     }
@@ -476,22 +479,22 @@ public class RecordingService {
                 Path filePath = Paths.get(url);
                 Files.deleteIfExists(filePath);
                 recordingUrls.remove(sessionId);
-                System.out.println("️ Grabación eliminada: " + filePath.getFileName());
+                logger.info("️ Grabación eliminada: " + filePath.getFileName());
             } catch (IOException e) {
-                System.err.println(" Error al eliminar: " + e.getMessage());
+                logger.info(" Error al eliminar: " + e.getMessage());
             }
         }
     }
 
     /**
-     * 🧹 Limpia grabación huérfana
+     *  Limpia grabación huérfana
      */
     public void forceStopRecording(Long sessionId) {
         RecordingSession recording = activeRecordings.remove(sessionId);
 
         if (recording != null) {
             recording.stop();
-            System.out.println(" Grabación limpiada para sesión: " + sessionId);
+            logger.info(" Grabación limpiada para sesión: " + sessionId);
         }
     }
 
@@ -522,7 +525,7 @@ public class RecordingService {
                     return status;
                 }
             } catch (Exception e) {
-                System.err.println(" Error consultando BD: " + e.getMessage());
+                logger.info(" Error consultando BD: " + e.getMessage());
             }
 
             // Fallback: verificar en memoria

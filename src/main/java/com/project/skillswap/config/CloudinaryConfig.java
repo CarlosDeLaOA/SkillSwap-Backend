@@ -1,5 +1,6 @@
 package com.project.skillswap.config;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class CloudinaryConfig {
+    private static final Logger logger = LoggerFactory.getLogger(CloudinaryConfig.class);
 
     @Value("${cloudinary.cloud-name}")
     private String cloudName;

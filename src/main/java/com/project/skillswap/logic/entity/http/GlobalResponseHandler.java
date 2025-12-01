@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.http;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalResponseHandler {
+    private static final Logger logger = LoggerFactory.getLogger(GlobalResponseHandler.class);
     @ResponseBody
     public <T> ResponseEntity<?> handleResponse(String message, T body, HttpStatus status, HttpServletRequest request) {
         Meta meta = new Meta(request.getMethod(), request.getRequestURL().toString());

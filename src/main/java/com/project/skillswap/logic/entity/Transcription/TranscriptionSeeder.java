@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Transcription;
 
+package com.project.skillswap.logic.entity.Transcription;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
 import org.springframework.context.ApplicationListener;
@@ -17,6 +19,7 @@ import java.util.Optional;
 @Order(5)
 @Component
 public class TranscriptionSeeder implements ApplicationListener<ContextRefreshedEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(TranscriptionSeeder.class);
 
     //#region Dependencies
     private final TranscriptionRepository transcriptionRepository;

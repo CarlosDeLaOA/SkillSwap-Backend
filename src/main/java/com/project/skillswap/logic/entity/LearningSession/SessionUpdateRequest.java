@@ -1,6 +1,10 @@
+
 package com.project.skillswap.logic.entity.LearningSession;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 public class SessionUpdateRequest {
+    private static final Logger logger = LoggerFactory.getLogger(SessionUpdateRequest.class);
 
     private String description;
     private Integer durationMinutes;

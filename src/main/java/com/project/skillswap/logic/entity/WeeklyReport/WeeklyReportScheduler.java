@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.WeeklyReport;
 
+package com.project.skillswap.logic.entity.WeeklyReport;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class WeeklyReportScheduler {
+    private static final Logger logger = LoggerFactory.getLogger(WeeklyReportScheduler.class);
 
     //#region Dependencies
     private final WeeklyReportService weeklyReportService;
@@ -24,9 +27,9 @@ public class WeeklyReportScheduler {
     @Scheduled(cron = "0 0 12 * * SUN")
     //@Scheduled(cron = "0 * * * * *") // Para probar el codigo con facilidad (Sammy o Jose) esto pasaría cada min
     public void sendWeeklyReports() {
-        System.out.println("Iniciando generación de reportes semanales...");
+        logger.info("Iniciando generación de reportes semanales...");
         weeklyReportService.generateAndSendWeeklyReports();
-        System.out.println("Reportes semanales generados y enviados.");
+        logger.info("Reportes semanales generados y enviados.");
     }
 
     /**
@@ -34,9 +37,9 @@ public class WeeklyReportScheduler {
      */
     @Scheduled(cron = "0 0 2 1 * *")
     public void cleanOldReports() {
-        System.out.println("Iniciando limpieza de reportes antiguos...");
+        logger.info("Iniciando limpieza de reportes antiguos...");
         weeklyReportService.cleanOldReports(6);
-        System.out.println("Reportes antiguos eliminados.");
+        logger.info("Reportes antiguos eliminados.");
     }
     //#endregion
 }

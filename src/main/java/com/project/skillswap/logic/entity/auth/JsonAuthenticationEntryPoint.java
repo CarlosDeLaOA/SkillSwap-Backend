@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.auth;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -18,6 +19,7 @@ import java.util.Map;
 
 @Component
 public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
+    private static final Logger logger = LoggerFactory.getLogger(JsonAuthenticationEntryPoint.class);
 
     //#region Dependencies
     private final ObjectMapper mapper = new ObjectMapper();

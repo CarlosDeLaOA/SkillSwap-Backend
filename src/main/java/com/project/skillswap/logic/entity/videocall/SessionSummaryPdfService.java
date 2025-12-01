@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.videocall;
 
+package com.project.skillswap.logic.entity.videocall;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -23,6 +25,7 @@ import java.text.SimpleDateFormat;
  */
 @Service
 public class SessionSummaryPdfService {
+    private static final Logger logger = LoggerFactory.getLogger(SessionSummaryPdfService.class);
 
     //#region Public API
 

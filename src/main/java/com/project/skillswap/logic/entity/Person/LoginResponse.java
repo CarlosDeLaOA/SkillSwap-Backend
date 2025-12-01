@@ -1,7 +1,10 @@
-package com.project.skillswap.logic.entity.Person;
 
+package com.project.skillswap.logic.entity.Person;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 public class LoginResponse {
+    private static final Logger logger = LoggerFactory.getLogger(LoginResponse.class);
 
     //#region Fields
     private String token;

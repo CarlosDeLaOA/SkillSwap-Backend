@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.LearningCommunity;
 
+package com.project.skillswap.logic.entity.LearningCommunity;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.CommunityMember.CommunityMember;
@@ -17,6 +19,7 @@ import java.util.List;
 })
 @Entity
 public class LearningCommunity {
+    private static final Logger logger = LoggerFactory.getLogger(LearningCommunity.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
