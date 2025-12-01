@@ -227,7 +227,7 @@ public class FeedbackService {
      */
     private void validateInstructorExists(Long instructorId) {
         System.out.println("[FeedbackService] Validating instructor ID: " + instructorId);
-        boolean exists = instructorRepository.existsById(instructorId.intValue());
+        boolean exists = instructorRepository.existsById(instructorId);
         if (!exists) {
             System.out.println("[FeedbackService] Instructor not found: " + instructorId);
             throw FeedbackException.instructorNotFound(instructorId);

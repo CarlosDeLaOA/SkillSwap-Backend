@@ -66,7 +66,7 @@ public class InstructorPayPalService {
      * Vincula y verifica la cuenta PayPal del instructor
      */
     @Transactional
-    public void linkPayPalAccount(Integer instructorId, String paypalEmail) {
+    public void linkPayPalAccount(Long instructorId, String paypalEmail) {
 
         System.out.println("[PAYPAL_LINK] Vinculando cuenta PayPal para instructor: " + instructorId);
 
@@ -96,7 +96,7 @@ public class InstructorPayPalService {
      * Procesa el retiro de SkillCoins a PayPal
      */
     @Transactional
-    public Transaction withdrawToPayPal(Integer instructorId, BigDecimal skillCoinsAmount) {
+    public Transaction withdrawToPayPal(Long instructorId, BigDecimal skillCoinsAmount) {
 
         System.out.println("[PAYPAL_WITHDRAWAL] Procesando retiro para instructor: " + instructorId);
         System.out.println("[PAYPAL_WITHDRAWAL] Cantidad: " + skillCoinsAmount + " SkillCoins");
@@ -221,7 +221,7 @@ public class InstructorPayPalService {
     /**
      * Obtiene información de la cuenta PayPal vinculada
      */
-    public Map<String, Object> getPayPalInfo(Integer instructorId) {
+    public Map<String, Object> getPayPalInfo(Long instructorId) {
 
         System.out.println("[PAYPAL_INFO] Obteniendo info para instructor: " + instructorId);
 

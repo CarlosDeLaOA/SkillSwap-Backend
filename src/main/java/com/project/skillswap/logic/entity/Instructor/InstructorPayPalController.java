@@ -1,4 +1,4 @@
-package com.project.skillswap.rest.Instructor;
+package com.project.skillswap.logic.entity.Instructor;
 
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Instructor.InstructorPayPalService;
@@ -46,8 +46,8 @@ public class InstructorPayPalController {
                         .body(Map.of("error", "User is not an instructor"));
             }
 
-            //  CONVERSIÓN: Long → Integer
-            Integer instructorId = instructor.getId().intValue();
+
+            Long instructorId = instructor.getId();
             Map<String, Object> info = instructorPayPalService.getPayPalInfo(instructorId);
 
             return ResponseEntity.ok(info);
@@ -86,7 +86,7 @@ public class InstructorPayPalController {
             }
 
 
-            Integer instructorId = instructor.getId().intValue();
+            Long instructorId = instructor.getId();
             instructorPayPalService.linkPayPalAccount(instructorId, paypalEmail);
 
             return ResponseEntity.ok(Map.of(
@@ -130,7 +130,7 @@ public class InstructorPayPalController {
             }
 
 
-            Integer instructorId = instructor.getId().intValue();
+            Long instructorId = instructor.getId();
             Transaction transaction = instructorPayPalService.withdrawToPayPal(instructorId, amount);
 
             return ResponseEntity.ok(Map.of(

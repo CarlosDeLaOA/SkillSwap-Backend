@@ -12,13 +12,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Servicio para integración con procesamiento de pagos de PayPal usando PayPal REST API.
- * Maneja la creación de órdenes, captura de pagos y verificación para compras de SkillCoins.
- *
- * @author Equipo de Desarrollo SkillSwap
- * @version 1.0
- */
+
 @Service
 public class PayPalService {
 
