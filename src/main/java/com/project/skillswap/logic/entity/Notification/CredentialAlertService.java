@@ -113,10 +113,4 @@ public class CredentialAlertService {
         notificationRepository.save(notification);
     }
 
-    /**
-     * Obtiene preview de alertas que se enviarían (para testing)
-     */
-    public List<CredentialAlertDTO> getAlertsPreview() {
-        return credentialRepository.findLearnersCloseToAchievingCertificate();
-    }
 }

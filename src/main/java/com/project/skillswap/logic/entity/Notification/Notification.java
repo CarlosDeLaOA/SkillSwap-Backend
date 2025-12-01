@@ -138,31 +138,5 @@ public class Notification {
             this.message = metadata.getOrDefault("content", "").toString();
         }
     }
-
-    /**
-     * Obtiene el contenido legible del mensaje
-     */
-    @Transient
-    public String getReadableContent() {
-        try {
-            Map<String, Object> metadata = getMetadata();
-            return metadata.getOrDefault("content", this.message).toString();
-        } catch (Exception e) {
-            return this.message;
-        }
-    }
-
-    /**
-     * Obtiene el tipo de evento (si está en metadata)
-     */
-    @Transient
-    public String getEventType() {
-        try {
-            Map<String, Object> metadata = getMetadata();
-            return metadata.getOrDefault("eventType", "GENERAL").toString();
-        } catch (Exception e) {
-            return "GENERAL";
-        }
-    }
     //</editor-fold>
 }

@@ -46,9 +46,6 @@ public class SessionAlertService {
     /**
      * Procesa y envía alertas de sesiones próximas (próximos 7 días)
      */
-    /**
-     * Procesa y envía alertas de sesiones SIN verificar duplicados (para testing)
-     */
     @Transactional
     public void processAndSendSessionAlerts() {
         logger.info("[TESTING] Buscando sesiones programadas para esta semana...");
@@ -160,63 +157,5 @@ public class SessionAlertService {
         notification.setRead(false);
 
         notificationRepository.save(notification);
-    }
-
-    /**
-     * Obtiene preview de alertas que se enviarían (para testing)
-     */
-    public Map<Long, UserSessionAlertDTO> getAlertsPreview() {
-        Date startDate = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
-        Date endDate = Date.from(LocalDate.now().plusDays(7).atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        List<LearningSession> sessions = learningSessionRepository.findScheduledSessionsInDateRange(startDate, endDate);
-        List<Booking> bookings = bookingRepository.findActiveBookingsInDateRange(startDate, endDate);
-
-        Map<Long, UserSessionAlertDTO> userAlertsMap = new HashMap<>();
-
-        for (LearningSession session : sessions) {
-            Person instructor = session.getInstructor().getPerson();
-            Long personId = instructor.getId();
-
-            UserSessionAlertDTO userAlert = userAlertsMap.computeIfAbsent(personId,
-                    id -> new UserSessionAlertDTO(id, instructor.getFullName(), instructor.getEmail()));
-
-            SessionAlertDTO sessionDTO = new SessionAlertDTO(
-                    session.getId(),
-                    session.getTitle(),
-                    session.getSkill().getName(),
-                    session.getScheduledDatetime(),
-                    session.getDurationMinutes(),
-                    "INSTRUCTOR",
-                    instructor.getFullName(),
-                    session.getVideoCallLink()
-            );
-
-            userAlert.getInstructorSessions().add(sessionDTO);
-        }
-
-        for (Booking booking : bookings) {
-            Person learner = booking.getLearner().getPerson();
-            Long personId = learner.getId();
-            LearningSession session = booking.getLearningSession();
-
-            UserSessionAlertDTO userAlert = userAlertsMap.computeIfAbsent(personId,
-                    id -> new UserSessionAlertDTO(id, learner.getFullName(), learner.getEmail()));
-
-            SessionAlertDTO sessionDTO = new SessionAlertDTO(
-                    session.getId(),
-                    session.getTitle(),
-                    session.getSkill().getName(),
-                    session.getScheduledDatetime(),
-                    session.getDurationMinutes(),
-                    "LEARNER",
-                    session.getInstructor().getPerson().getFullName(),
-                    session.getVideoCallLink()
-            );
-
-            userAlert.getLearnerSessions().add(sessionDTO);
-        }
-
-        return userAlertsMap;
     }
 }
