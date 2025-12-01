@@ -1,4 +1,3 @@
-
 package com.project.skillswap.logic.entity.Skill;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -119,6 +118,42 @@ public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
         skills.add(new SkillData("Power Skills", "Adaptabilidad", "Capacidad de afrontar cambios con flexibilidad", true));
         skills.add(new SkillData("Power Skills", "Gestión del Estrés", "Manejo emocional y equilibrio mental", true));
         skills.add(new SkillData("Power Skills", "Creatividad", "Innovación y pensamiento fuera de lo común", true));
+
+        skills.add(new SkillData("Cocina", "Cocina Francesa", "Alta cocina, salsas clásicas y técnicas refinadas", true));
+        skills.add(new SkillData("Cocina", "Cocina Asiática Fusión", "Mezcla de sabores orientales con técnicas modernas", true));
+        skills.add(new SkillData("Cocina", "Panadería Artesanal", "Elaboración de panes con masa madre y fermentación natural", true));
+        skills.add(new SkillData("Cocina", "Coctelería", "Preparación de cócteles clásicos y mixología creativa", true));
+        skills.add(new SkillData("Cocina", "Cocina Mediterránea", "Dieta balanceada con ingredientes frescos del mediterráneo", true));
+
+        skills.add(new SkillData("Idiomas", "Ruso", "Alfabeto cirílico y gramática rusa", true));
+        skills.add(new SkillData("Idiomas", "Árabe", "Lectura, escritura y conversación en árabe", true));
+        skills.add(new SkillData("Idiomas", "Hebreo", "Idioma hebreo moderno y clásico", true));
+        skills.add(new SkillData("Idiomas", "Hindi", "Idioma oficial de India y escritura devanagari", true));
+        skills.add(new SkillData("Idiomas", "Griego", "Griego moderno y elementos del griego clásico", true));
+
+        skills.add(new SkillData("Programación", "TypeScript", "JavaScript con tipado estático para aplicaciones robustas", true));
+        skills.add(new SkillData("Programación", "Kotlin", "Desarrollo Android moderno con Kotlin", true));
+        skills.add(new SkillData("Programación", "Swift", "Programación para iOS y macOS", true));
+        skills.add(new SkillData("Programación", "Ruby on Rails", "Desarrollo web ágil con Ruby", true));
+        skills.add(new SkillData("Programación", "Machine Learning", "Algoritmos de aprendizaje automático e inteligencia artificial", true));
+
+        skills.add(new SkillData("Deportes", "Escalada", "Técnicas de escalada en roca y boulder", true));
+        skills.add(new SkillData("Deportes", "Tenis", "Golpes básicos, estrategia y condición física", true));
+        skills.add(new SkillData("Deportes", "Boxeo", "Técnica de golpeo, defensa y acondicionamiento", true));
+        skills.add(new SkillData("Deportes", "Pilates", "Fortalecimiento del core y flexibilidad", true));
+        skills.add(new SkillData("Deportes", "CrossFit", "Entrenamiento funcional de alta intensidad", true));
+
+        skills.add(new SkillData("Arte", "Animación Digital", "Creación de animaciones 2D y 3D", true));
+        skills.add(new SkillData("Arte", "Ilustración Digital", "Dibujo digital con tabletas y software especializado", true));
+        skills.add(new SkillData("Arte", "Cerámica", "Modelado y decoración de piezas de arcilla", true));
+        skills.add(new SkillData("Arte", "Tatuaje", "Diseño y técnica de tatuaje artístico", true));
+        skills.add(new SkillData("Arte", "Edición de Video", "Montaje y postproducción audiovisual", true));
+
+        skills.add(new SkillData("Power Skills", "Inteligencia Emocional", "Autoconocimiento y manejo de emociones propias y ajenas", true));
+        skills.add(new SkillData("Power Skills", "Resolución de Conflictos", "Mediación y solución pacífica de disputas", true));
+        skills.add(new SkillData("Power Skills", "Oratoria", "Hablar en público con confianza y persuasión", true));
+        skills.add(new SkillData("Power Skills", "Mentoría", "Guía y desarrollo de talento en otros", true));
+        skills.add(new SkillData("Power Skills", "Networking", "Construcción de redes profesionales efectivas", true));
 
         return skills;
     }
