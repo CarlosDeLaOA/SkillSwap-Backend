@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.project.skillswap.logic.entity.LearningSession.SessionCompletionService;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +39,9 @@ public class TranscriptionService {
 
     @Autowired
     private SessionSummaryEmailService summaryEmailService;
+
+    @Autowired
+    private SessionCompletionService sessionCompletionService;
     //#endregion
 
 
@@ -152,6 +156,13 @@ public class TranscriptionService {
                 }
             } catch (Exception ignored) {}
 
+            try {
+                System.out.println("📧 INICIANDO ENVÍO DE INVITACIONES QUIZ");
+                sessionCompletionService.processSessionCompletion(session.getId());
+            } catch (Exception e) {
+                System.err.println("❌ ERROR AL ENVIAR INVITACIONES QUIZ");
+                e.printStackTrace();
+            }
             // 9. Respuesta final
             return CompletableFuture.completedFuture(
                     new TranscriptionResult(true, transcription, durationSeconds, null)

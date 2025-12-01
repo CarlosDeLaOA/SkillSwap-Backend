@@ -1,19 +1,19 @@
 package com.project.skillswap.logic.entity.Quiz;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.skillswap.logic.entity.Booking.Booking;
 import com.project.skillswap.logic.entity.Booking.BookingRepository;
+import com.project.skillswap.logic.entity.Credential.CredentialService;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Learner.LearnerRepository;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
 import com.project.skillswap.logic.entity.Question.Question;
 import com.project.skillswap.logic.entity.Question.QuestionRepository;
-import com.project.skillswap.logic.entity.Quiz.Quiz;
-import com.project.skillswap.logic.entity.Quiz.QuizRepository;
-import com.project.skillswap.logic.entity.Quiz.QuizStatus;
+import com.project.skillswap.logic.entity.Transcription.TranscriptionFileService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 public class QuizService {
 
     //#region Constants
+    private static final Logger logger = LoggerFactory.getLogger(QuizService.class);
     private static final int MAX_ATTEMPTS = 2;
     private static final int TOTAL_QUESTIONS = 10;
     private static final int TOTAL_OPTIONS = 12;
@@ -40,6 +41,9 @@ public class QuizService {
     private final LearningSessionRepository learningSessionRepository;
     private final BookingRepository bookingRepository;
     private final ObjectMapper objectMapper;
+    private final CredentialService credentialService;
+    private final GroqAIQuizService groqAIQuizService;
+    private final TranscriptionFileService transcriptionFileService;
     //#endregion
 
     //#region Constructor
@@ -50,7 +54,10 @@ public class QuizService {
             LearnerRepository learnerRepository,
             LearningSessionRepository learningSessionRepository,
             BookingRepository bookingRepository,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            @Lazy CredentialService credentialService,
+            GroqAIQuizService groqAIQuizService,
+            TranscriptionFileService transcriptionFileService
     ) {
         this.quizRepository = quizRepository;
         this.questionRepository = questionRepository;
@@ -58,6 +65,9 @@ public class QuizService {
         this.learningSessionRepository = learningSessionRepository;
         this.bookingRepository = bookingRepository;
         this.objectMapper = objectMapper;
+        this.credentialService = credentialService;
+        this.groqAIQuizService = groqAIQuizService;
+        this.transcriptionFileService = transcriptionFileService;
     }
     //#endregion
 
@@ -72,6 +82,8 @@ public class QuizService {
      */
     @Transactional
     public Quiz getOrCreateQuiz(Long sessionId, Long learnerId) {
+        logger.info("Obteniendo o creando quiz para session: {} y learner: {}", sessionId, learnerId);
+
         LearningSession session = learningSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Sesión no encontrada"));
 
@@ -85,12 +97,14 @@ public class QuizService {
                 .filter(q -> q.getStatus() == QuizStatus.IN_PROGRESS);
 
         if (inProgressQuiz.isPresent()) {
+            logger.info("Quiz en progreso encontrado: {}", inProgressQuiz.get().getId());
             return inProgressQuiz.get();
         }
 
         Long attemptCount = quizRepository.countAttemptsByLearnerAndSession(learnerId, sessionId);
 
         if (attemptCount >= MAX_ATTEMPTS) {
+            logger.warn("Learner {} excedió intentos para session {}", learnerId, sessionId);
             throw new IllegalArgumentException("Has alcanzado el número máximo de intentos (2)");
         }
 
@@ -107,6 +121,8 @@ public class QuizService {
      */
     @Transactional
     public void savePartialAnswer(Long quizId, Integer questionNumber, String userAnswer) {
+        logger.debug("Guardando respuesta parcial - Quiz: {}, Pregunta: {}", quizId, questionNumber);
+
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new IllegalArgumentException("Cuestionario no encontrado"));
 
@@ -132,7 +148,9 @@ public class QuizService {
      * @throws IllegalStateException si no están todas las respuestas
      */
     @Transactional
-    public Quiz submitQuiz(Long quizId) {
+    public Quiz submitQuiz(Long quizId) throws Exception {
+        logger.info("Enviando quiz {} para calificación", quizId);
+
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new IllegalArgumentException("Cuestionario no encontrado"));
 
@@ -147,7 +165,17 @@ public class QuizService {
         quiz.setStatus(QuizStatus.GRADED);
         quiz.setCompletionDate(new Date());
 
-        return quizRepository.save(quiz);
+        quiz = quizRepository.save(quiz);
+
+        logger.info("Quiz {} calificado - Puntaje: {}/{}, Aprobado: {}",
+                quizId, quiz.getScoreObtained(), TOTAL_QUESTIONS, quiz.getPassed());
+
+        if (Boolean.TRUE.equals(quiz.getPassed())) {
+            logger.info("Quiz aprobado, registrando credencial");
+            credentialService.registerCredentialFromQuiz(quiz);
+        }
+
+        return quiz;
     }
 
     /**
@@ -193,6 +221,7 @@ public class QuizService {
                 );
 
         if (!attended) {
+            logger.warn("Learner {} no asistió a la session {}", learner.getId(), session.getId());
             throw new IllegalArgumentException("No tienes permitido realizar este cuestionario. " +
                     "Solo los participantes que asistieron a la sesión pueden realizarlo.");
         }
@@ -202,6 +231,9 @@ public class QuizService {
      * Crea un nuevo cuestionario con preguntas y opciones generadas
      */
     private Quiz createNewQuiz(LearningSession session, Learner learner, int attemptNumber) {
+        logger.info("Creando nuevo quiz - Session: {}, Learner: {}, Intento: {}",
+                session.getId(), learner.getId(), attemptNumber);
+
         Quiz quiz = new Quiz();
         quiz.setLearningSession(session);
         quiz.setSkill(session.getSkill());
@@ -209,7 +241,12 @@ public class QuizService {
         quiz.setAttemptNumber(attemptNumber);
         quiz.setStatus(QuizStatus.IN_PROGRESS);
 
-        Map<String, Object> questionsAndOptions = generateQuestionsAndOptions(session.getFullText());
+        String transcriptionText = getTranscriptionText(session);
+
+        Map<String, Object> questionsAndOptions = generateQuestionsAndOptions(
+                transcriptionText,
+                session.getSkill().getName()
+        );
 
         quiz.setOptionsJson(serializeOptions(questionsAndOptions.get("options")));
 
@@ -219,21 +256,77 @@ public class QuizService {
         List<Map<String, String>> questionsList = (List<Map<String, String>>) questionsAndOptions.get("questions");
         createQuestions(quiz, questionsList);
 
+        logger.info("Quiz creado exitosamente con ID: {}", quiz.getId());
         return quiz;
     }
 
     /**
-     * Genera las preguntas y opciones basadas en la transcripción
-     * PLACEHOLDER: Aquí se integrará la generación con IA (Groq AI)
+     * Obtiene el texto de transcripción para una sesión
+     *
+     * @param session la sesión
+     * @return texto de la transcripción
      */
-    private Map<String, Object> generateQuestionsAndOptions(String transcription) {
+    private String getTranscriptionText(LearningSession session) {
+        try {
+            if (transcriptionFileService.hasTranscription(session.getId())) {
+                logger.info("Usando transcripción del archivo para session: {}", session.getId());
+                return transcriptionFileService.getTranscriptionText(session.getId());
+            }
+        } catch (Exception e) {
+            logger.warn("Error al leer transcripción del archivo: {}", e.getMessage());
+        }
+
+        if (session.getFullText() != null && !session.getFullText().trim().isEmpty()) {
+            logger.info("Usando fullText de la sesión para session: {}", session.getId());
+            return session.getFullText();
+        }
+
+        logger.warn("No hay transcripción disponible para session: {}", session.getId());
+        return "";
+    }
+
+    /**
+     * Genera las preguntas y opciones basadas en la transcripción
+     * Usa Groq AI con fallback a preguntas de ejemplo
+     *
+     * @param transcription texto de la transcripción
+     * @param skillName nombre de la habilidad
+     * @return mapa con preguntas y opciones
+     */
+    private Map<String, Object> generateQuestionsAndOptions(String transcription, String skillName) {
+        logger.info("Generando preguntas con Groq AI para skill: {}", skillName);
+
+        try {
+            Map<String, Object> result = groqAIQuizService.generateQuestionsAndOptions(
+                    transcription,
+                    skillName
+            );
+
+            logger.info("Preguntas generadas exitosamente con Groq AI");
+            return result;
+
+        } catch (Exception e) {
+            logger.error("Error al generar preguntas con Groq AI, usando fallback: {}", e.getMessage());
+            return generateExampleQuestions(skillName);
+        }
+    }
+
+    /**
+     * Genera preguntas de ejemplo como fallback
+     *
+     * @param skillName nombre de la habilidad
+     * @return mapa con preguntas y opciones de ejemplo
+     */
+    private Map<String, Object> generateExampleQuestions(String skillName) {
+        logger.warn("Usando preguntas de ejemplo para skill: {}", skillName);
+
         Map<String, Object> result = new HashMap<>();
 
         List<Map<String, String>> questions = new ArrayList<>();
         for (int i = 1; i <= TOTAL_QUESTIONS; i++) {
             Map<String, String> question = new HashMap<>();
             question.put("number", String.valueOf(i));
-            question.put("text", "Pregunta " + i + " (generada por IA)");
+            question.put("text", String.format("Pregunta %d sobre %s (generada automáticamente)", i, skillName));
             question.put("correctAnswer", "Respuesta " + i);
             questions.add(question);
         }
@@ -241,7 +334,7 @@ public class QuizService {
 
         List<String> options = new ArrayList<>();
         for (int i = 1; i <= TOTAL_OPTIONS; i++) {
-            options.add("Opción " + i);
+            options.add("Respuesta " + i);
         }
         Collections.shuffle(options);
         result.put("options", options);
@@ -267,6 +360,8 @@ public class QuizService {
 
         questionRepository.saveAll(questions);
         quiz.setQuestions(questions);
+
+        logger.debug("Creadas {} preguntas para quiz {}", questions.size(), quiz.getId());
     }
 
     /**
@@ -276,6 +371,7 @@ public class QuizService {
         try {
             return objectMapper.writeValueAsString(options);
         } catch (Exception e) {
+            logger.error("Error al serializar opciones: {}", e.getMessage());
             throw new RuntimeException("Error al serializar opciones", e);
         }
     }
@@ -288,6 +384,7 @@ public class QuizService {
                 .allMatch(q -> q.getUserAnswer() != null && !q.getUserAnswer().trim().isEmpty());
 
         if (!allAnswered) {
+            logger.warn("Quiz {} tiene preguntas sin responder", quiz.getId());
             throw new IllegalStateException("Debes responder todas las preguntas antes de enviar");
         }
     }
@@ -296,6 +393,8 @@ public class QuizService {
      * Califica el cuestionario comparando respuestas
      */
     private void gradeQuiz(Quiz quiz) {
+        logger.debug("Calificando quiz {}", quiz.getId());
+
         int correctCount = 0;
 
         for (Question question : quiz.getQuestions()) {
@@ -314,6 +413,9 @@ public class QuizService {
         quiz.setScoreObtained(correctCount);
         double percentage = (correctCount * 100.0) / TOTAL_QUESTIONS;
         quiz.setPassed(percentage >= PASSING_SCORE);
+
+        logger.info("Quiz {} calificado: {}/{} correctas ({}%)",
+                quiz.getId(), correctCount, TOTAL_QUESTIONS, percentage);
     }
     //#endregion
 }
