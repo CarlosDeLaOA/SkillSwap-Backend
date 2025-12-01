@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.LearningSession;
 
+package com.project.skillswap.logic.entity.LearningSession;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Notification.Notification;
 import com.project.skillswap.logic.entity.Notification.NotificationRepository;
 import com.project.skillswap.logic.entity.Notification.NotificationType;
@@ -19,6 +21,7 @@ import java.util.*;
  */
 @Service
 public class SessionEmailService {
+    private static final Logger logger = LoggerFactory.getLogger(SessionEmailService.class);
 
     private final JavaMailSender mailSender;
     private final NotificationRepository notificationRepository;
@@ -42,7 +45,7 @@ public class SessionEmailService {
      */
     public boolean sendSessionCreationEmail(LearningSession session, Person instructor) {
         try {
-            System.out.println(" [SessionEmailService] Iniciando envío para: " + instructor.getEmail());
+            logger.info(" [SessionEmailService] Iniciando envío para: " + instructor.getEmail());
 
             MimeMessage msg = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(msg, "UTF-8");
@@ -57,11 +60,11 @@ public class SessionEmailService {
             mailSender.send(msg);
 
             registerSuccessfulNotification(instructor, session, "SESSION_CREATED");
-            System.out.println(" [SessionEmailService] Email enviado exitosamente");
+            logger.info(" [SessionEmailService] Email enviado exitosamente");
             return true;
 
         } catch (Exception e) {
-            System.err.println(" [SessionEmailService] Error: " + e.getMessage());
+            logger.info(" [SessionEmailService] Error: " + e.getMessage());
             e.printStackTrace();
             registerFailedNotification(instructor, "SESSION_CREATED", "Error: " + e.getMessage());
             return false;
@@ -73,15 +76,15 @@ public class SessionEmailService {
      */
     public boolean sendTranscriptionReadyEmail(LearningSession session, Person instructor) {
         try {
-            System.out.println("========================================");
-            System.out.println(" ENVIANDO EMAIL DE TRANSCRIPCIÓN");
-            System.out.println("   Sesión: " + session.getTitle());
-            System.out.println("   Instructor: " + instructor.getEmail());
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" ENVIANDO EMAIL DE TRANSCRIPCIÓN");
+            logger.info("   Sesión: " + session.getTitle());
+            logger.info("   Instructor: " + instructor.getEmail());
+            logger.info("========================================");
 
             // Validar que hay transcripción
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
-                System.err.println(" No hay texto de transcripción para enviar");
+                logger.info(" No hay texto de transcripción para enviar");
                 return false;
             }
 
@@ -99,17 +102,17 @@ public class SessionEmailService {
 
             registerSuccessfulNotification(instructor, session, "TRANSCRIPTION_READY");
 
-            System.out.println("========================================");
-            System.out.println(" EMAIL DE TRANSCRIPCIÓN ENVIADO");
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" EMAIL DE TRANSCRIPCIÓN ENVIADO");
+            logger.info("========================================");
 
             return true;
 
         } catch (Exception e) {
-            System.err.println("========================================");
-            System.err.println(" ERROR ENVIANDO EMAIL DE TRANSCRIPCIÓN");
-            System.err.println("   Error: " + e.getMessage());
-            System.err.println("========================================");
+            logger.info("========================================");
+            logger.info(" ERROR ENVIANDO EMAIL DE TRANSCRIPCIÓN");
+            logger.info("   Error: " + e.getMessage());
+            logger.info("========================================");
             e.printStackTrace();
             registerFailedNotification(instructor, "TRANSCRIPTION_READY", "Error: " + e.getMessage());
             return false;
@@ -401,7 +404,7 @@ public class SessionEmailService {
             notification.setRead(false);
             notificationRepository.save(notification);
         } catch (Exception e) {
-            System.err.println(" Error registrando notificación: " + e.getMessage());
+            logger.info(" Error registrando notificación: " + e.getMessage());
         }
     }
 
@@ -415,7 +418,7 @@ public class SessionEmailService {
             notification.setRead(false);
             notificationRepository.save(notification);
         } catch (Exception e) {
-            System.err.println(" Error registrando notificación fallida: " + e.getMessage());
+            logger.info(" Error registrando notificación fallida: " + e.getMessage());
         }
     }
 

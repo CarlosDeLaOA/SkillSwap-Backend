@@ -1,5 +1,6 @@
-    package com.project.skillswap.logic.entity.CommunityDocument;
-
+package com.project.skillswap.logic.entity.CommunityDocument;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
     import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunity;
     import com.project.skillswap.logic.entity.LearningSession.LearningSession;
     import com.project.skillswap.logic.entity.Learner.Learner;
@@ -14,6 +15,7 @@
     })
     @Entity
     public class CommunityDocument {
+    private static final Logger logger = LoggerFactory.getLogger(CommunityDocument.class);
 
         //<editor-fold desc="Fields">
         @Id

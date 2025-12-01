@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Transaction;
 
+package com.project.skillswap.logic.entity.Transaction;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.paypal.core.PayPalEnvironment;
 import com.paypal.core.PayPalHttpClient;
 import com.paypal.http.HttpResponse;
@@ -15,6 +17,7 @@ import java.util.List;
 
 @Service
 public class PayPalService {
+    private static final Logger logger = LoggerFactory.getLogger(PayPalService.class);
 
     @Value("${paypal.client.id}")
     private String clientId;

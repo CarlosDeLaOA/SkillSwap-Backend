@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.WeeklyReport;
 
+package com.project.skillswap.logic.entity.WeeklyReport;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Attendancerecord.AttendanceRecord;
 import com.project.skillswap.logic.entity.Attendancerecord.AttendanceRecordRepository;
 import com.project.skillswap.logic.entity.Booking.Booking;
@@ -35,6 +37,7 @@ import java.util.stream.Collectors;
  */
 @Service
 public class WeeklyReportService {
+    private static final Logger logger = LoggerFactory.getLogger(WeeklyReportService.class);
 
     //#region Dependencies
     private final PersonRepository personRepository;
@@ -90,7 +93,7 @@ public class WeeklyReportService {
             try {
                 generateAndSendPersonReport(person, weekStartDate, weekEndDate);
             } catch (Exception e) {
-                System.err.println("Error generando reporte para " + person.getEmail() + ": " + e.getMessage());
+                logger.info("Error generando reporte para " + person.getEmail() + ": " + e.getMessage());
             }
         }
     }
@@ -164,7 +167,7 @@ public class WeeklyReportService {
             emailService.sendLearnerWeeklyReport(person.getEmail(), person.getFullName(), data);
             report.setEmailSent(true);
         } catch (MessagingException e) {
-            System.err.println("Error enviando correo a " + person.getEmail() + ": " + e.getMessage());
+            logger.info("Error enviando correo a " + person.getEmail() + ": " + e.getMessage());
             report.setEmailSent(false);
         }
 
@@ -211,7 +214,7 @@ public class WeeklyReportService {
             emailService.sendInstructorWeeklyReport(person.getEmail(), person.getFullName(), data);
             report.setEmailSent(true);
         } catch (MessagingException e) {
-            System.err.println("Error enviando correo a " + person.getEmail() + ": " + e.getMessage());
+            logger.info("Error enviando correo a " + person.getEmail() + ": " + e.getMessage());
             report.setEmailSent(false);
         }
 

@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.auth;
 
+package com.project.skillswap.rest.auth;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Person.LoginResponse;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
@@ -23,6 +25,7 @@ import com.project.skillswap.logic.entity.Instructor.Instructor;
 @RequestMapping("/auth")
 @RestController
 public class AuthRestController {
+    private static final Logger logger = LoggerFactory.getLogger(AuthRestController.class);
     //#region Dependencies
     @Autowired
     private PersonRepository personRepository;
@@ -30,19 +33,19 @@ public class AuthRestController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired(required=false)
-    private GoogleOAuthService googleOAuthService;
-
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
+    private final GoogleOAuthService googleOAuthService;
     //#endregion
 
     //#region Constructor
-   public AuthRestController(
+    public AuthRestController(
             JwtService jwtService,
-            AuthenticationService authenticationService) {
+            AuthenticationService authenticationService,
+            GoogleOAuthService googleOAuthService) {
         this.jwtService = jwtService;
         this.authenticationService = authenticationService;
+        this.googleOAuthService = googleOAuthService;
     }
     //#endregion
 
@@ -56,14 +59,15 @@ public class AuthRestController {
      * contra el hash de la BD usando passwordEncoder.matches(raw, hash).
      */
     @PostMapping("/login")
-    public ResponseEntity<? > authenticate(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> authenticate(@RequestBody Map<String, Object> payload) {
         try {
-            System.out.println("[LOGIN] Iniciando proceso de autenticación...");
+            logger.info("[LOGIN] Iniciando proceso de autenticación...");
+
 
             String email = payload.get("email") != null ? payload.get("email").toString().trim() : null;
 
             if (email == null || email.isEmpty()) {
-                System.out.println("[LOGIN] Email vacío o nulo");
+                logger.info("[LOGIN] Email vacío o nulo");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(createErrorResponse(
                                 "INVALID_EMAIL",
@@ -71,6 +75,7 @@ public class AuthRestController {
                                 HttpStatus.BAD_REQUEST.value()
                         ));
             }
+
 
             String rawPassword = null;
             if (payload.get("password") != null) {
@@ -80,7 +85,7 @@ public class AuthRestController {
             }
 
             if (rawPassword == null || rawPassword.trim().isEmpty()) {
-                System.out.println("[LOGIN] Contraseña vacía o nula");
+                logger.info("[LOGIN] Contraseña vacía o nula");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(createErrorResponse(
                                 "INVALID_PASSWORD",
@@ -89,8 +94,9 @@ public class AuthRestController {
                         ));
             }
 
+
             if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-                System.out.println("[LOGIN] Formato de email inválido: " + email);
+                logger.info("[LOGIN] Formato de email inválido: " + email);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(createErrorResponse(
                                 "INVALID_EMAIL_FORMAT",
@@ -99,12 +105,12 @@ public class AuthRestController {
                         ));
             }
 
-            System.out.println("[LOGIN] Validaciones iniciales pasadas para: " + email);
+            logger.info("[LOGIN] Validaciones iniciales pasadas para: " + email);
 
             Optional<Person> userOptional = personRepository.findByEmail(email);
 
             if (!userOptional.isPresent()) {
-                System.out.println("[LOGIN] Usuario no existe: " + email);
+                logger.info("[LOGIN] Usuario no existe: " + email);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(createErrorResponse(
                                 "USER_NOT_FOUND",
@@ -116,7 +122,7 @@ public class AuthRestController {
             Person foundUser = userOptional.get();
 
             if (foundUser.getEmailVerified() != null && !foundUser.getEmailVerified()) {
-                System.out.println("[LOGIN] Usuario no verificado: " + email);
+                logger.info("[LOGIN] Usuario no verificado: " + email);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(createErrorResponse(
                                 "ACCOUNT_NOT_VERIFIED",
@@ -126,24 +132,26 @@ public class AuthRestController {
             }
 
             if (foundUser.getActive() != null && !foundUser.getActive()) {
-                System.out.println("[LOGIN] Cuenta deshabilitada: " + email);
+                logger.info("[LOGIN] Cuenta deshabilitada: " + email);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(createErrorResponse(
                                 "ACCOUNT_DISABLED",
-                                "Tu cuenta ha sido deshabilitada.Contacta a soporte.",
+                                "Tu cuenta ha sido deshabilitada. Contacta a soporte.",
                                 HttpStatus.FORBIDDEN.value()
                         ));
             }
+
 
             Person loginPerson = new Person();
             loginPerson.setEmail(email);
             loginPerson.setPasswordHash(rawPassword);
 
-            System.out.println("[LOGIN] Llamando al servicio de autenticación...");
+
+            logger.info("[LOGIN] Llamando al servicio de autenticación...");
             Person authenticatedUser = authenticationService.authenticate(loginPerson);
 
             if (authenticatedUser == null) {
-                System.out.println("[LOGIN] AuthenticationService retornó null");
+                logger.info("[LOGIN] AuthenticationService retornó null");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(createErrorResponse(
                                 "INVALID_CREDENTIALS",
@@ -152,25 +160,27 @@ public class AuthRestController {
                         ));
             }
 
-            System.out.println("[LOGIN] Usuario autenticado correctamente: " + authenticatedUser.getEmail());
+            logger.info("[LOGIN] Usuario autenticado correctamente: " + authenticatedUser.getEmail());
+
 
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("userId", authenticatedUser.getId());
             extraClaims.put("rol", authenticatedUser.getRole());
 
             String jwtToken = jwtService.generateToken(extraClaims, authenticatedUser);
-            System.out.println("[LOGIN] Token JWT generado con userId: " + authenticatedUser.getId() + " y rol: " + authenticatedUser.getRole());
+            logger.info("[LOGIN] Token JWT generado con userId: " + authenticatedUser.getId() + " y rol: " + authenticatedUser.getRole());
+
 
             LoginResponse loginResponse = new LoginResponse();
             loginResponse.setToken(jwtToken);
             loginResponse.setExpiresIn(jwtService.getExpirationTime());
             loginResponse.setAuthPerson(authenticatedUser);
 
-            System.out.println("[LOGIN] Login exitoso para: " + email);
+            logger.info("[LOGIN] Login exitoso para: " + email);
             return ResponseEntity.ok(loginResponse);
 
         } catch (BadCredentialsException e) {
-            System.err.println("[LOGIN] BadCredentialsException: " + e.getMessage());
+            logger.info("[LOGIN] BadCredentialsException: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(createErrorResponse(
                             "INVALID_CREDENTIALS",
@@ -179,7 +189,7 @@ public class AuthRestController {
                     ));
 
         } catch (UsernameNotFoundException e) {
-            System.err.println("[LOGIN] Usuario no encontrado: " + e.getMessage());
+            logger.info("[LOGIN] Usuario no encontrado: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(createErrorResponse(
                             "USER_NOT_FOUND",
@@ -188,7 +198,7 @@ public class AuthRestController {
                     ));
 
         } catch (AuthenticationException e) {
-            System.err.println("[LOGIN] AuthenticationException: " + e.getMessage());
+            logger.info("[LOGIN] AuthenticationException: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(createErrorResponse(
                             "AUTHENTICATION_FAILED",
@@ -197,7 +207,7 @@ public class AuthRestController {
                     ));
 
         } catch (Exception e) {
-            System.err.println("[LOGIN] Error inesperado: " + e.getMessage());
+            logger.info("[LOGIN] Error inesperado: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse(
@@ -229,11 +239,6 @@ public class AuthRestController {
             if (redirectUri == null || redirectUri.trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(createErrorResponse("URI de redirección requerida"));
-            }
-
-            if (googleOAuthService == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(createErrorResponse("Servicio de Google OAuth no configurado"));
             }
 
             Map<String, Object> tokenResponse = googleOAuthService.exchangeCodeForToken(code, redirectUri);
@@ -347,7 +352,7 @@ public class AuthRestController {
         try {
             String code = requestBody.get("code");
             String redirectUri = requestBody.get("redirectUri");
-            String role = requestBody.get("role");
+            String role = requestBody.get("role"); // "LEARNER" o "INSTRUCTOR"
 
             if (code == null || code.trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -359,20 +364,17 @@ public class AuthRestController {
                         .body(createErrorResponse("URI de redirección requerida"));
             }
 
-            if (role == null || (! role.equals("LEARNER") && !role.equals("INSTRUCTOR"))) {
+            if (role == null || (!role.equals("LEARNER") && !role.equals("INSTRUCTOR"))) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(createErrorResponse("Rol inválido. Debe ser LEARNER o INSTRUCTOR"));
             }
 
-            System.out.println("🟢 [CompleteRegistration] Procesando registro con rol: " + role);
+            logger.info("🟢 [CompleteRegistration] Procesando registro con rol: " + role);
 
-            if (googleOAuthService == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(createErrorResponse("Servicio de Google OAuth no configurado"));
-            }
 
             Map<String, Object> tokenResponse = googleOAuthService.exchangeCodeForToken(code, redirectUri);
             String accessToken = (String) tokenResponse.get("accessToken");
+
 
             Map<String, Object> userInfo = googleOAuthService.getUserInfo(accessToken);
 
@@ -384,16 +386,19 @@ public class AuthRestController {
 
             String email = (String) userInfo.get("email");
 
+
             Optional<Person> existingPerson = personRepository.findByEmail(email);
             Person person;
 
             if (existingPerson.isPresent()) {
                 person = existingPerson.get();
-                System.out.println(" Usuario existente encontrado: " + email);
+                logger.info(" Usuario existente encontrado: " + email);
             } else {
+
                 person = googleOAuthService.processGoogleUser(userInfo);
-                System.out.println(" Nuevo usuario creado: " + email);
+                logger.info(" Nuevo usuario creado: " + email);
             }
+
 
             if (role.equals("LEARNER")) {
                 if (person.getLearner() == null) {
@@ -401,7 +406,7 @@ public class AuthRestController {
                     learner.setPerson(person);
                     person.setLearner(learner);
                     personRepository.save(person);
-                    System.out.println(" Rol LEARNER creado para: " + email);
+                    logger.info(" Rol LEARNER creado para: " + email);
                 }
             } else if (role.equals("INSTRUCTOR")) {
                 if (person.getInstructor() == null) {
@@ -409,9 +414,10 @@ public class AuthRestController {
                     instructor.setPerson(person);
                     person.setInstructor(instructor);
                     personRepository.save(person);
-                    System.out.println(" Rol INSTRUCTOR creado para: " + email);
+                    logger.info(" Rol INSTRUCTOR creado para: " + email);
                 }
             }
+
 
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("userId", person.getId());
@@ -419,20 +425,21 @@ public class AuthRestController {
 
             String jwtToken = jwtService.generateToken(extraClaims, person);
 
+
             Map<String, Object> response = new HashMap<>();
             response.put("token", jwtToken);
             response.put("tokenType", "Bearer");
             response.put("expiresIn", jwtService.getExpirationTime());
             response.put("profile", createUserResponse(person));
-            response.put("requiresOnboarding", true);
+            response.put("requiresOnboarding", true); // SIEMPRE true porque necesita seleccionar skills
             response.put("selectedRole", role);
 
-            System.out.println(" Registro completado exitosamente para: " + email);
+            logger.info(" Registro completado exitosamente para: " + email);
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" Error en registro completo: " + e.getMessage());
+            logger.info(" Error en registro completo: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error al completar el registro: " + e.getMessage()));
@@ -462,31 +469,29 @@ public class AuthRestController {
                         .body(createErrorResponse("URI de redirección requerida"));
             }
 
-            System.out.println("🔵 [CheckUser] Verificando usuario existente...");
-
-            if (googleOAuthService == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(createErrorResponse("Servicio de Google OAuth no configurado"));
-            }
+            logger.info(" [CheckUser] Verificando usuario existente...");
 
             Map<String, Object> tokenResponse = googleOAuthService.exchangeCodeForToken(code, redirectUri);
             String accessToken = (String) tokenResponse.get("accessToken");
 
+
             Map<String, Object> userInfo = googleOAuthService.getUserInfo(accessToken);
             String email = (String) userInfo.get("email");
+
 
             Optional<Person> existingPerson = personRepository.findByEmail(email);
 
             Map<String, Object> response = new HashMap<>();
 
             if (existingPerson.isEmpty()) {
+
                 response.put("exists", false);
                 response.put("hasRole", false);
                 response.put("needsRoleSelection", true);
 
                 response.put("userInfo", userInfo);
                 response.put("accessToken", accessToken);
-                System.out.println("🆕 Usuario nuevo: " + email);
+                logger.info("🆕 Usuario nuevo: " + email);
                 return ResponseEntity.ok(response);
             }
 
@@ -495,18 +500,20 @@ public class AuthRestController {
             boolean hasInstructor = person.getInstructor() != null;
             boolean hasAnyRole = hasLearner || hasInstructor;
 
-            if (! hasAnyRole) {
+            if (!hasAnyRole) {
+                // Usuario existe pero NO tiene roles - necesita seleccionar rol
                 response.put("exists", true);
                 response.put("hasRole", false);
                 response.put("needsRoleSelection", true);
 
                 response.put("userInfo", userInfo);
                 response.put("accessToken", accessToken);
-                System.out.println("⚠️ Usuario existe sin roles: " + email);
+                logger.info("️ Usuario existe sin roles: " + email);
                 return ResponseEntity.ok(response);
             }
 
-            System.out.println(" Usuario existente con roles: " + email);
+            logger.info(" Usuario existente con roles: " + email);
+
 
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("userId", person.getId());
@@ -527,7 +534,7 @@ public class AuthRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" Error verificando usuario: " + e.getMessage());
+            logger.info(" Error verificando usuario: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error al verificar usuario: " + e.getMessage()));
@@ -553,37 +560,35 @@ public class AuthRestController {
                         .body(createErrorResponse("Información del usuario requerida"));
             }
 
-            if (role == null || (! role.equals("LEARNER") && !role.equals("INSTRUCTOR"))) {
+            if (role == null || (!role.equals("LEARNER") && !role.equals("INSTRUCTOR"))) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(createErrorResponse("Rol inválido. Debe ser LEARNER o INSTRUCTOR"));
             }
 
             String email = (String) userInfo.get("email");
-            System.out.println("🟢 [CompleteRegistration] Procesando con userInfo para: " + email);
+            logger.info("🟢 [CompleteRegistration] Procesando con userInfo para: " + email);
 
-            if (googleOAuthService == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(createErrorResponse("Servicio de Google OAuth no configurado"));
-            }
-
+            // 1. Verificar si el usuario ya existe
             Optional<Person> existingPerson = personRepository.findByEmail(email);
             Person person;
 
             if (existingPerson.isPresent()) {
                 person = existingPerson.get();
-                System.out.println(" Usuario existente encontrado: " + email);
+                logger.info(" Usuario existente encontrado: " + email);
             } else {
+                // 2. Crear nuevo usuario
                 person = googleOAuthService.processGoogleUser(userInfo);
-                System.out.println(" Nuevo usuario creado: " + email);
+                logger.info(" Nuevo usuario creado: " + email);
             }
 
+            // 3. Crear o actualizar el rol específico
             if (role.equals("LEARNER")) {
                 if (person.getLearner() == null) {
                     Learner learner = new Learner();
                     learner.setPerson(person);
                     person.setLearner(learner);
                     personRepository.save(person);
-                    System.out.println(" Rol LEARNER creado para: " + email);
+                    logger.info(" Rol LEARNER creado para: " + email);
                 }
             } else if (role.equals("INSTRUCTOR")) {
                 if (person.getInstructor() == null) {
@@ -591,16 +596,18 @@ public class AuthRestController {
                     instructor.setPerson(person);
                     person.setInstructor(instructor);
                     personRepository.save(person);
-                    System.out.println(" Rol INSTRUCTOR creado para: " + email);
+                    logger.info(" Rol INSTRUCTOR creado para: " + email);
                 }
             }
 
+            // 4. Generar JWT token
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("userId", person.getId());
             extraClaims.put("rol", person.getRole());
 
             String jwtToken = jwtService.generateToken(extraClaims, person);
 
+            // 5. Crear respuesta
             Map<String, Object> response = new HashMap<>();
             response.put("token", jwtToken);
             response.put("tokenType", "Bearer");
@@ -609,12 +616,12 @@ public class AuthRestController {
             response.put("requiresOnboarding", true);
             response.put("selectedRole", role);
 
-            System.out.println(" Registro completado exitosamente para: " + email);
+            logger.info(" Registro completado exitosamente para: " + email);
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" Error en registro: " + e.getMessage());
+            logger.info(" Error en registro: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error al completar el registro: " + e.getMessage()));
@@ -630,4 +637,6 @@ public class AuthRestController {
         error.put("timestamp", System.currentTimeMillis());
         return error;
     }
+
+
 }

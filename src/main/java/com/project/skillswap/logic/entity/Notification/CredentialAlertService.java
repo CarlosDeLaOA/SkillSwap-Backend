@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Notification.CredentialAlertDTO;
 import com.project.skillswap.logic.entity.Credential.CredentialRepository;
 import com.project.skillswap.logic.entity.Notification.Notification;
@@ -20,6 +22,7 @@ import java.util.Map;
  */
 @Service
 public class CredentialAlertService {
+    private static final Logger logger = LoggerFactory.getLogger(CredentialAlertService.class);
 
     private final CredentialRepository credentialRepository;
     private final NotificationRepository notificationRepository;
@@ -45,7 +48,7 @@ public class CredentialAlertService {
      */
     @Transactional
     public void processAndSendCredentialAlerts() {
-        System.out.println("Buscando learners cercanos a obtener certificado...");
+        logger.info("Buscando learners cercanos a obtener certificado...");
 
         // Query SIN validación de notificaciones previas
         List<CredentialAlertDTO> alerts = credentialRepository.findLearnersCloseToAchievingCertificate();
@@ -66,14 +69,14 @@ public class CredentialAlertService {
 
             } catch (MessagingException e) {
                 errorCount++;
-                System.err.println("Error al enviar alerta a " + alert.getLearnerName() + ": " + e.getMessage());
+                logger.info("Error al enviar alerta a " + alert.getLearnerName() + ": " + e.getMessage());
             } catch (Exception e) {
                 errorCount++;
-                System.err.println("Error inesperado para " + alert.getLearnerName() + ": " + e.getMessage());
+                logger.info("Error inesperado para " + alert.getLearnerName() + ": " + e.getMessage());
             }
         }
 
-        System.out.println("Resumen: " + successCount + " exitosas, " + errorCount + " fallidas");
+        logger.info("Resumen: " + successCount + " exitosas, " + errorCount + " fallidas");
     }
 
     /**
@@ -86,7 +89,7 @@ public class CredentialAlertService {
                 .orElse(null);
 
         if (person == null) {
-            System.err.println("No se encontró person con email: " + alert.getLearnerEmail());
+            logger.info("No se encontró person con email: " + alert.getLearnerEmail());
             return;
         }
 
@@ -110,10 +113,4 @@ public class CredentialAlertService {
         notificationRepository.save(notification);
     }
 
-    /**
-     * Obtiene preview de alertas que se enviarían (para testing)
-     */
-    public List<CredentialAlertDTO> getAlertsPreview() {
-        return credentialRepository.findLearnersCloseToAchievingCertificate();
-    }
 }

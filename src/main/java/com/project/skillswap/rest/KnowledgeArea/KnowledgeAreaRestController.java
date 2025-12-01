@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.KnowledgeArea;
 
+package com.project.skillswap.rest.KnowledgeArea;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Knowledgearea.KnowledgeArea;
 import com.project.skillswap.logic.entity.Knowledgearea.KnowledgeAreaService;
 import com.project.skillswap.logic.entity.http.GlobalResponseHandler;
@@ -21,6 +23,7 @@ import java.util.Map;
 @RequestMapping("/knowledge-areas")
 @CrossOrigin(origins = "*")
 public class KnowledgeAreaRestController {
+    private static final Logger logger = LoggerFactory.getLogger(KnowledgeAreaRestController.class);
 
     //<editor-fold desc="Dependencies">
     @Autowired
@@ -50,7 +53,7 @@ public class KnowledgeAreaRestController {
                     request
             );
         } catch (Exception e) {
-            System.err.println("Error getting knowledge areas: " + e.getMessage());
+            logger.info("Error getting knowledge areas: " + e.getMessage());
             e.printStackTrace();
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

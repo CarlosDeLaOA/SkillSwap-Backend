@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.videocall;
 
+package com.project.skillswap.logic.entity.videocall;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -26,6 +28,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 public class SessionSummaryService {
+    private static final Logger logger = LoggerFactory.getLogger(SessionSummaryService.class);
 
     //#region Configuración
 

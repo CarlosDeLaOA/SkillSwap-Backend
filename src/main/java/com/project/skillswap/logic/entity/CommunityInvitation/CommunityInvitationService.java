@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.CommunityInvitation;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.CommunityMember.CommunityMember;
 import com.project.skillswap.logic.entity.CommunityMember.CommunityMemberRepository;
 import com.project.skillswap.logic.entity.CommunityMember.MemberRole;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
  */
 @Service
 public class CommunityInvitationService {
+    private static final Logger logger = LoggerFactory.getLogger(CommunityInvitationService.class);
 
     //#region Constants
     private static final int TOKEN_EXPIRATION_HOURS = 48;
@@ -237,7 +239,7 @@ public class CommunityInvitationService {
                     community.getName()
             );
         } catch (MessagingException e) {
-            System.err.println("Error enviando correo de bienvenida: " + e.getMessage());
+            logger.info("Error enviando correo de bienvenida: " + e.getMessage());
         }
 
         return new AcceptInvitationResult(true,

@@ -1,6 +1,8 @@
+
 package com.project.skillswap.rest.LearningSession;
 
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.CancelSessionRequest;
 import com.project.skillswap.logic.entity.LearningSession.CancelSessionResponse;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
@@ -28,6 +30,7 @@ import java.util.Map;
 @RequestMapping("/learning-sessions")
 @CrossOrigin(origins = "*")
 public class LearningSessionRestController {
+    private static final Logger logger = LoggerFactory.getLogger(LearningSessionRestController.class);
 
     //#region Dependencies
     @Autowired
@@ -62,16 +65,16 @@ public class LearningSessionRestController {
                     request
             );
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
         } catch (IllegalStateException e) {
-            System.err.println("Error: Invalid user role: " + e.getMessage());
+            logger.info("Error: Invalid user role: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(createErrorResponse("Invalid user role", e.getMessage()));
         } catch (Exception e) {
-            System.err.println("Error getting available sessions: " + e.getMessage());
+            logger.info("Error getting available sessions: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving available sessions",
@@ -111,16 +114,16 @@ public class LearningSessionRestController {
                     request
             );
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
         } catch (IllegalStateException e) {
-            System.err.println("Error: Invalid user role: " + e.getMessage());
+            logger.info("Error: Invalid user role: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(createErrorResponse("Invalid user role", e.getMessage()));
         } catch (Exception e) {
-            System.err.println("Error getting filtered sessions: " + e.getMessage());
+            logger.info("Error getting filtered sessions: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving filtered sessions",
@@ -157,18 +160,18 @@ public class LearningSessionRestController {
             );
 
         } catch (IllegalArgumentException e) {
-            System.err.println(" Error: " + e.getMessage());
+            logger.info(" Error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(createErrorResponse("Not found", e.getMessage()));
 
         } catch (ClassCastException e) {
-            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info(" Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
 
         } catch (Exception e) {
-            System.err.println(" Error getting session: " + e.getMessage());
+            logger.info(" Error getting session: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving session",
@@ -198,7 +201,7 @@ public class LearningSessionRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println(" [LearningSessionController] Creating session for user: " +
+            logger.info(" [LearningSessionController] Creating session for user: " +
                     authenticatedPerson.getId());
 
             LearningSession createdSession = learningSessionService.createSession(
@@ -206,7 +209,7 @@ public class LearningSessionRestController {
                     authenticatedPerson
             );
 
-            System.out.println(" [LearningSessionController] Session created in DRAFT: " +
+            logger.info(" [LearningSessionController] Session created in DRAFT: " +
                     createdSession.getId());
 
             return new GlobalResponseHandler().handleResponse(
@@ -217,23 +220,23 @@ public class LearningSessionRestController {
             );
 
         } catch (IllegalStateException e) {
-            System.err.println(" Error: Unauthorized role: " + e.getMessage());
+            logger.info(" Error: Unauthorized role: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(createErrorResponse("Rol no autorizado", e.getMessage()));
 
         } catch (IllegalArgumentException e) {
-            System.err.println(" Error: Validation failed: " + e.getMessage());
+            logger.info(" Error: Validation failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(createErrorResponse("Validation error", e.getMessage()));
 
         } catch (ClassCastException e) {
-            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info(" Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
 
         } catch (Exception e) {
-            System.err.println(" Error creating session: " + e.getMessage());
+            logger.info(" Error creating session: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error creating session",
@@ -265,7 +268,7 @@ public class LearningSessionRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println(" [LearningSessionController] Publishing session: " + id);
+            logger.info(" [LearningSessionController] Publishing session: " + id);
 
             LearningSession publishedSession = learningSessionService.publishSession(
                     id,
@@ -273,7 +276,7 @@ public class LearningSessionRestController {
                     minorEditsRequest
             );
 
-            System.out.println(" [LearningSessionController] Session published: " +
+            logger.info(" [LearningSessionController] Session published: " +
                     publishedSession.getId() + " with status: " + publishedSession.getStatus());
 
             return new GlobalResponseHandler().handleResponse(
@@ -284,23 +287,23 @@ public class LearningSessionRestController {
             );
 
         } catch (IllegalStateException e) {
-            System.err.println(" Error: Unauthorized: " + e.getMessage());
+            logger.info(" Error: Unauthorized: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(createErrorResponse("No autorizado", e.getMessage()));
 
         } catch (IllegalArgumentException e) {
-            System.err.println(" Error: Validation failed: " + e.getMessage());
+            logger.info(" Error: Validation failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(createErrorResponse("Validation error", e.getMessage()));
 
         } catch (ClassCastException e) {
-            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info(" Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
 
         } catch (Exception e) {
-            System.err.println(" Error publishing session: " + e.getMessage());
+            logger.info(" Error publishing session: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error publishing session",
@@ -330,7 +333,7 @@ public class LearningSessionRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println(" [LearningSessionController] Cancelling session: " + id);
+            logger.info(" [LearningSessionController] Cancelling session: " + id);
 
             String reason = cancelRequest != null ? cancelRequest.getReason() : null;
 
@@ -349,7 +352,7 @@ public class LearningSessionRestController {
                     cancelledSession.getCancellationDate().toString()
             );
 
-            System.out.println(" [LearningSessionController] Session cancelled: " +
+            logger.info(" [LearningSessionController] Session cancelled: " +
                     cancelledSession.getId() + " with status: " + cancelledSession.getStatus());
 
             return new GlobalResponseHandler().handleResponse(
@@ -360,23 +363,23 @@ public class LearningSessionRestController {
             );
 
         } catch (IllegalStateException e) {
-            System.err.println(" Error: Unauthorized: " + e.getMessage());
+            logger.info(" Error: Unauthorized: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(createErrorResponse("No autorizado", e.getMessage()));
 
         } catch (IllegalArgumentException e) {
-            System.err.println(" Error: Validation failed: " + e.getMessage());
+            logger.info(" Error: Validation failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(createErrorResponse("Validation error", e.getMessage()));
 
         } catch (ClassCastException e) {
-            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info(" Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
 
         } catch (Exception e) {
-            System.err.println(" Error cancelling session: " + e.getMessage());
+            logger.info(" Error cancelling session: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error cancelling session",

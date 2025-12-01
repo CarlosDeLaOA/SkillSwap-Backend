@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.verification;
 
+package com.project.skillswap.logic.entity.verification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
 import jakarta.mail.MessagingException;
@@ -15,6 +17,7 @@ import java.util.UUID;
  */
 @Service
 public class VerificationService {
+    private static final Logger logger = LoggerFactory.getLogger(VerificationService.class);
 
     //#region Constants
     private static final int TOKEN_EXPIRATION_HOURS = 24;
@@ -90,7 +93,7 @@ public class VerificationService {
         try {
             emailVerificationService.sendWelcomeEmail(person.getEmail(), person.getFullName());
         } catch (MessagingException e) {
-            System.err.println("Error enviando correo de bienvenida: " + e.getMessage());
+            logger.info("Error enviando correo de bienvenida: " + e.getMessage());
         }
 
         return new VerificationResult(true, "Cuenta verificada exitosamente", VerificationStatus.SUCCESS);

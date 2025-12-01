@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.skillswap.logic.entity.Person.Person;
@@ -17,6 +19,7 @@ import java.util.Map;
 })
 @Entity
 public class Notification {
+    private static final Logger logger = LoggerFactory.getLogger(Notification.class);
 
     //<editor-fold desc="Fields">
     @Id
@@ -133,32 +136,6 @@ public class Notification {
             this.message = mapper.writeValueAsString(metadata);
         } catch (JsonProcessingException e) {
             this.message = metadata.getOrDefault("content", "").toString();
-        }
-    }
-
-    /**
-     * Obtiene el contenido legible del mensaje
-     */
-    @Transient
-    public String getReadableContent() {
-        try {
-            Map<String, Object> metadata = getMetadata();
-            return metadata.getOrDefault("content", this.message).toString();
-        } catch (Exception e) {
-            return this.message;
-        }
-    }
-
-    /**
-     * Obtiene el tipo de evento (si está en metadata)
-     */
-    @Transient
-    public String getEventType() {
-        try {
-            Map<String, Object> metadata = getMetadata();
-            return metadata.getOrDefault("eventType", "GENERAL").toString();
-        } catch (Exception e) {
-            return "GENERAL";
         }
     }
     //</editor-fold>

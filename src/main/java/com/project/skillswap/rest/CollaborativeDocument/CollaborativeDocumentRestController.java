@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.CollaborativeDocument;
 
+package com.project.skillswap.rest.CollaborativeDocument;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.CollaborativeDocument.CollaborativeDocumentService;
 import com.project.skillswap.logic.entity.CollaborativeDocument.DocumentResponse;
 import com.project.skillswap.logic.entity.CollaborativeDocument.DocumentUpdateRequest;
@@ -22,6 +24,7 @@ import java.util.Map;
 @RequestMapping("/api/collaborative-documents")
 @CrossOrigin(origins = "http://localhost:4200")
 public class CollaborativeDocumentRestController {
+    private static final Logger logger = LoggerFactory.getLogger(CollaborativeDocumentRestController.class);
 
     //#region Dependencies
     @Autowired
@@ -46,8 +49,8 @@ public class CollaborativeDocumentRestController {
                         .body(createErrorResponse("User not authenticated"));
             }
 
-            System.out.println("[GET] Getting document for session: " + sessionId);
-            System.out.println("     User: " + person.getFullName());
+            logger.info("[GET] Getting document for session: " + sessionId);
+            logger.info("     User: " + person.getFullName());
 
             DocumentResponse document = documentService.getOrCreateDocument(sessionId);
 
@@ -58,7 +61,7 @@ public class CollaborativeDocumentRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("Error retrieving document: " + e.getMessage());
+            logger.info("Error retrieving document: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving document: " + e.getMessage()));
@@ -78,7 +81,7 @@ public class CollaborativeDocumentRestController {
                         .body(createErrorResponse("User not authenticated"));
             }
 
-            System.out.println("[GET] Getting document: " + documentId);
+            logger.info("[GET] Getting document: " + documentId);
 
             DocumentResponse document = documentService.getDocumentByDocumentId(documentId);
 
@@ -89,11 +92,11 @@ public class CollaborativeDocumentRestController {
             return ResponseEntity.ok(response);
 
         } catch (RuntimeException e) {
-            System.err.println("Error: " + e.getMessage());
+            logger.info("Error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(createErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            System.err.println("Unexpected error: " + e.getMessage());
+            logger.info("Unexpected error: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving document"));
@@ -124,10 +127,10 @@ public class CollaborativeDocumentRestController {
                         .body(createErrorResponse("content is required"));
             }
 
-            System.out.println("[PUT] Updating document: " + request.getDocumentId());
-            System.out.println("      User: " + person.getFullName());
-            System.out.println("      Expected version: " + request.getVersion());
-            System.out.println("      Content size: " + request.getContent().length() + " characters");
+            logger.info("[PUT] Updating document: " + request.getDocumentId());
+            logger.info("      User: " + person.getFullName());
+            logger.info("      Expected version: " + request.getVersion());
+            logger.info("      Content size: " + request.getContent().length() + " characters");
 
             DocumentResponse updated = documentService.updateDocument(
                     request.getDocumentId(),
@@ -142,7 +145,7 @@ public class CollaborativeDocumentRestController {
             return ResponseEntity.ok(response);
 
         } catch (RuntimeException e) {
-            System.err.println("Validation error: " + e.getMessage());
+            logger.info("Validation error: " + e.getMessage());
 
             // Determine status code based on error
             HttpStatus status = HttpStatus.BAD_REQUEST;
@@ -159,7 +162,7 @@ public class CollaborativeDocumentRestController {
                     .body(createErrorResponse(e.getMessage()));
 
         } catch (Exception e) {
-            System.err.println("Unexpected error: " + e.getMessage());
+            logger.info("Unexpected error: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error updating document"));
@@ -179,8 +182,8 @@ public class CollaborativeDocumentRestController {
                         .body(createErrorResponse("User not authenticated"));
             }
 
-            System.out.println("[POST] Deactivating document for session: " + sessionId);
-            System.out.println("       User: " + person.getFullName());
+            logger.info("[POST] Deactivating document for session: " + sessionId);
+            logger.info("       User: " + person.getFullName());
 
             documentService.deactivateDocument(sessionId);
 
@@ -191,7 +194,7 @@ public class CollaborativeDocumentRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("Error deactivating document: " + e.getMessage());
+            logger.info("Error deactivating document: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error deactivating document"));

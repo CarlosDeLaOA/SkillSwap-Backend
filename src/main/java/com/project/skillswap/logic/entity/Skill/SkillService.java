@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Skill;
 
+package com.project.skillswap.logic.entity.Skill;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +14,7 @@ import java.util.Optional;
  */
 @Service
 public class SkillService {
+    private static final Logger logger = LoggerFactory.getLogger(SkillService.class);
 
     //<editor-fold desc="Dependencies">
     @Autowired

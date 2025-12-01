@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.videocall;
 
+package com.project.skillswap.logic.entity.videocall;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.project.skillswap.logic.entity.LearningSession.SessionCompletionService;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class TranscriptionService {
+    private static final Logger logger = LoggerFactory.getLogger(TranscriptionService.class);
 
     //#region Dependencies
     @Autowired
@@ -38,6 +42,9 @@ public class TranscriptionService {
 
     @Autowired
     private SessionSummaryEmailService summaryEmailService;
+
+    @Autowired
+    private SessionCompletionService sessionCompletionService;
     //#endregion
 
 
@@ -152,6 +159,13 @@ public class TranscriptionService {
                 }
             } catch (Exception ignored) {}
 
+            try {
+                logger.info(" INICIANDO ENVÍO DE INVITACIONES QUIZ");
+                sessionCompletionService.processSessionCompletion(session.getId());
+            } catch (Exception e) {
+                logger.info(" ERROR AL ENVIAR INVITACIONES QUIZ");
+                e.printStackTrace();
+            }
             // 9. Respuesta final
             return CompletableFuture.completedFuture(
                     new TranscriptionResult(true, transcription, durationSeconds, null)

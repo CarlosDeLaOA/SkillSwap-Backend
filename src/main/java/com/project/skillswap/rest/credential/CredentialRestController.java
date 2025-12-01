@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.credential;
 
+package com.project.skillswap.rest.credential;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Credential.CredentialDTO;
 import com.project.skillswap.logic.entity.Credential.CredentialService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import java.util.List;
 @RequestMapping("/communities")
 @CrossOrigin(origins = "*")
 public class CredentialRestController {
+    private static final Logger logger = LoggerFactory.getLogger(CredentialRestController.class);
 
     @Autowired
     private CredentialService credentialService;

@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Notification.SessionAlertDTO;
 import com.project.skillswap.logic.entity.Notification.UserSessionAlertDTO;
 import com.project.skillswap.logic.entity.Booking.Booking;
@@ -23,6 +25,7 @@ import java.util.*;
  */
 @Service
 public class SessionAlertService {
+    private static final Logger logger = LoggerFactory.getLogger(SessionAlertService.class);
 
     private final LearningSessionRepository learningSessionRepository;
     private final BookingRepository bookingRepository;
@@ -43,12 +46,9 @@ public class SessionAlertService {
     /**
      * Procesa y envía alertas de sesiones próximas (próximos 7 días)
      */
-    /**
-     * Procesa y envía alertas de sesiones SIN verificar duplicados (para testing)
-     */
     @Transactional
     public void processAndSendSessionAlerts() {
-        System.out.println("[TESTING] Buscando sesiones programadas para esta semana...");
+        logger.info("[TESTING] Buscando sesiones programadas para esta semana...");
 
         // Calcular rango de fechas (hoy + 7 días)
         Date startDate = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
@@ -58,8 +58,8 @@ public class SessionAlertService {
         List<LearningSession> sessions = learningSessionRepository.findScheduledSessionsInDateRange(startDate, endDate);
         List<Booking> bookings = bookingRepository.findActiveBookingsInDateRange(startDate, endDate);
 
-        System.out.println("Sesiones encontradas: " + sessions.size());
-        System.out.println("Bookings encontrados: " + bookings.size());
+        logger.info("Sesiones encontradas: " + sessions.size());
+        logger.info("Bookings encontrados: " + bookings.size());
 
         // Agrupar por usuario
         Map<Long, UserSessionAlertDTO> userAlertsMap = new HashMap<>();
@@ -119,18 +119,18 @@ public class SessionAlertService {
                     alertEmailService.sendSessionAlert(userAlert);
                     saveNotification(userAlert);
                     successCount++;
-                    System.out.println("Alerta de sesiones enviada a: " + userAlert.getFullName());
+                    logger.info("Alerta de sesiones enviada a: " + userAlert.getFullName());
                 } catch (MessagingException e) {
                     errorCount++;
-                    System.err.println("Error al enviar alerta a " + userAlert.getFullName() + ": " + e.getMessage());
+                    logger.info("Error al enviar alerta a " + userAlert.getFullName() + ": " + e.getMessage());
                 } catch (Exception e) {
                     errorCount++;
-                    System.err.println("Error inesperado para " + userAlert.getFullName() + ": " + e.getMessage());
+                    logger.info("Error inesperado para " + userAlert.getFullName() + ": " + e.getMessage());
                 }
             }
         }
 
-        System.out.println("Resumen: " + successCount + " exitosas, " + errorCount + " fallidas");
+        logger.info("Resumen: " + successCount + " exitosas, " + errorCount + " fallidas");
     }
 
     /**
@@ -157,63 +157,5 @@ public class SessionAlertService {
         notification.setRead(false);
 
         notificationRepository.save(notification);
-    }
-
-    /**
-     * Obtiene preview de alertas que se enviarían (para testing)
-     */
-    public Map<Long, UserSessionAlertDTO> getAlertsPreview() {
-        Date startDate = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
-        Date endDate = Date.from(LocalDate.now().plusDays(7).atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        List<LearningSession> sessions = learningSessionRepository.findScheduledSessionsInDateRange(startDate, endDate);
-        List<Booking> bookings = bookingRepository.findActiveBookingsInDateRange(startDate, endDate);
-
-        Map<Long, UserSessionAlertDTO> userAlertsMap = new HashMap<>();
-
-        for (LearningSession session : sessions) {
-            Person instructor = session.getInstructor().getPerson();
-            Long personId = instructor.getId();
-
-            UserSessionAlertDTO userAlert = userAlertsMap.computeIfAbsent(personId,
-                    id -> new UserSessionAlertDTO(id, instructor.getFullName(), instructor.getEmail()));
-
-            SessionAlertDTO sessionDTO = new SessionAlertDTO(
-                    session.getId(),
-                    session.getTitle(),
-                    session.getSkill().getName(),
-                    session.getScheduledDatetime(),
-                    session.getDurationMinutes(),
-                    "INSTRUCTOR",
-                    instructor.getFullName(),
-                    session.getVideoCallLink()
-            );
-
-            userAlert.getInstructorSessions().add(sessionDTO);
-        }
-
-        for (Booking booking : bookings) {
-            Person learner = booking.getLearner().getPerson();
-            Long personId = learner.getId();
-            LearningSession session = booking.getLearningSession();
-
-            UserSessionAlertDTO userAlert = userAlertsMap.computeIfAbsent(personId,
-                    id -> new UserSessionAlertDTO(id, learner.getFullName(), learner.getEmail()));
-
-            SessionAlertDTO sessionDTO = new SessionAlertDTO(
-                    session.getId(),
-                    session.getTitle(),
-                    session.getSkill().getName(),
-                    session.getScheduledDatetime(),
-                    session.getDurationMinutes(),
-                    "LEARNER",
-                    session.getInstructor().getPerson().getFullName(),
-                    session.getVideoCallLink()
-            );
-
-            userAlert.getLearnerSessions().add(sessionDTO);
-        }
-
-        return userAlertsMap;
     }
 }

@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Transaction;
 
+package com.project.skillswap.logic.entity.Transaction;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Learner.LearnerRepository;
 import com.project.skillswap.logic.entity.Person.Person;
@@ -22,6 +24,7 @@ import java.util.Optional;
  */
 @Service
 public class CoinPurchaseService {
+    private static final Logger logger = LoggerFactory.getLogger(CoinPurchaseService.class);
 
     @Autowired
     private TransactionRepository transactionRepository;

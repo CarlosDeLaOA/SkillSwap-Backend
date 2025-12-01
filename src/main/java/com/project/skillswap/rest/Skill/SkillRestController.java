@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.Skill;
 
+package com.project.skillswap.rest.Skill;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Skill.Skill;
 import com.project.skillswap.logic.entity.Skill.SkillService;
 import com.project.skillswap.logic.entity.Person.Person;
@@ -22,6 +24,7 @@ import java.util.Map;
 @RequestMapping("/skills")
 @CrossOrigin(origins = "*")
 public class SkillRestController {
+    private static final Logger logger = LoggerFactory.getLogger(SkillRestController.class);
 
     //<editor-fold desc="Dependencies">
     @Autowired
@@ -50,11 +53,11 @@ public class SkillRestController {
                     request
             );
         } catch (IllegalStateException e) {
-            System.err.println("Error: Invalid user role: " + e.getMessage());
+            logger.info("Error: Invalid user role: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(createErrorResponse("Invalid user role", e.getMessage()));
         } catch (Exception e) {
-            System.err.println("Error getting skills: " + e.getMessage());
+            logger.info("Error getting skills: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving skills",
@@ -81,16 +84,16 @@ public class SkillRestController {
                     request
             );
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
         } catch (IllegalStateException e) {
-            System.err.println("Error: Invalid user role: " + e.getMessage());
+            logger.info("Error: Invalid user role: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(createErrorResponse("Invalid user role", e.getMessage()));
         } catch (Exception e) {
-            System.err.println("Error getting all skills: " + e.getMessage());
+            logger.info("Error getting all skills: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving all skills",

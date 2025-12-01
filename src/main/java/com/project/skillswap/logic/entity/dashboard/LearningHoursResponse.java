@@ -1,9 +1,11 @@
 package com.project.skillswap.logic.entity.dashboard;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 /**
  * Response containing total learning hours information
  */
 public class LearningHoursResponse {
+    private static final Logger logger = LoggerFactory.getLogger(LearningHoursResponse.class);
 
     //#region Fields
     private Integer totalMinutes;

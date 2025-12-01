@@ -1,5 +1,6 @@
 package com.project.skillswap.config;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import java.util.Map;
  */
 @Service
 public class CloudinaryService {
+    private static final Logger logger = LoggerFactory.getLogger(CloudinaryService.class);
 
     @Autowired
     private Cloudinary cloudinary;
@@ -30,7 +32,7 @@ public class CloudinaryService {
      * @throws IOException si hay error en la subida
      */
     public String uploadImage(MultipartFile file) throws IOException {
-        System.out.println(" [CloudinaryService] Uploading image: " + file.getOriginalFilename());
+        logger.info(" [CloudinaryService] Uploading image: " + file.getOriginalFilename());
 
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
                 ObjectUtils.asMap(
@@ -40,7 +42,7 @@ public class CloudinaryService {
                 ));
 
         String imageUrl = uploadResult.get("secure_url").toString();
-        System.out.println(" [CloudinaryService] Image uploaded successfully: " + imageUrl);
+        logger.info(" [CloudinaryService] Image uploaded successfully: " + imageUrl);
 
         return imageUrl;
     }
@@ -52,9 +54,9 @@ public class CloudinaryService {
      * @throws IOException si hay error en la eliminación
      */
     public void deleteImage(String publicId) throws IOException {
-        System.out.println(" [CloudinaryService] Deleting image with public_id: " + publicId);
+        logger.info(" [CloudinaryService] Deleting image with public_id: " + publicId);
         Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
-        System.out.println(" [CloudinaryService] Image deleted successfully: " + result);
+        logger.info(" [CloudinaryService] Image deleted successfully: " + result);
     }
 
     /**
@@ -76,11 +78,11 @@ public class CloudinaryService {
             String withoutVersion = pathAfterUpload.replaceFirst("v\\d+/", "");
             String publicId = withoutVersion.replaceFirst("\\.[^.]+$", "");
 
-            System.out.println("[CloudinaryService] Extracted public_id: " + publicId + " from URL: " + imageUrl);
+            logger.info("[CloudinaryService] Extracted public_id: " + publicId + " from URL: " + imageUrl);
 
             return publicId;
         } catch (Exception e) {
-            System.err.println(" [CloudinaryService] Error extracting public_id: " + e.getMessage());
+            logger.info(" [CloudinaryService] Error extracting public_id: " + e.getMessage());
             return null;
         }
     }

@@ -1,5 +1,6 @@
 package com.project.skillswap.config;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -8,12 +9,13 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.Executor;
 
 /**
- * ⚙ Configuración para procesamiento asíncrono
+ *  Configuración para procesamiento asíncrono
  * Permite que las transcripciones se procesen en segundo plano
  */
 @Configuration
 @EnableAsync
 public class AsyncConfiguration {
+    private static final Logger logger = LoggerFactory.getLogger(AsyncConfiguration.class);
 
     @Bean(name = "transcriptionExecutor")
     public Executor transcriptionExecutor() {
@@ -24,10 +26,10 @@ public class AsyncConfiguration {
         executor.setThreadNamePrefix("transcription-");
         executor.initialize();
 
-        System.out.println("⚙️ Executor de transcripción configurado");
-        System.out.println("   Core pool size: 2");
-        System.out.println("   Max pool size: 4");
-        System.out.println("   Queue capacity: 10");
+        logger.info("️ Executor de transcripción configurado");
+        logger.info("   Core pool size: 2");
+        logger.info("   Max pool size: 4");
+        logger.info("   Queue capacity: 10");
 
         return executor;
     }

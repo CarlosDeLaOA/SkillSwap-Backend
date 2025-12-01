@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.person;
 
+package com.project.skillswap.rest.person;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Learner.LearnerRepository;
@@ -33,6 +35,7 @@ import java.util.stream.Stream;
 @RequestMapping("/register")
 @CrossOrigin(origins = "*")
 public class PersonRestController {
+    private static final Logger logger = LoggerFactory.getLogger(PersonRestController.class);
 
     //#region Dependencies
     private final PersonRepository personRepository;
@@ -110,7 +113,7 @@ public class PersonRestController {
             try {
                 userSkillService.saveUserSkills(person, skillIds);
             } catch (Exception e) {
-                System.err.println(" Error guardando skills del usuario: " + e.getMessage());
+                logger.info(" Error guardando skills del usuario: " + e.getMessage());
             }
 
             boolean emailSent = false;
@@ -119,7 +122,7 @@ public class PersonRestController {
                     verificationService.createAndSendVerificationToken(person);
                     emailSent = true;
                 } catch (Exception e) {
-                    System.err.println(" Error enviando correo: " + e.getMessage());
+                    logger.info(" Error enviando correo: " + e.getMessage());
                 }
             }
 
@@ -141,7 +144,7 @@ public class PersonRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println(" Error en registro de learner: " + e.getMessage());
+            logger.info(" Error en registro de learner: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al procesar el registro. Por favor intente nuevamente.");
@@ -191,7 +194,7 @@ public class PersonRestController {
             try {
                 userSkillService.saveUserSkills(person, skillIds);
             } catch (Exception e) {
-                System.err.println(" Error guardando skills del usuario: " + e.getMessage());
+                logger.info(" Error guardando skills del usuario: " + e.getMessage());
             }
 
             boolean emailSent = false;
@@ -200,7 +203,7 @@ public class PersonRestController {
                     verificationService.createAndSendVerificationToken(person);
                     emailSent = true;
                 } catch (Exception e) {
-                    System.err.println("Error enviando correo: " + e.getMessage());
+                    logger.info("Error enviando correo: " + e.getMessage());
                 }
             }
 
@@ -222,7 +225,7 @@ public class PersonRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println(" Error en registro de instructor: " + e.getMessage());
+            logger.info(" Error en registro de instructor: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al procesar el registro. Por favor intente nuevamente.");

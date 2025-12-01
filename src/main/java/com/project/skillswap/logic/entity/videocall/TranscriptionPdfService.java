@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.videocall;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -16,10 +17,11 @@ import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 
 /**
- *  Servicio para generar PDFs de transcripciones
+ *Servicio para generar PDFs de transcripciones
  */
 @Service
 public class TranscriptionPdfService {
+    private static final Logger logger = LoggerFactory.getLogger(TranscriptionPdfService.class);
 
     /**
      * Genera PDF de transcripción
@@ -29,10 +31,10 @@ public class TranscriptionPdfService {
      */
     public byte[] generateTranscriptionPdf(LearningSession session) {
         try {
-            System.out.println("========================================");
-            System.out.println(" GENERANDO PDF DE TRANSCRIPCIÓN");
-            System.out.println("   Session ID: " + session.getId());
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" GENERANDO PDF DE TRANSCRIPCIÓN");
+            logger.info("   Session ID: " + session.getId());
+            logger.info("========================================");
 
             // Crear PDF en memoria
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -151,18 +153,18 @@ public class TranscriptionPdfService {
 
             byte[] pdfBytes = baos.toByteArray();
 
-            System.out.println("========================================");
-            System.out.println(" PDF GENERADO EXITOSAMENTE");
-            System.out.println("   Tamaño: " + formatFileSize(pdfBytes.length));
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info(" PDF GENERADO EXITOSAMENTE");
+            logger.info("   Tamaño: " + formatFileSize(pdfBytes.length));
+            logger.info("========================================");
 
             return pdfBytes;
 
         } catch (Exception e) {
-            System.err.println("========================================");
-            System.err.println(" ERROR GENERANDO PDF");
-            System.err.println("   Error: " + e.getMessage());
-            System.err.println("========================================");
+            logger.info("========================================");
+            logger.info(" ERROR GENERANDO PDF");
+            logger.info("   Error: " + e.getMessage());
+            logger.info("========================================");
             e.printStackTrace();
             throw new RuntimeException("Error al generar PDF: " + e.getMessage());
         }

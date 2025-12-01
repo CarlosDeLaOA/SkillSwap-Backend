@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.WeeklyReport;
 
+package com.project.skillswap.logic.entity.WeeklyReport;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Person.Person;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -16,6 +18,7 @@ import java.util.Date;
 })
 @Entity
 public class WeeklyReport {
+    private static final Logger logger = LoggerFactory.getLogger(WeeklyReport.class);
 
     //#region Fields
     @Id

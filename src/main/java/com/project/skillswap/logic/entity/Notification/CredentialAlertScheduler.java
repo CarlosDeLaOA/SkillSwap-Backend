@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class CredentialAlertScheduler {
+    private static final Logger logger = LoggerFactory.getLogger(CredentialAlertScheduler.class);
 
     private final CredentialAlertService credentialAlertService;
 
@@ -22,8 +25,8 @@ public class CredentialAlertScheduler {
     @Scheduled(cron = "0 0 8 * * *")
      //@Scheduled(cron = "0 * * * * *") //PARA PROBARLO QUE LLEGUE CADA MINUTO
     public void sendCredentialAlerts() {
-        System.out.println("Iniciando envío de alertas de credenciales...");
+        logger.info("Iniciando envío de alertas de credenciales...");
         credentialAlertService.processAndSendCredentialAlerts();
-        System.out.println("Proceso de alertas de credenciales completado");
+        logger.info("Proceso de alertas de credenciales completado");
     }
 }

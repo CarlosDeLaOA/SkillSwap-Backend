@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.LearningSession;
 
+package com.project.skillswap.logic.entity.LearningSession;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Booking.BookingRepository;
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Person.Person;
@@ -21,6 +23,7 @@ import java.util.Map;
  */
 @Service
 public class InstructorSessionService {
+    private static final Logger logger = LoggerFactory.getLogger(InstructorSessionService.class);
 
     //#region Dependencies
 
