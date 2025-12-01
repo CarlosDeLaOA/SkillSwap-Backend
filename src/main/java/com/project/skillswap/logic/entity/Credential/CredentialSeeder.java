@@ -6,10 +6,9 @@ import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
 import com.project.skillswap.logic.entity.Quiz.Quiz;
 import com.project.skillswap.logic.entity.Quiz.QuizRepository;
+import com.project.skillswap.logic.entity.Quiz.QuizStatus;
 import com.project.skillswap.logic.entity.Skill.Skill;
 import com.project.skillswap.logic.entity.Skill.SkillRepository;
-import com.project.skillswap.logic.entity.Transcription.Transcription;
-import com.project.skillswap.logic.entity.Transcription.TranscriptionRepository;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.annotation.Order;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,7 +33,6 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
     private final SkillRepository skillRepository;
     private final LearningSessionRepository learningSessionRepository;
     private final QuizRepository quizRepository;
-    private final TranscriptionRepository transcriptionRepository;
     //#endregion
 
     //#region Constructor
@@ -45,21 +44,18 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
      * @param skillRepository the skill repository
      * @param learningSessionRepository the learning session repository
      * @param quizRepository the quiz repository
-     * @param transcriptionRepository the transcription repository
      */
     public CredentialSeeder(
             CredentialRepository credentialRepository,
             LearnerRepository learnerRepository,
             SkillRepository skillRepository,
             LearningSessionRepository learningSessionRepository,
-            QuizRepository quizRepository,
-            TranscriptionRepository transcriptionRepository) {
+            QuizRepository quizRepository) {
         this.credentialRepository = credentialRepository;
         this.learnerRepository = learnerRepository;
         this.skillRepository = skillRepository;
         this.learningSessionRepository = learningSessionRepository;
         this.quizRepository = quizRepository;
-        this.transcriptionRepository = transcriptionRepository;
     }
     //#endregion
 
@@ -86,19 +82,25 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
             Optional<Learner> learner = learnerRepository.findById(credentialData.learnerId);
             Optional<Skill> skill = skillRepository.findById(credentialData.skillId);
             Optional<LearningSession> session = learningSessionRepository.findById(credentialData.learningSessionId);
-            Optional<Transcription> transcription = transcriptionRepository.findByLearningSession(session.orElse(null));
 
-            if (learner.isEmpty() || skill.isEmpty() || session.isEmpty() || transcription.isEmpty()) {
+            if (learner.isEmpty() || skill.isEmpty() || session.isEmpty()) {
                 continue;
             }
 
-            Quiz quiz = createQuiz(learner.get(), skill.get(), transcription.get());
+            Optional<Quiz> existingQuiz = quizRepository.findFirstByLearnerAndLearningSessionOrderByAttemptNumberDesc(
+                    learner.get(), session.get()
+            );
+
+            if (existingQuiz.isPresent()) {
+                continue;
+            }
+
+            Quiz quiz = createQuiz(learner.get(), skill.get(), session.get(), credentialData.percentageAchieved);
             Quiz savedQuiz = quizRepository.save(quiz);
 
             Credential credential = createCredential(credentialData, learner.get(), skill.get(), session.get(), savedQuiz);
             credentialRepository.save(credential);
         }
-
     }
 
     /**
@@ -106,16 +108,31 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
      *
      * @param learner the learner
      * @param skill the skill
-     * @param transcription the transcription
+     * @param learningSession the learning session
+     * @param percentageAchieved the percentage achieved
      * @return the created Quiz entity
      */
-    private Quiz createQuiz(Learner learner, Skill skill, Transcription transcription) {
+    private Quiz createQuiz(Learner learner, Skill skill, LearningSession learningSession,
+                            BigDecimal percentageAchieved) {
         Quiz quiz = new Quiz();
         quiz.setLearner(learner);
         quiz.setSkill(skill);
-        quiz.setTranscription(transcription);
-        quiz.setScoreObtained(85);
-        quiz.setPassed(true);
+        quiz.setLearningSession(learningSession);
+        quiz.setAttemptNumber(1);
+        quiz.setStatus(QuizStatus.GRADED);
+
+        int scoreObtained = (int) Math.round(10 * percentageAchieved.doubleValue() / 100);
+        quiz.setScoreObtained(scoreObtained);
+        quiz.setPassed(percentageAchieved.compareTo(new BigDecimal("70.0")) >= 0);
+        quiz.setCompletionDate(new Date());
+
+        String[] sampleOptions = {
+                "Option 1", "Option 2", "Option 3", "Option 4",
+                "Option 5", "Option 6", "Option 7", "Option 8",
+                "Option 9", "Option 10", "Option 11", "Option 12"
+        };
+        quiz.setOptionsJson(convertToJson(sampleOptions));
+
         return quiz;
     }
 
@@ -139,6 +156,24 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
         credential.setPercentageAchieved(data.percentageAchieved);
         credential.setBadgeUrl(data.badgeUrl);
         return credential;
+    }
+
+    /**
+     * Converts array to JSON string
+     *
+     * @param options array of options
+     * @return JSON string
+     */
+    private String convertToJson(String[] options) {
+        StringBuilder json = new StringBuilder("[");
+        for (int i = 0; i < options.length; i++) {
+            json.append("\"").append(options[i]).append("\"");
+            if (i < options.length - 1) {
+                json.append(",");
+            }
+        }
+        json.append("]");
+        return json.toString();
     }
 
     /**

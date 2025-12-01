@@ -2,20 +2,21 @@ package com.project.skillswap.logic.entity.Transcription;
 
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.Summary.Summary;
-import com.project.skillswap.logic.entity.Quiz.Quiz;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
-import java.util.List;
 
+/**
+ * Entity representing a transcription of a learning session
+ */
 @Table(name = "transcription", indexes = {
         @Index(name = "idx_transcription_session", columnList = "learning_session_id", unique = true)
 })
 @Entity
 public class Transcription {
 
-    //<editor-fold desc="Fields">
+    //#region Fields
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,16 +37,13 @@ public class Transcription {
 
     @OneToOne(mappedBy = "transcription", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Summary summary;
+    //#endregion
 
-    @OneToMany(mappedBy = "transcription", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Quiz> quizzes;
-    //</editor-fold>
-
-    //<editor-fold desc="Constructors">
+    //#region Constructors
     public Transcription() {}
-    //</editor-fold>
+    //#endregion
 
-    //<editor-fold desc="Getters and Setters">
+    //#region Getters and Setters
     public Long getId() {
         return id;
     }
@@ -93,13 +91,5 @@ public class Transcription {
     public void setSummary(Summary summary) {
         this.summary = summary;
     }
-
-    public List<Quiz> getQuizzes() {
-        return quizzes;
-    }
-
-    public void setQuizzes(List<Quiz> quizzes) {
-        this.quizzes = quizzes;
-    }
-    //</editor-fold>
+    //#endregion
 }

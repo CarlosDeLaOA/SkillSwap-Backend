@@ -6,5 +6,6 @@ public enum NotificationType {
     REMINDER,
     ALERT,
     CREDENTIAL_ALERT,
+    SESSION,
     SESSION_REMINDER
 }
