@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.videocall;
 
+package com.project.skillswap.logic.entity.videocall;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Booking.Booking;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.Person.Person;
@@ -20,6 +22,7 @@ import java.util.*;
  */
 @Service
 public class SessionSummaryEmailService {
+    private static final Logger logger = LoggerFactory.getLogger(SessionSummaryEmailService.class);
 
     //#region Dependencies & Config
 

@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.verification;
 
+package com.project.skillswap.logic.entity.verification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Person.Person;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -16,6 +18,7 @@ import java.time.LocalDateTime;
 })
 @Entity
 public class VerificationToken {
+    private static final Logger logger = LoggerFactory.getLogger(VerificationToken.class);
 
     //#region Fields
     @Id

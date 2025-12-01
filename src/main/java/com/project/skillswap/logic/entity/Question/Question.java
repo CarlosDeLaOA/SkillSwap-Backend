@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Question;
 
+package com.project.skillswap.logic.entity.Question;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Quiz.Quiz;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -11,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 })
 @Entity
 public class Question {
+    private static final Logger logger = LoggerFactory.getLogger(Question.class);
 
     //<editor-fold desc="Fields">
     @Id

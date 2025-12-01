@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.videocall;
 
+package com.project.skillswap.logic.entity.videocall;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -23,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class TranscriptionService {
+    private static final Logger logger = LoggerFactory.getLogger(TranscriptionService.class);
 
     //#region Dependencies
     @Autowired
@@ -157,10 +160,10 @@ public class TranscriptionService {
             } catch (Exception ignored) {}
 
             try {
-                System.out.println(" INICIANDO ENVÍO DE INVITACIONES QUIZ");
+                logger.info(" INICIANDO ENVÍO DE INVITACIONES QUIZ");
                 sessionCompletionService.processSessionCompletion(session.getId());
             } catch (Exception e) {
-                System.err.println(" ERROR AL ENVIAR INVITACIONES QUIZ");
+                logger.info(" ERROR AL ENVIAR INVITACIONES QUIZ");
                 e.printStackTrace();
             }
             // 9. Respuesta final

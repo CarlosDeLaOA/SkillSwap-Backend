@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.CommunityDocument.CommunityDocument;
 import com.project.skillswap.logic.entity.CommunityMember.CommunityMember;
 import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunity;
@@ -12,6 +14,7 @@ import java.util.*;
 
 @Service
 public class NotificationService {
+    private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);
 
     @Autowired
     private NotificationRepository notificationRepository;
@@ -25,18 +28,18 @@ public class NotificationService {
     @Transactional
     public void notifyDocumentAdded(CommunityDocument document, List<Person> recipients) {
 
-        System.out.println("=".repeat(80));
-        System.out.println(" [NOTIFICATION] Iniciando notifyDocumentAdded");
-        System.out.println("=".repeat(80));
+        logger.info("=".repeat(80));
+        logger.info(" [NOTIFICATION] Iniciando notifyDocumentAdded");
+        logger.info("=".repeat(80));
 
-        System.out.println(" [DEBUG] Documento ID: " + document.getId());
-        System.out.println(" [DEBUG] Documento Título: " + document.getTitle());
-        System.out.println(" [DEBUG] Cantidad de recipients recibidos: " + recipients.size());
+        logger.info(" [DEBUG] Documento ID: " + document.getId());
+        logger.info(" [DEBUG] Documento Título: " + document.getTitle());
+        logger.info(" [DEBUG] Cantidad de recipients recibidos: " + recipients.size());
 
-        System.out.println("\n [DEBUG] Lista COMPLETA de recipients:");
+        logger.info("\n [DEBUG] Lista COMPLETA de recipients:");
         for (int i = 0; i < recipients.size(); i++) {
             Person p = recipients.get(i);
-            System.out.println("  [" + (i+1) + "] Person ID: " + p.getId() +
+            logger.info("  [" + (i+1) + "] Person ID: " + p.getId() +
                     " | Nombre: " + p.getFullName() +
                     " | Email: " + p.getEmail());
         }
@@ -44,13 +47,13 @@ public class NotificationService {
         LearningCommunity community = document.getLearningCommunity();
         Person uploader = document.getUploadedBy().getPerson();
 
-        System.out.println("\n [DEBUG] Uploader:");
-        System.out.println("  Person ID: " + uploader.getId() +
+        logger.info("\n [DEBUG] Uploader:");
+        logger.info("  Person ID: " + uploader.getId() +
                 " | Nombre: " + uploader.getFullName() +
                 " | Email: " + uploader.getEmail());
 
-        System.out.println("\n [DEBUG] Comunidad:");
-        System.out.println("  ID: " + community.getId() + " | Nombre: " + community.getName());
+        logger.info("\n [DEBUG] Comunidad:");
+        logger.info("  ID: " + community.getId() + " | Nombre: " + community.getName());
 
         String title = "📄 Nuevo documento en " + community.getName();
 
@@ -64,23 +67,23 @@ public class NotificationService {
         metadata.put("uploaderName", uploader.getFullName());
         metadata.put("uploaderId", uploader.getId());
 
-        System.out.println("\n [DEBUG] Iniciando envío de notificaciones...");
+        logger.info("\n [DEBUG] Iniciando envío de notificaciones...");
 
         int notificationCount = 0;
         int emailCount = 0;
         int skippedCount = 0;
 
         for (Person recipient : recipients) {
-            System.out.println("\n [LOOP] Procesando recipient: " + recipient.getFullName() + " (ID: " + recipient.getId() + ")");
+            logger.info("\n [LOOP] Procesando recipient: " + recipient.getFullName() + " (ID: " + recipient.getId() + ")");
 
             // No notificar al que subió el documento
             if (recipient.getId().equals(uploader.getId())) {
-                System.out.println(" [SKIP] Es el uploader, saltando...");
+                logger.info(" [SKIP] Es el uploader, saltando...");
                 skippedCount++;
                 continue;
             }
 
-            System.out.println(" [PROCESS] Creando notificación IN-APP...");
+            logger.info(" [PROCESS] Creando notificación IN-APP...");
 
             // Crear notificación IN-APP
             Notification notification = new Notification();
@@ -92,28 +95,28 @@ public class NotificationService {
 
             Notification saved = notificationRepository.save(notification);
             notificationCount++;
-            System.out.println(" [SAVED] Notificación guardada con ID: " + saved.getId());
+            logger.info(" [SAVED] Notificación guardada con ID: " + saved.getId());
 
             // Enviar email
             try {
-                System.out.println("[EMAIL] Intentando enviar email a: " + recipient.getEmail());
+                logger.info("[EMAIL] Intentando enviar email a: " + recipient.getEmail());
                 notificationEmailService.sendDocumentAddedEmail(recipient, community, document, uploader);
                 emailCount++;
-                System.out.println("[EMAIL] Email enviado exitosamente a: " + recipient.getEmail());
+                logger.info("[EMAIL] Email enviado exitosamente a: " + recipient.getEmail());
             } catch (Exception e) {
-                System.err.println("[EMAIL] Error al enviar email: " + e.getMessage());
+                logger.info("[EMAIL] Error al enviar email: " + e.getMessage());
                 e.printStackTrace();
             }
         }
 
-        System.out.println("\n" + "=".repeat(80));
-        System.out.println("[RESUMEN]");
-        System.out.println("  Recipients recibidos: " + recipients.size());
-        System.out.println("  Recipients procesados: " + (notificationCount));
-        System.out.println("  Recipients saltados (uploader): " + skippedCount);
-        System.out.println("  Notificaciones creadas: " + notificationCount);
-        System.out.println("  Emails enviados: " + emailCount);
-        System.out.println("=".repeat(80));
+        logger.info("\n" + "=".repeat(80));
+        logger.info("[RESUMEN]");
+        logger.info("  Recipients recibidos: " + recipients.size());
+        logger.info("  Recipients procesados: " + (notificationCount));
+        logger.info("  Recipients saltados (uploader): " + skippedCount);
+        logger.info("  Notificaciones creadas: " + notificationCount);
+        logger.info("  Emails enviados: " + emailCount);
+        logger.info("=".repeat(80));
     }
 
     /**
@@ -122,7 +125,7 @@ public class NotificationService {
     @Transactional
     public void notifyMemberJoined(LearningCommunity community, Person newMember, List<Person> recipients) {
 
-        System.out.println("[NOTIFICATION] Notificando nuevo miembro a " + recipients.size() + " personas");
+        logger.info("[NOTIFICATION] Notificando nuevo miembro a " + recipients.size() + " personas");
 
         String title = "👋 " + newMember.getFullName() + " se unió a " + community.getName();
 
@@ -151,9 +154,9 @@ public class NotificationService {
 
             try {
                 notificationEmailService.sendMemberJoinedEmail(recipient, community, newMember);
-                System.out.println("[EMAIL] Email enviado a: " + recipient.getEmail());
+                logger.info("[EMAIL] Email enviado a: " + recipient.getEmail());
             } catch (Exception e) {
-                System.err.println("[EMAIL] Error al enviar email: " + e.getMessage());
+                logger.info("[EMAIL] Error al enviar email: " + e.getMessage());
             }
         }
     }
@@ -164,7 +167,7 @@ public class NotificationService {
     @Transactional
     public void notifyMemberLeft(LearningCommunity community, Person leftMember, Person creator) {
 
-        System.out.println("[NOTIFICATION] Notificando al creador que un miembro salió");
+        logger.info("[NOTIFICATION] Notificando al creador que un miembro salió");
 
         String title = "⚠️ " + leftMember.getFullName() + " salió de " + community.getName();
 
@@ -187,9 +190,9 @@ public class NotificationService {
 
         try {
             notificationEmailService.sendMemberLeftEmail(creator, community, leftMember);
-            System.out.println("[EMAIL] Email enviado al creador: " + creator.getEmail());
+            logger.info("[EMAIL] Email enviado al creador: " + creator.getEmail());
         } catch (Exception e) {
-            System.err.println("[EMAIL] Error al enviar email: " + e.getMessage());
+            logger.info("[EMAIL] Error al enviar email: " + e.getMessage());
         }
     }
 
@@ -200,7 +203,7 @@ public class NotificationService {
     public void notifyAchievementEarned(LearningCommunity community, Person achiever,
                                         String achievementName, List<Person> recipients) {
 
-        System.out.println(" [NOTIFICATION] Notificando nuevo logro a " + recipients.size() + " miembros");
+        logger.info(" [NOTIFICATION] Notificando nuevo logro a " + recipients.size() + " miembros");
 
         String title = "🏆 " + achiever.getFullName() + " obtuvo certificación en " + achievementName;
 
@@ -230,9 +233,9 @@ public class NotificationService {
 
             try {
                 notificationEmailService.sendAchievementEarnedEmail(recipient, community, achiever, achievementName);
-                System.out.println("[EMAIL] Email enviado a: " + recipient.getEmail());
+                logger.info("[EMAIL] Email enviado a: " + recipient.getEmail());
             } catch (Exception e) {
-                System.err.println("[EMAIL] Error al enviar email: " + e.getMessage());
+                logger.info("[EMAIL] Error al enviar email: " + e.getMessage());
             }
         }
     }
@@ -275,7 +278,7 @@ public class NotificationService {
             if (notification.getPerson().getId().equals(person.getId())) {
                 notification.setRead(true);
                 notificationRepository.save(notification);
-                System.out.println("[NOTIFICATION] Notificación " + notificationId + " marcada como leída");
+                logger.info("[NOTIFICATION] Notificación " + notificationId + " marcada como leída");
             }
         }
     }
@@ -292,7 +295,7 @@ public class NotificationService {
         }
 
         notificationRepository.saveAll(unread);
-        System.out.println("[NOTIFICATION] " + unread.size() + " notificaciones marcadas como leídas");
+        logger.info("[NOTIFICATION] " + unread.size() + " notificaciones marcadas como leídas");
     }
 
     /**
@@ -308,7 +311,7 @@ public class NotificationService {
             // Validar que la notificación pertenece al usuario
             if (notification.getPerson().getId().equals(person.getId())) {
                 notificationRepository.delete(notification);
-                System.out.println("[NOTIFICATION] Notificación " + notificationId + " eliminada");
+                logger.info("[NOTIFICATION] Notificación " + notificationId + " eliminada");
             }
         }
     }

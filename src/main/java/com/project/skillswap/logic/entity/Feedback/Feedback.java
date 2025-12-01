@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Feedback;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import jakarta.persistence.*;
@@ -14,6 +15,7 @@ import java.util.Date;
 })
 @Entity
 public class Feedback {
+    private static final Logger logger = LoggerFactory.getLogger(Feedback.class);
 
     //<editor-fold desc="Fields">
     @Id

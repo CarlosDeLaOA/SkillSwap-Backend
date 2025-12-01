@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.exceptions;
 
+package com.project.skillswap.logic.exceptions;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.springframework.http.HttpStatusCode;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * Maneja todas las excepciones de seguridad y generales de la aplicación.

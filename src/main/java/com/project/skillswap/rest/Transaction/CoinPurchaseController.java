@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.Transaction;
 
+package com.project.skillswap.rest.Transaction;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Transaction.CoinPurchaseService;
 import com.project.skillswap.logic.entity.Transaction.CoinPackageType;
 import com.project.skillswap.logic.entity.Transaction.Transaction;
@@ -26,6 +28,7 @@ import java.util.*;
 @RequestMapping("/api/coins")
 @CrossOrigin(origins = "*")
 public class CoinPurchaseController {
+    private static final Logger logger = LoggerFactory.getLogger(CoinPurchaseController.class);
 
     @Autowired
     private CoinPurchaseService coinPurchaseService;

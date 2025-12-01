@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.videocall;
 
+package com.project.skillswap.logic.entity.videocall;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
 import com.project.skillswap.logic.entity.LearningSession.SessionStatus;
@@ -13,6 +15,7 @@ import java.util.*;
 
 @Service
 public class VideoCallService {
+    private static final Logger logger = LoggerFactory.getLogger(VideoCallService.class);
 
     //#region Dependencies
     @Autowired
@@ -44,7 +47,7 @@ public class VideoCallService {
 
         // Validar estado de la sesión
         if (developmentMode) {
-            System.out.println("️ [DEV MODE] Permitiendo acceso a sesión");
+            logger.info("️ [DEV MODE] Permitiendo acceso a sesión");
             if (session.getStatus() == SessionStatus.CANCELLED) {
                 throw new RuntimeException("La sesión ha sido cancelada");
             }
@@ -54,10 +57,10 @@ public class VideoCallService {
                     session.getStatus() == SessionStatus.DRAFT) {
                 session.setStatus(SessionStatus.ACTIVE);
                 sessionRepository.save(session);
-                System.out.println(" Sesión cambiada a ACTIVE");
+                logger.info(" Sesión cambiada a ACTIVE");
             }
         } else {
-            System.out.println(" [PROD MODE] Validando estado: " + session.getStatus());
+            logger.info(" [PROD MODE] Validando estado: " + session.getStatus());
             if (session.getStatus() != SessionStatus.SCHEDULED &&
                     session.getStatus() != SessionStatus.ACTIVE) {
                 throw new RuntimeException("La sesión no está disponible. Estado: " + session.getStatus());
@@ -67,13 +70,13 @@ public class VideoCallService {
 
         String roomName = "skillswap_session_" + sessionId;
 
-        System.out.println("========================================");
-        System.out.println(" GENERANDO DATOS DE VIDEOLLAMADA");
-        System.out.println("   Session ID: " + sessionId);
-        System.out.println("   Room Name: " + roomName);
-        System.out.println("   Usuario: " + person.getFullName());
-        System.out.println("   Es Moderador: " + isModerator);
-        System.out.println("========================================");
+        logger.info("========================================");
+        logger.info(" GENERANDO DATOS DE VIDEOLLAMADA");
+        logger.info("   Session ID: " + sessionId);
+        logger.info("   Room Name: " + roomName);
+        logger.info("   Usuario: " + person.getFullName());
+        logger.info("   Es Moderador: " + isModerator);
+        logger.info("========================================");
 
 
         String videoCallLink = frontendVideoCallUrl + "/" + sessionId;
@@ -82,17 +85,17 @@ public class VideoCallService {
         if (session.getVideoCallLink() == null || session.getVideoCallLink().isEmpty()) {
             session.setVideoCallLink(videoCallLink);
             sessionRepository.save(session);
-            System.out.println(" Link guardado: " + videoCallLink);
+            logger.info(" Link guardado: " + videoCallLink);
         }
 
 
         String jitsiJoinLink = "https://" + jitsiDomain + "/" + roomName;
 
-        System.out.println(" Datos de videollamada:");
-        System.out.println("   Domain: " + jitsiDomain);
-        System.out.println("   Room: " + roomName);
-        System.out.println("   User: " + person.getFullName());
-        System.out.println("   Moderator: " + isModerator);
+        logger.info(" Datos de videollamada:");
+        logger.info("   Domain: " + jitsiDomain);
+        logger.info("   Room: " + roomName);
+        logger.info("   User: " + person.getFullName());
+        logger.info("   Moderator: " + isModerator);
 
         Map<String, Object> response = new HashMap<>();
         response.put("sessionId", sessionId);
@@ -145,7 +148,7 @@ public class VideoCallService {
                 (developmentMode && session.getStatus() == SessionStatus.DRAFT)) {
             session.setStatus(SessionStatus.ACTIVE);
             sessionRepository.save(session);
-            System.out.println(" Sesión activada al unirse participante");
+            logger.info(" Sesión activada al unirse participante");
         }
 
         Map<String, Object> response = new HashMap<>();

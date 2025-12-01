@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Booking;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.Person.Person;
 import jakarta.mail.MessagingException;
@@ -19,6 +20,7 @@ import java.util.Locale;
  */
 @Service
 public class BookingEmailService {
+    private static final Logger logger = LoggerFactory.getLogger(BookingEmailService.class);
 
     //#region Dependencies
     private final JavaMailSender mailSender;

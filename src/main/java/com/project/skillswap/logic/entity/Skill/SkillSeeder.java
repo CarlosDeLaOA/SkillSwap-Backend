@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Skill;
 
+package com.project.skillswap.logic.entity.Skill;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Knowledgearea.KnowledgeArea;
 import com.project.skillswap.logic.entity.Knowledgearea.KnowledgeAreaRepository;
 import org.springframework.context.ApplicationListener;
@@ -14,6 +16,7 @@ import java.util.Optional;
 @Order(3)
 @Component
 public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(SkillSeeder.class);
 
     private final SkillRepository skillRepository;
     private final KnowledgeAreaRepository knowledgeAreaRepository;

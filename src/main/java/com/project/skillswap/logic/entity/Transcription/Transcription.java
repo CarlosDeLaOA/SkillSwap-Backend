@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Transcription;
 
+package com.project.skillswap.logic.entity.Transcription;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.Summary.Summary;
 import jakarta.persistence.*;
@@ -15,6 +17,7 @@ import java.util.Date;
 })
 @Entity
 public class Transcription {
+    private static final Logger logger = LoggerFactory.getLogger(Transcription.class);
 
     //#region Fields
     @Id

@@ -1,9 +1,12 @@
-package com.project.skillswap.logic.entity.LearningSession;
 
+package com.project.skillswap.logic.entity.LearningSession;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 /**
  * DTO para responder después de cancelar una sesión
  */
 public class CancelSessionResponse {
+    private static final Logger logger = LoggerFactory.getLogger(CancelSessionResponse.class);
 
     private Long sessionId;
     private String sessionTitle;

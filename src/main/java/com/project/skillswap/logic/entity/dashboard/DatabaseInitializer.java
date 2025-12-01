@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.dashboard;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class DatabaseInitializer implements CommandLineRunner {
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseInitializer.class);
 
     //#region Dependencies
     @Autowired
@@ -42,7 +44,7 @@ public class DatabaseInitializer implements CommandLineRunner {
             createUpcomingSessionsProcedure();
             createRecentAchievementsProcedure();
         } catch (Exception e) {
-            System.err.println("Error creating stored procedures: " + e.getMessage());
+            logger.info("Error creating stored procedures: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -61,7 +63,7 @@ public class DatabaseInitializer implements CommandLineRunner {
             try {
                 jdbcTemplate.execute(sql);
             } catch (Exception e) {
-                System.err.println("Warning dropping procedure: " + e.getMessage());
+                logger.info("Warning dropping procedure: " + e.getMessage());
             }
         }
     }

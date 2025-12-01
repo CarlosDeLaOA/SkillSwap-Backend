@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.auth;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,6 +31,7 @@ import java.util.Date;
 
 @Service
 public class GoogleOAuthService {
+    private static final Logger logger = LoggerFactory.getLogger(GoogleOAuthService.class);
     //#region Properties
     private static final String GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
     private static final String GOOGLE_USER_INFO_URL = "https://www.googleapis.com/oauth2/v1/userinfo";

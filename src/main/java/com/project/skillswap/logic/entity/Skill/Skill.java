@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Skill;
 
+package com.project.skillswap.logic.entity.Skill;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Knowledgearea.KnowledgeArea;
 import jakarta.persistence.*;
@@ -12,6 +14,7 @@ import jakarta.persistence.*;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Skill {
+    private static final Logger logger = LoggerFactory.getLogger(Skill.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

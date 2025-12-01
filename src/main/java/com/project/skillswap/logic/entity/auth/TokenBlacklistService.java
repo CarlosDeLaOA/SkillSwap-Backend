@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.auth;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @EnableScheduling
 public class TokenBlacklistService {
+    private static final Logger logger = LoggerFactory.getLogger(TokenBlacklistService.class);
 
     private final Map<String, Instant> blacklist = new ConcurrentHashMap<>();
 

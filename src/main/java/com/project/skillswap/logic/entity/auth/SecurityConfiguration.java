@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.auth;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfiguration {
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfiguration.class);
 
     //#region Dependencies
     private final AuthenticationProvider authenticationProvider;

@@ -1,11 +1,14 @@
-package com.project.skillswap.logic.entity.passreset;
 
+package com.project.skillswap.logic.entity.passreset;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth/password/reset")
 public class PasswordResetController {
+    private static final Logger logger = LoggerFactory.getLogger(PasswordResetController.class);
 
     private final PasswordResetService passwordResetService;
 

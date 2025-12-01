@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.CommunityInvitation;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class EmailCommunityService {
+    private static final Logger logger = LoggerFactory.getLogger(EmailCommunityService.class);
 
     //#region Dependencies
     private final JavaMailSender mailSender;

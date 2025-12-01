@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.CollaborativeDocument;
 
+package com.project.skillswap.logic.entity.CollaborativeDocument;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Controller;
  */
 @Controller
 public class DocumentWebSocketController {
+    private static final Logger logger = LoggerFactory.getLogger(DocumentWebSocketController.class);
 
     //#region Dependencies
     @Autowired
@@ -34,10 +37,10 @@ public class DocumentWebSocketController {
             DocumentMessage message) {
 
         try {
-            System.out.println("[WebSocket] Update received");
-            System.out.println("            Document ID: " + documentId);
-            System.out.println("            User: " + message.getUserName());
-            System.out.println("            Version: " + message.getVersion());
+            logger.info("[WebSocket] Update received");
+            logger.info("            Document ID: " + documentId);
+            logger.info("            User: " + message.getUserName());
+            logger.info("            Version: " + message.getVersion());
 
             // Save without version validation to allow collaborative editing
             if ("UPDATE".equals(message.getAction())) {
@@ -49,11 +52,11 @@ public class DocumentWebSocketController {
                     );
 
                     message.setVersion(updated.getVersion());
-                    System.out.println("            Document saved - Version: " + updated.getVersion());
+                    logger.info("            Document saved - Version: " + updated.getVersion());
 
                 } catch (Exception e) {
                     // Ignore version errors and broadcast message anyway
-                    System.out.println("            Save error (ignored): " + e.getMessage());
+                    logger.info("            Save error (ignored): " + e.getMessage());
                 }
             }
 
@@ -61,7 +64,7 @@ public class DocumentWebSocketController {
             return message;
 
         } catch (Exception e) {
-            System.err.println("Unexpected error: " + e.getMessage());
+            logger.info("Unexpected error: " + e.getMessage());
             e.printStackTrace();
 
             // Send UPDATE anyway instead of ERROR
@@ -79,9 +82,9 @@ public class DocumentWebSocketController {
             @DestinationVariable String documentId,
             DocumentMessage message) {
 
-        System.out.println("[WebSocket] User joined");
-        System.out.println("            Document ID: " + documentId);
-        System.out.println("            User: " + message.getUserName());
+        logger.info("[WebSocket] User joined");
+        logger.info("            Document ID: " + documentId);
+        logger.info("            User: " + message.getUserName());
 
         message.setAction("USER_JOIN");
         message.setDocumentId(documentId);
@@ -99,9 +102,9 @@ public class DocumentWebSocketController {
             @DestinationVariable String documentId,
             DocumentMessage message) {
 
-        System.out.println("[WebSocket] User left");
-        System.out.println("            Document ID: " + documentId);
-        System.out.println("            User: " + message.getUserName());
+        logger.info("[WebSocket] User left");
+        logger.info("            Document ID: " + documentId);
+        logger.info("            User: " + message.getUserName());
 
         message.setAction("USER_LEAVE");
         message.setDocumentId(documentId);
@@ -135,7 +138,7 @@ public class DocumentWebSocketController {
      */
     public void broadcastToDocument(String documentId, DocumentMessage message) {
         messagingTemplate.convertAndSend("/topic/document/" + documentId, message);
-        System.out.println("Broadcast sent to /topic/document/" + documentId);
+        logger.info("Broadcast sent to /topic/document/" + documentId);
     }
 
     //#endregion

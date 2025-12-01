@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Credential;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Learner.LearnerRepository;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
@@ -26,6 +27,7 @@ import java.util.Optional;
 @Order(6)
 @Component
 public class CredentialSeeder implements ApplicationListener<ContextRefreshedEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(CredentialSeeder.class);
 
     //#region Dependencies
     private final CredentialRepository credentialRepository;

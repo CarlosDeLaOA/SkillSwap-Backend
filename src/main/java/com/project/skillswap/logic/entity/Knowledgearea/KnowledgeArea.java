@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Knowledgearea;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Skill.Skill;
 import jakarta.persistence.*;
@@ -12,6 +13,7 @@ import java.util.List;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class KnowledgeArea {
+    private static final Logger logger = LoggerFactory.getLogger(KnowledgeArea.class);
 
     //<editor-fold desc="Fields">
     @Id

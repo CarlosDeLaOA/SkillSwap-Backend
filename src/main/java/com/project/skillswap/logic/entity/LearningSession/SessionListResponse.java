@@ -1,8 +1,11 @@
-package com.project.skillswap.logic.entity.LearningSession;
 
+package com.project.skillswap.logic.entity.LearningSession;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import java.util.Date;
 
 public class SessionListResponse {
+    private static final Logger logger = LoggerFactory.getLogger(SessionListResponse.class);
     private Long id;
     private String title;
     private String description;

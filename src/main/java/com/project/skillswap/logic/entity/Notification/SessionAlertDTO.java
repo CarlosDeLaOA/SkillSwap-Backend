@@ -1,11 +1,14 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import java.util.Date;
 
 /**
  * DTO para alertas de sesiones próximas de la semana
  */
 public class SessionAlertDTO {
+    private static final Logger logger = LoggerFactory.getLogger(SessionAlertDTO.class);
     private Long sessionId;
     private String sessionTitle;
     private String skillName;

@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.notification;
 
+package com.project.skillswap.rest.notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Notification.CredentialAlertService;
 import com.project.skillswap.logic.entity.Notification.SessionAlertService;
 import com.project.skillswap.logic.entity.Notification.CredentialAlertDTO;
@@ -18,6 +20,7 @@ import java.util.Map;
 @RequestMapping("/api/alerts/test")
 @CrossOrigin
 public class AlertTestController {
+    private static final Logger logger = LoggerFactory.getLogger(AlertTestController.class);
 
     private final CredentialAlertService credentialAlertService;
     private final SessionAlertService sessionAlertService;

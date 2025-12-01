@@ -1,9 +1,12 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 /**
  * DTO para alertas de credenciales cercanas a certificado (8 o 9 de 10)
  */
 public class CredentialAlertDTO {
+    private static final Logger logger = LoggerFactory.getLogger(CredentialAlertDTO.class);
     private Long learnerId;
     private String learnerName;
     private String learnerEmail;

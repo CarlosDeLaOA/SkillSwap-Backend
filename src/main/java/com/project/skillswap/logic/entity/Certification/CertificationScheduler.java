@@ -100,7 +100,7 @@ public class CertificationScheduler {
                     long credentialCount = credentialRepository.countByLearnerAndSkill(learner, skill);
 
                     if (credentialCount >= CREDENTIALS_REQUIRED) {
-                        logger.info("    ⭐ Learner {} tiene {} credenciales en skill '{}' (ID: {})",
+                        logger.info(" Learner {} tiene {} credenciales en skill '{}' (ID: {})",
                                 learner.getId(),
                                 credentialCount,
                                 skill.getName(),
@@ -120,7 +120,7 @@ public class CertificationScheduler {
                             logger.info("     Certificado generado exitosamente");
                             logger.info("     Email enviado a: {}", learner.getPerson().getEmail());
                         } else {
-                            logger.debug("    ℹ️  Ya tiene certificado en skill '{}'", skill.getName());
+                            logger.debug(" Ya tiene certificado en skill '{}'", skill.getName());
                         }
                     }
                 } catch (Exception e) {

@@ -1,10 +1,13 @@
-package com.project.skillswap.logic.entity.CollaborativeDocument;
 
+package com.project.skillswap.logic.entity.CollaborativeDocument;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 /**
  * Mensaje WebSocket para actualizaciones de documento en tiempo real
  * Se usa para comunicación bidireccional entre cliente y servidor
  */
 public class DocumentMessage {
+    private static final Logger logger = LoggerFactory.getLogger(DocumentMessage.class);
 
     private String documentId;
     private String content;

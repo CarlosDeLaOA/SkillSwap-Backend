@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.notification;
 
+package com.project.skillswap.rest.notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.CommunityDocument.CommunityDocument;
 import com.project.skillswap.logic.entity.CommunityDocument.CommunityDocumentRepository;
 import com.project.skillswap.logic.entity.CommunityMember.CommunityMember;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/notifications/test")
 @CrossOrigin(origins = "*")
 public class NotificationTestController {
+    private static final Logger logger = LoggerFactory.getLogger(NotificationTestController.class);
 
     @Autowired
     private NotificationService notificationService;
@@ -45,33 +48,33 @@ public class NotificationTestController {
     @PostMapping("/document-added/{documentId}")
     public ResponseEntity<Map<String, Object>> testDocumentAdded(@PathVariable Integer documentId) {
         try {
-            System.out.println(" [TEST] Probando notificación de documento agregado");
-            System.out.println(" [TEST] Document ID: " + documentId);
+            logger.info(" [TEST] Probando notificación de documento agregado");
+            logger.info(" [TEST] Document ID: " + documentId);
 
             // Buscar el documento
             CommunityDocument document = documentRepository.findById(documentId)
                     .orElseThrow(() -> new RuntimeException("Documento no encontrado con ID: " + documentId));
 
-            System.out.println(" [TEST] Documento encontrado: " + document.getTitle());
-            System.out.println(" [TEST] Comunidad ID: " + document.getLearningCommunity().getId());
+            logger.info(" [TEST] Documento encontrado: " + document.getTitle());
+            logger.info(" [TEST] Comunidad ID: " + document.getLearningCommunity().getId());
 
             // Obtener todos los miembros activos de la comunidad
             List<CommunityMember> members = memberRepository
                     .findActiveMembersByCommunityId(document.getLearningCommunity().getId());
 
-            System.out.println(" [TEST] Miembros activos encontrados: " + members.size());
+            logger.info(" [TEST] Miembros activos encontrados: " + members.size());
 
             // Convertir a lista de Person
             List<Person> recipients = members.stream()
                     .map(cm -> {
                         Person p = cm.getLearner().getPerson();
-                        System.out.println(" [TEST] Miembro: " + p.getFullName() + " (ID: " + p.getId() + ", Email: " + p.getEmail() + ")");
+                        logger.info(" [TEST] Miembro: " + p.getFullName() + " (ID: " + p.getId() + ", Email: " + p.getEmail() + ")");
                         return p;
                     })
                     .collect(Collectors.toList());
 
-            System.out.println(" [TEST] Total recipients para notificar: " + recipients.size());
-            System.out.println(" [TEST] Llamando a notificationService.notifyDocumentAdded()...");
+            logger.info(" [TEST] Total recipients para notificar: " + recipients.size());
+            logger.info(" [TEST] Llamando a notificationService.notifyDocumentAdded()...");
 
             // Disparar notificación
             notificationService.notifyDocumentAdded(document, recipients);
@@ -86,7 +89,7 @@ public class NotificationTestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" [TEST] Error: " + e.getMessage());
+            logger.info(" [TEST] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -105,7 +108,7 @@ public class NotificationTestController {
             @PathVariable Long communityId,
             @PathVariable Long newMemberId) {
         try {
-            System.out.println(" [TEST] Probando notificación de nuevo miembro");
+            logger.info(" [TEST] Probando notificación de nuevo miembro");
 
             // Buscar comunidad
             LearningCommunity community = communityRepository.findById(communityId)
@@ -125,7 +128,7 @@ public class NotificationTestController {
                     .map(cm -> cm.getLearner().getPerson())
                     .collect(Collectors.toList());
 
-            System.out.println(" [TEST] Enviando notificación a " + recipients.size() + " miembros");
+            logger.info(" [TEST] Enviando notificación a " + recipients.size() + " miembros");
 
             // Disparar notificación
             notificationService.notifyMemberJoined(community, newMemberPerson, recipients);
@@ -140,7 +143,7 @@ public class NotificationTestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" [TEST] Error: " + e.getMessage());
+            logger.info(" [TEST] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -159,7 +162,7 @@ public class NotificationTestController {
             @PathVariable Long communityId,
             @PathVariable Long leftMemberId) {
         try {
-            System.out.println(" [TEST] Probando notificación de miembro que salió");
+            logger.info(" [TEST] Probando notificación de miembro que salió");
 
             // Buscar comunidad
             LearningCommunity community = communityRepository.findById(communityId)
@@ -172,7 +175,7 @@ public class NotificationTestController {
             Person leftMemberPerson = leftMember.getLearner().getPerson();
             Person creator = community.getCreator().getPerson();
 
-            System.out.println(" [TEST] Enviando notificación al creador: " + creator.getFullName());
+            logger.info(" [TEST] Enviando notificación al creador: " + creator.getFullName());
 
             // Disparar notificación (solo al creador)
             notificationService.notifyMemberLeft(community, leftMemberPerson, creator);
@@ -187,7 +190,7 @@ public class NotificationTestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" [TEST] Error: " + e.getMessage());
+            logger.info(" [TEST] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -207,7 +210,7 @@ public class NotificationTestController {
             @PathVariable Long achieverId,
             @RequestBody Map<String, String> body) {
         try {
-            System.out.println(" [TEST] Probando notificación de logro");
+            logger.info(" [TEST] Probando notificación de logro");
 
             String achievementName = body.getOrDefault("achievementName", "React Avanzado");
 
@@ -229,7 +232,7 @@ public class NotificationTestController {
                     .map(cm -> cm.getLearner().getPerson())
                     .collect(Collectors.toList());
 
-            System.out.println(" [TEST] Enviando notificación a " + recipients.size() + " miembros");
+            logger.info(" [TEST] Enviando notificación a " + recipients.size() + " miembros");
 
             // Disparar notificación
             notificationService.notifyAchievementEarned(community, achieverPerson, achievementName, recipients);
@@ -245,7 +248,7 @@ public class NotificationTestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" [TEST] Error: " + e.getMessage());
+            logger.info(" [TEST] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();

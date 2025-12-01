@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.notification;
 
+package com.project.skillswap.rest.notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Notification.Notification;
 import com.project.skillswap.logic.entity.Notification.NotificationService;
 import com.project.skillswap.logic.entity.Person.Person;
@@ -18,6 +20,7 @@ import java.util.Map;
 @RequestMapping("/api/notifications")
 @CrossOrigin(origins = "*")
 public class NotificationRestController {
+    private static final Logger logger = LoggerFactory.getLogger(NotificationRestController.class);
 
     @Autowired
     private NotificationService notificationService;
@@ -52,7 +55,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
+            logger.info(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -85,7 +88,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
+            logger.info(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -117,7 +120,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
+            logger.info(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -150,7 +153,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
+            logger.info(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -182,7 +185,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
+            logger.info(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -215,7 +218,7 @@ public class NotificationRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println(" [NOTIFICATION] Error: " + e.getMessage());
+            logger.info(" [NOTIFICATION] Error: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);

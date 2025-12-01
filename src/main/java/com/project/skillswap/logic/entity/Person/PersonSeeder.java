@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Person;
 
+package com.project.skillswap.logic.entity.Person;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Instructor.InstructorRepository;
 import com.project.skillswap.logic.entity.Learner.Learner;
@@ -21,6 +23,7 @@ import java.util.Optional;
 @Order(1)
 @Component
 public class PersonSeeder implements ApplicationListener<ContextRefreshedEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(PersonSeeder.class);
 
     //#region Dependencies
     private final PersonRepository personRepository;

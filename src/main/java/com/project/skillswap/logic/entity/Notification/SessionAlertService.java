@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Notification.SessionAlertDTO;
 import com.project.skillswap.logic.entity.Notification.UserSessionAlertDTO;
 import com.project.skillswap.logic.entity.Booking.Booking;
@@ -23,6 +25,7 @@ import java.util.*;
  */
 @Service
 public class SessionAlertService {
+    private static final Logger logger = LoggerFactory.getLogger(SessionAlertService.class);
 
     private final LearningSessionRepository learningSessionRepository;
     private final BookingRepository bookingRepository;
@@ -48,7 +51,7 @@ public class SessionAlertService {
      */
     @Transactional
     public void processAndSendSessionAlerts() {
-        System.out.println("[TESTING] Buscando sesiones programadas para esta semana...");
+        logger.info("[TESTING] Buscando sesiones programadas para esta semana...");
 
         // Calcular rango de fechas (hoy + 7 días)
         Date startDate = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
@@ -58,8 +61,8 @@ public class SessionAlertService {
         List<LearningSession> sessions = learningSessionRepository.findScheduledSessionsInDateRange(startDate, endDate);
         List<Booking> bookings = bookingRepository.findActiveBookingsInDateRange(startDate, endDate);
 
-        System.out.println("Sesiones encontradas: " + sessions.size());
-        System.out.println("Bookings encontrados: " + bookings.size());
+        logger.info("Sesiones encontradas: " + sessions.size());
+        logger.info("Bookings encontrados: " + bookings.size());
 
         // Agrupar por usuario
         Map<Long, UserSessionAlertDTO> userAlertsMap = new HashMap<>();
@@ -119,18 +122,18 @@ public class SessionAlertService {
                     alertEmailService.sendSessionAlert(userAlert);
                     saveNotification(userAlert);
                     successCount++;
-                    System.out.println("Alerta de sesiones enviada a: " + userAlert.getFullName());
+                    logger.info("Alerta de sesiones enviada a: " + userAlert.getFullName());
                 } catch (MessagingException e) {
                     errorCount++;
-                    System.err.println("Error al enviar alerta a " + userAlert.getFullName() + ": " + e.getMessage());
+                    logger.info("Error al enviar alerta a " + userAlert.getFullName() + ": " + e.getMessage());
                 } catch (Exception e) {
                     errorCount++;
-                    System.err.println("Error inesperado para " + userAlert.getFullName() + ": " + e.getMessage());
+                    logger.info("Error inesperado para " + userAlert.getFullName() + ": " + e.getMessage());
                 }
             }
         }
 
-        System.out.println("Resumen: " + successCount + " exitosas, " + errorCount + " fallidas");
+        logger.info("Resumen: " + successCount + " exitosas, " + errorCount + " fallidas");
     }
 
     /**

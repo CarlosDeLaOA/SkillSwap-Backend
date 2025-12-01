@@ -1,11 +1,13 @@
 package com.project.skillswap.logic.entity.dashboard;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import java.util.Date;
 
 /**
  * Response containing information about an upcoming session
  */
 public class UpcomingSessionResponse {
+    private static final Logger logger = LoggerFactory.getLogger(UpcomingSessionResponse.class);
 
     //#region Fields
     private Long id;

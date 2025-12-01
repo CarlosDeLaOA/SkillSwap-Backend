@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Certification;
 
+package com.project.skillswap.logic.entity.Certification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Credential.CredentialRepository;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Skill.Skill;
@@ -28,6 +30,7 @@ import java.util.UUID;
  */
 @Service
 public class CertificationService {
+    private static final Logger logger = LoggerFactory.getLogger(CertificationService.class);
 
     //#region Constants
     private static final int CREDENTIALS_REQUIRED = 10;
@@ -281,7 +284,7 @@ public class CertificationService {
 
             mailSender.send(message);
         } catch (Exception e) {
-            System.out.println("Error al enviar el correo del certificado: " + e.getMessage());
+            logger.info("Error al enviar el correo del certificado: " + e.getMessage());
         }
     }
 

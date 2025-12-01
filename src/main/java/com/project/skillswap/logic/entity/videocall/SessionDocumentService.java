@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.videocall;
 
+package com.project.skillswap.logic.entity.videocall;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 public class SessionDocumentService {
+    private static final Logger logger = LoggerFactory.getLogger(SessionDocumentService.class);
 
     private static final String UPLOAD_DIR = "uploads/session-documents/";
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -107,10 +110,10 @@ public class SessionDocumentService {
 
             documents.put(documentId, documentInfo);
 
-            System.out.println(" Documento subido exitosamente");
-            System.out.println("   Sesión: " + sessionId);
-            System.out.println("   Nombre: " + originalFilename);
-            System.out.println("   Tamaño: " + file.getSize() + " bytes");
+            logger.info(" Documento subido exitosamente");
+            logger.info("   Sesión: " + sessionId);
+            logger.info("   Nombre: " + originalFilename);
+            logger.info("   Tamaño: " + file.getSize() + " bytes");
 
 
             // notificationService.notifyDocumentUpload(sessionId, documentInfo);
@@ -185,7 +188,7 @@ public class SessionDocumentService {
             // Eliminar registro
             documents.remove(documentId);
 
-            System.out.println(" Documento eliminado: " + doc.getName());
+            logger.info(" Documento eliminado: " + doc.getName());
 
         } catch (IOException e) {
             throw new RuntimeException("Error al eliminar el archivo: " + e.getMessage());

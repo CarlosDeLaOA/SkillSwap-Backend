@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.booking;
 
+package com.project.skillswap.rest.booking;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Booking.Booking;
 import com.project.skillswap.logic.entity.Booking.BookingService;
 import com.project.skillswap.logic.entity.auth.JwtService;
@@ -16,6 +18,7 @@ import java.util.Map;
 @RequestMapping("/api/bookings")
 @CrossOrigin(origins = "*")
 public class BookingRestController {
+    private static final Logger logger = LoggerFactory.getLogger(BookingRestController.class);
 
     @Autowired
     private BookingService bookingService;
@@ -32,12 +35,12 @@ public class BookingRestController {
             @RequestBody Map<String, Long> request,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println("[BOOKING] POST /api/bookings");
+            logger.info("[BOOKING] POST /api/bookings");
 
             String token = authHeader.replace("Bearer ", "");
             String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("[BOOKING] Usuario autenticado: " + userEmail);
+            logger.info("[BOOKING] Usuario autenticado: " + userEmail);
 
             Long sessionId = request.get("learningSessionId");
             if (sessionId == null) {
@@ -54,7 +57,7 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("[BOOKING] Error: " + e.getMessage());
+            logger.info("[BOOKING] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -93,13 +96,13 @@ public class BookingRestController {
             @PathVariable Long id,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println(" [BOOKING] PUT /api/bookings/" + id + "/cancel");
+            logger.info(" [BOOKING] PUT /api/bookings/" + id + "/cancel");
 
             String token = authHeader.replace("Bearer ", "");
             String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("[BOOKING] Usuario autenticado: " + userEmail);
-            System.out.println("[BOOKING] Cancelando booking ID: " + id);
+            logger.info("[BOOKING] Usuario autenticado: " + userEmail);
+            logger.info("[BOOKING] Cancelando booking ID: " + id);
 
             Booking booking = bookingService.cancelBooking(id, userEmail);
 
@@ -108,12 +111,12 @@ public class BookingRestController {
             response.put("message", "Registro cancelado exitosamente");
             response.put("data", booking);
 
-            System.out.println("[BOOKING] Booking cancelado exitosamente");
+            logger.info("[BOOKING] Booking cancelado exitosamente");
 
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
-            System.err.println("[BOOKING] Error de validación: " + e.getMessage());
+            logger.info("[BOOKING] Error de validación: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -121,7 +124,7 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 
         } catch (RuntimeException e) {
-            System.err.println("[BOOKING] Error de ejecución: " + e.getMessage());
+            logger.info("[BOOKING] Error de ejecución: " + e.getMessage());
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -129,7 +132,7 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 
         } catch (Exception e) {
-            System.err.println("[BOOKING] Error inesperado: " + e.getMessage());
+            logger.info("[BOOKING] Error inesperado: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -147,12 +150,12 @@ public class BookingRestController {
             @RequestBody Map<String, Long> request,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println("[BOOKING] POST /api/bookings/group");
+            logger.info("[BOOKING] POST /api/bookings/group");
 
             String token = authHeader.replace("Bearer ", "");
             String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("[BOOKING] Usuario autenticado: " + userEmail);
+            logger.info("[BOOKING] Usuario autenticado: " + userEmail);
 
             Long sessionId = request.get("learningSessionId");
             Long communityId = request.get("communityId");
@@ -176,7 +179,7 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("[BOOKING] Error: " + e.getMessage());
+            logger.info("[BOOKING] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -195,12 +198,12 @@ public class BookingRestController {
             @RequestBody Map<String, Long> request,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println("[WAITLIST] POST /api/bookings/waitlist");
+            logger.info("[WAITLIST] POST /api/bookings/waitlist");
 
             String token = authHeader.replace("Bearer ", "");
             String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("[WAITLIST] Usuario autenticado: " + userEmail);
+            logger.info("[WAITLIST] Usuario autenticado: " + userEmail);
 
             Long sessionId = request.get("learningSessionId");
 
@@ -218,7 +221,7 @@ public class BookingRestController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("[WAITLIST] Error: " + e.getMessage());
+            logger.info("[WAITLIST] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -238,7 +241,7 @@ public class BookingRestController {
             @PathVariable Long sessionId,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println("[WAITLIST] POST /api/bookings/process-waitlist/" + sessionId);
+            logger.info("[WAITLIST] POST /api/bookings/process-waitlist/" + sessionId);
 
             bookingService.processWaitlist(sessionId);
 
@@ -249,7 +252,7 @@ public class BookingRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("[WAITLIST] Error: " + e.getMessage());
+            logger.info("[WAITLIST] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
@@ -269,12 +272,12 @@ public class BookingRestController {
             @PathVariable Long bookingId,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println("[WAITLIST] DELETE /api/bookings/waitlist/" + bookingId);
+            logger.info("[WAITLIST] DELETE /api/bookings/waitlist/" + bookingId);
 
             String token = authHeader.replace("Bearer ", "");
             String userEmail = jwtService.extractUsername(token);
 
-            System.out.println("[WAITLIST] Usuario autenticado: " + userEmail);
+            logger.info("[WAITLIST] Usuario autenticado: " + userEmail);
 
             bookingService.leaveWaitlist(bookingId, userEmail);
 
@@ -285,7 +288,7 @@ public class BookingRestController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("[WAITLIST] Error: " + e.getMessage());
+            logger.info("[WAITLIST] Error: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();

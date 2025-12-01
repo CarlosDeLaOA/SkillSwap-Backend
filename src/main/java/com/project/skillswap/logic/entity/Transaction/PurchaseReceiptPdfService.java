@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Transaction;
 
+package com.project.skillswap.logic.entity.Transaction;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -27,6 +29,7 @@ import java.util.Date;
  */
 @Service
 public class PurchaseReceiptPdfService {
+    private static final Logger logger = LoggerFactory.getLogger(PurchaseReceiptPdfService.class);
 
     private static final DeviceRgb SKILLSWAP_PURPLE = new DeviceRgb(80, 74, 183);
     private static final DeviceRgb SKILLSWAP_GREEN = new DeviceRgb(170, 225, 107);

@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.WeeklyReport;
 
+package com.project.skillswap.logic.entity.WeeklyReport;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +16,7 @@ import java.util.List;
  */
 @Service
 public class WeeklyReportEmailService {
+    private static final Logger logger = LoggerFactory.getLogger(WeeklyReportEmailService.class);
 
     //#region Dependencies
     private final JavaMailSender mailSender;

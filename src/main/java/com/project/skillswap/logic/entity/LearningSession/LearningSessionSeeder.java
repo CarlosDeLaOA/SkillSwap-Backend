@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.LearningSession;
 
+package com.project.skillswap.logic.entity.LearningSession;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Instructor.InstructorRepository;
 import com.project.skillswap.logic.entity.Skill.Skill;
@@ -23,6 +25,7 @@ import java.util.Optional;
 @Order(4)
 @Component
 public class LearningSessionSeeder implements ApplicationListener<ContextRefreshedEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(LearningSessionSeeder.class);
 
     //#region Dependencies
     private final LearningSessionRepository learningSessionRepository;

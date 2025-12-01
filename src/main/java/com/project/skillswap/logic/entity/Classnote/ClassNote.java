@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Classnote;
 
+package com.project.skillswap.logic.entity.Classnote;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -11,6 +13,7 @@ import java.util.Date;
 })
 @Entity
 public class ClassNote {
+    private static final Logger logger = LoggerFactory.getLogger(ClassNote.class);
 
     //<editor-fold desc="Fields">
     @Id

@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Certification;
 
+package com.project.skillswap.logic.entity.Certification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Skill.Skill;
 import jakarta.persistence.*;
@@ -14,6 +16,7 @@ import java.util.Date;
 })
 @Entity
 public class Certification {
+    private static final Logger logger = LoggerFactory.getLogger(Certification.class);
 
     //<editor-fold desc="Fields">
     @Id

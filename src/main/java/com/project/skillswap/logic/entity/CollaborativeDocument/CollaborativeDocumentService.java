@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.CollaborativeDocument;
 
+package com.project.skillswap.logic.entity.CollaborativeDocument;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import java.util.UUID;
 
 @Service
 public class CollaborativeDocumentService {
+    private static final Logger logger = LoggerFactory.getLogger(CollaborativeDocumentService.class);
 
     //#region Dependencies
     @Autowired
@@ -31,7 +34,7 @@ public class CollaborativeDocumentService {
      */
     @Transactional
     public DocumentResponse getOrCreateDocument(Long sessionId) {
-        System.out.println("Getting or creating document for session: " + sessionId);
+        logger.info("Getting or creating document for session: " + sessionId);
 
         Optional<CollaborativeDocument> existingDoc = documentRepository.findBySessionId(sessionId);
 
@@ -39,10 +42,10 @@ public class CollaborativeDocumentService {
             CollaborativeDocument doc = existingDoc.get();
 
             if (doc.isExpired()) {
-                System.out.println("Document expired, creating new one");
+                logger.info("Document expired, creating new one");
                 documentRepository.delete(doc);
             } else {
-                System.out.println("Existing document found");
+                logger.info("Existing document found");
                 return mapToResponse(doc);
             }
         }
@@ -60,7 +63,7 @@ public class CollaborativeDocumentService {
         newDoc.setExpiresAt(LocalDateTime.now().plusHours(24));
 
         CollaborativeDocument saved = documentRepository.save(newDoc);
-        System.out.println("New document created: " + saved.getDocumentId());
+        logger.info("New document created: " + saved.getDocumentId());
 
         return mapToResponse(saved);
     }
@@ -71,7 +74,7 @@ public class CollaborativeDocumentService {
      */
     @Transactional
     public DocumentResponse updateDocument(String documentId, String content, Long expectedVersion) {
-        System.out.println("Updating document: " + documentId);
+        logger.info("Updating document: " + documentId);
 
         CollaborativeDocument document = documentRepository.findByDocumentId(documentId)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
@@ -95,7 +98,7 @@ public class CollaborativeDocumentService {
         document.updateSize();
 
         CollaborativeDocument updated = documentRepository.save(document);
-        System.out.println("Document updated - Version: " + updated.getVersion());
+        logger.info("Document updated - Version: " + updated.getVersion());
 
         return mapToResponse(updated);
     }
@@ -139,7 +142,7 @@ public class CollaborativeDocumentService {
             CollaborativeDocument doc = docOpt.get();
             doc.setIsActive(false);
             documentRepository.save(doc);
-            System.out.println("Document deactivated for session: " + sessionId);
+            logger.info("Document deactivated for session: " + sessionId);
         }
     }
 
@@ -154,9 +157,9 @@ public class CollaborativeDocumentService {
     @Scheduled(fixedRate = 3600000)
     @Transactional
     public void cleanupExpiredDocuments() {
-        System.out.println("Cleaning up expired documents...");
+        logger.info("Cleaning up expired documents...");
         int deleted = documentRepository.deleteExpiredDocuments(LocalDateTime.now());
-        System.out.println("Documents deleted: " + deleted);
+        logger.info("Documents deleted: " + deleted);
     }
 
     //#endregion

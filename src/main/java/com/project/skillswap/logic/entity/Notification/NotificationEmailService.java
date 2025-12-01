@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.CommunityDocument.CommunityDocument;
 import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunity;
 import com.project.skillswap.logic.entity.Person.Person;
@@ -17,6 +19,7 @@ import java.util.Locale;
 
 @Service
 public class NotificationEmailService {
+    private static final Logger logger = LoggerFactory.getLogger(NotificationEmailService.class);
 
     private final JavaMailSender mailSender;
 
