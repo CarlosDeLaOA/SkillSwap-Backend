@@ -1,4 +1,3 @@
-
 package com.project.skillswap.logic.entity.videocall;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -143,7 +142,7 @@ public class SessionSummaryEmailService {
             helper.setTo(recipient.getEmail());
             helper.setSubject("Resumen de tu Sesión - " + session.getTitle());
 
-            helper.setText(buildEmailBody(recipient, session, summary), false);
+            helper.setText(buildEmailBody(recipient, session, summary), true);
 
             String fileName = "resumen_sesion_" + session.getId() + "_" +
                     new SimpleDateFormat("yyyyMMdd").format(new Date()) + ".pdf";
@@ -166,12 +165,12 @@ public class SessionSummaryEmailService {
     //#region Email Body
 
     /**
-     * Construye el cuerpo textual del email enviado al participante.
+     * Construye el cuerpo HTML del email enviado al participante.
      *
      * @param recipient Persona destinataria
      * @param session   Sesión correspondiente
      * @param summary   Resumen textual generado por IA
-     * @return Cuerpo del correo como texto plano
+     * @return Cuerpo del correo como HTML
      */
     private String buildEmailBody(Person recipient, LearningSession session, String summary) {
 
@@ -188,38 +187,94 @@ public class SessionSummaryEmailService {
                 ? new SimpleDateFormat("dd/MM/yyyy").format(session.getScheduledDatetime())
                 : "N/A";
 
-        return String.format("""
-        Hola %s,
+        // Escapar el summary para HTML (reemplazar caracteres especiales)
+        String escapedSummary = summary != null
+                ? summary.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\n", "<br>")
+                : "No hay resumen disponible.";
 
-        Tu sesión de %s ha sido procesada correctamente.
-
-        Hemos generado un resumen conciso de tu sesión reciente para que puedas revisar los puntos clave en cualquier momento.
-
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        DETALLES DE LA SESIÓN
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-        Título:      %s
-        Instructor:  %s
-        Habilidad:   %s
-        Fecha:       %s
-
-        Adjunto encontrarás un documento PDF con el resumen completo generado automáticamente.
-
-        Saludos cordiales,
-        El Equipo de %s
-
-        ---
-        Este es un mensaje automático. Por favor no respondas a este correo.
-        """,
-                recipient.getFullName(),
-                appName,
-                session.getTitle(),
-                instructorName,
-                skillName,
-                sessionDate,
-                appName
-        );
+        return "<!DOCTYPE html>" +
+                "<html lang='es'>" +
+                "<head>" +
+                "    <meta charset='UTF-8'>" +
+                "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                "    <title>Resumen de Sesión</title>" +
+                "</head>" +
+                "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #39434b;'>" +
+                "    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #39434b; padding: 40px 20px;'>" +
+                "        <tr>" +
+                "            <td align='center'>" +
+                "                <table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>" +
+                "                    <tr>" +
+                "                        <td style='background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); padding: 40px 20px; text-align: center;'>" +
+                "                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                    <tr>" +
+                "                        <td style='padding: 40px 30px; color: #ffffff;'>" +
+                "                            <h2 style='color: #aae16b; margin-top: 0; font-size: 24px;'>¡Hola, " + recipient.getFullName() + "!</h2>" +
+                "                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>" +
+                "                                Tu sesión de <strong style='color: #aae16b;'>" + appName + "</strong> ha sido procesada correctamente." +
+                "                            </p>" +
+                "                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>" +
+                "                                Hemos generado un resumen conciso de tu sesión reciente para que puedas revisar los puntos clave en cualquier momento." +
+                "                            </p>" +
+                "                            <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 30px 0;'>" +
+                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 18px; border-bottom: 2px solid #504ab7; padding-bottom: 10px;'>Detalles de la Sesión</h3>" +
+                "                                <table width='100%' cellpadding='8' cellspacing='0' style='font-size: 14px;'>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold; width: 120px;'>Título:</td>" +
+                "                                        <td style='color: #ffffff;'>" + session.getTitle() + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold;'>Instructor:</td>" +
+                "                                        <td style='color: #ffffff;'>" + instructorName + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold;'>Habilidad:</td>" +
+                "                                        <td style='color: #ffffff;'>" + skillName + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold;'>Fecha:</td>" +
+                "                                        <td style='color: #ffffff;'>" + sessionDate + "</td>" +
+                "                                    </tr>" +
+                "                                </table>" +
+                "                            </div>" +
+                "                            <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0;'>" +
+                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 18px;'>Resumen de la Sesión</h3>" +
+                "                                <p style='font-size: 14px; line-height: 1.8; color: #ffffff; margin: 0;'>" +
+                escapedSummary +
+                "                                </p>" +
+                "                            </div>" +
+                "                            <div style='background-color: #504ab7; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #aae16b;'>" +
+                "                                <p style='font-size: 14px; line-height: 1.6; color: #ffffff; margin: 0;'>" +
+                "                                    <strong>📄 Archivo Adjunto:</strong> Adjunto encontrarás un documento PDF con el resumen completo generado automáticamente." +
+                "                                </p>" +
+                "                            </div>" +
+                "                            <p style='font-size: 14px; line-height: 1.6; color: #b0b0b0; margin: 30px 0 0 0;'>" +
+                "                                Saludos cordiales,<br>" +
+                "                                <strong style='color: #aae16b;'>El Equipo de " + appName + "</strong>" +
+                "                            </p>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                    <tr>" +
+                "                        <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>" +
+                "                            <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>" +
+                "                                Este es un mensaje automático. Por favor no respondas a este correo." +
+                "                            </p>" +
+                "                            <p style='margin: 10px 0 0 0; font-size: 12px; color: #b0b0b0;'>" +
+                "                                © 2025 SkillSwap. Todos los derechos reservados." +
+                "                            </p>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                </table>" +
+                "            </td>" +
+                "        </tr>" +
+                "    </table>" +
+                "</body>" +
+                "</html>";
     }
 
     //#endregion

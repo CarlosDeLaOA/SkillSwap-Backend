@@ -1,4 +1,3 @@
-
 package com.project.skillswap.logic.entity.Transaction;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -75,7 +74,7 @@ public class TransactionEmailService {
                     usdAmount, newBalance, paypalReference
             );
 
-            helper.setText(emailBody);
+            helper.setText(emailBody, true);
 
             byte[] pdfBytes = purchaseReceiptPdfService.generatePurchaseReceipt(
                     transaction,
@@ -97,7 +96,7 @@ public class TransactionEmailService {
     }
 
     /**
-     * Construye el cuerpo del email de confirmación de compra.
+     * Construye el cuerpo HTML del email de confirmación de compra.
      *
      * @param userName nombre del usuario
      * @param transactionId ID de la transacción
@@ -106,7 +105,7 @@ public class TransactionEmailService {
      * @param usdAmount monto en USD
      * @param newBalance nuevo balance
      * @param paypalReference referencia PayPal
-     * @return cuerpo del email formateado
+     * @return cuerpo del email en formato HTML
      */
     private String buildPurchaseConfirmationEmail(
             String userName,
@@ -120,41 +119,94 @@ public class TransactionEmailService {
         String timestamp = LocalDateTime.now()
                 .format(DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy 'a las' hh:mm a", new Locale("es", "ES")));
 
-        return String.format("""
-            Hola %s,
-            
-            ¡Muchas gracias por tu compra! Tus SkillCoins han sido agregadas a tu cuenta exitosamente.
-            
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            DETALLES DE LA COMPRA
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            
-            Paquete:              %s
-            SkillCoins Agregadas: %s coins
-            Monto Pagado:         $%s USD
-            ID de Transacción:    #%d
-            Referencia PayPal:    %s
-            Fecha y Hora:         %s
-            
-            COMPROBANTE ADJUNTO
-            Hemos adjuntado tu comprobante de compra en formato PDF para tus registros.
-            
-            Si tienes alguna pregunta sobre tu compra, por favor contacta a nuestro equipo de soporte.
-            
-            Saludos cordiales,
-            El Equipo de SkillSwap
-            
-            Este es un mensaje automático. Por favor no respondas a este correo.
-            """,
-                userName,
-                packageType,
-                coinsAdded,
-                usdAmount,
-                transactionId,
-                paypalReference,
-                timestamp,
-                newBalance
-        );
+        return "<!DOCTYPE html>" +
+                "<html lang='es'>" +
+                "<head>" +
+                "    <meta charset='UTF-8'>" +
+                "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                "    <title>Confirmación de Compra</title>" +
+                "</head>" +
+                "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #39434b;'>" +
+                "    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #39434b; padding: 40px 20px;'>" +
+                "        <tr>" +
+                "            <td align='center'>" +
+                "                <table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>" +
+                "                    <tr>" +
+                "                        <td style='background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); padding: 40px 20px; text-align: center;'>" +
+                "                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                    <tr>" +
+                "                        <td style='padding: 40px 30px; color: #ffffff;'>" +
+                "                            <h2 style='color: #aae16b; margin-top: 0; font-size: 24px;'>¡Hola, " + userName + "!</h2>" +
+                "                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>" +
+                "                                ¡Muchas gracias por tu compra! Tus <strong style='color: #aae16b;'>SkillCoins</strong> han sido agregadas a tu cuenta exitosamente." +
+                "                            </p>" +
+                "                            <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 30px 0;'>" +
+                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 18px; border-bottom: 2px solid #504ab7; padding-bottom: 10px;'>Detalles de la Compra</h3>" +
+                "                                <table width='100%' cellpadding='8' cellspacing='0' style='font-size: 14px;'>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold; width: 180px;'>Paquete:</td>" +
+                "                                        <td style='color: #ffffff;'>" + packageType + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold;'>SkillCoins Agregadas:</td>" +
+                "                                        <td style='color: #ffffff;'>" + coinsAdded + " coins</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold;'>Monto Pagado:</td>" +
+                "                                        <td style='color: #ffffff;'>$" + usdAmount + " USD</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold;'>Nuevo Balance:</td>" +
+                "                                        <td style='color: #ffffff; font-size: 16px; font-weight: bold;'>" + newBalance + " coins</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold;'>ID de Transacción:</td>" +
+                "                                        <td style='color: #ffffff;'>#" + transactionId + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold;'>Referencia PayPal:</td>" +
+                "                                        <td style='color: #ffffff; font-size: 12px;'>" + paypalReference + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold;'>Fecha y Hora:</td>" +
+                "                                        <td style='color: #ffffff;'>" + timestamp + "</td>" +
+                "                                    </tr>" +
+                "                                </table>" +
+                "                            </div>" +
+                "                            <div style='background-color: #504ab7; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #aae16b;'>" +
+                "                                <p style='font-size: 14px; line-height: 1.6; color: #ffffff; margin: 0;'>" +
+                "                                    <strong>📄 Comprobante Adjunto:</strong> Hemos adjuntado tu comprobante de compra en formato PDF para tus registros." +
+                "                                </p>" +
+                "                            </div>" +
+                "                            <div style='background-color: #39434b; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: center;'>" +
+                "                                <p style='font-size: 14px; line-height: 1.6; color: #b0b0b0; margin: 0;'>" +
+                "                                    Si tienes alguna pregunta sobre tu compra, por favor contacta a nuestro equipo de soporte." +
+                "                                </p>" +
+                "                            </div>" +
+                "                            <p style='font-size: 14px; line-height: 1.6; color: #b0b0b0; margin: 30px 0 0 0;'>" +
+                "                                Saludos cordiales,<br>" +
+                "                                <strong style='color: #aae16b;'>El Equipo de " + appName + "</strong>" +
+                "                            </p>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                    <tr>" +
+                "                        <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>" +
+                "                            <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>" +
+                "                                Este es un mensaje automático. Por favor no respondas a este correo." +
+                "                            </p>" +
+                "                            <p style='margin: 10px 0 0 0; font-size: 12px; color: #b0b0b0;'>" +
+                "                                © 2025 SkillSwap. Todos los derechos reservados." +
+                "                            </p>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                </table>" +
+                "            </td>" +
+                "        </tr>" +
+                "    </table>" +
+                "</body>" +
+                "</html>";
     }
 
     /**
@@ -177,45 +229,105 @@ public class TransactionEmailService {
 
             helper.setFrom(fromEmail);
             helper.setTo(userEmail);
-            helper.setSubject("️ Pago Fallido - " + appName);
+            helper.setSubject("⚠️ Pago Fallido - " + appName);
 
-            String emailBody = String.format("""
-                Hola %s,
-                
-                Lo sentimos, pero tu intento de compra reciente no fue exitoso.
-                
-                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                DETALLES DE LA TRANSACCIÓN
-                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                
-                Paquete:    %s
-                Estado:     Fallido
-                Razón:      %s
-                
-                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                ¿QUÉ HACER AHORA?
-                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                
-                1. Por favor verifica que tu cuenta de PayPal esté activa y tenga fondos suficientes
-                2. Intenta realizar la compra nuevamente
-                3. Si el problema persiste, contacta a nuestro equipo de soporte
-                
-                Saludos cordiales,
-                El Equipo de SkillSwap
-                
-                ---
-                Este es un mensaje automático. Por favor no respondas a este correo.
-                """,
-                    userName,
-                    packageType,
-                    errorMessage
-            );
+            String emailBody = buildPurchaseFailedEmail(userName, packageType, errorMessage);
 
-            helper.setText(emailBody);
+            helper.setText(emailBody, true);
             mailSender.send(message);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to send failure notification email: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Construye el cuerpo HTML del email de notificación de fallo.
+     *
+     * @param userName nombre del usuario
+     * @param packageType tipo de paquete
+     * @param errorMessage mensaje de error
+     * @return cuerpo del email en formato HTML
+     */
+    private String buildPurchaseFailedEmail(
+            String userName,
+            String packageType,
+            String errorMessage
+    ) {
+        return "<!DOCTYPE html>" +
+                "<html lang='es'>" +
+                "<head>" +
+                "    <meta charset='UTF-8'>" +
+                "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                "    <title>Pago Fallido</title>" +
+                "</head>" +
+                "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #39434b;'>" +
+                "    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #39434b; padding: 40px 20px;'>" +
+                "        <tr>" +
+                "            <td align='center'>" +
+                "                <table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>" +
+                "                    <tr>" +
+                "                        <td style='background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); padding: 40px 20px; text-align: center;'>" +
+                "                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                    <tr>" +
+                "                        <td style='padding: 40px 30px; color: #ffffff;'>" +
+                "                            <h2 style='color: #aae16b; margin-top: 0; font-size: 24px;'>Hola, " + userName + "</h2>" +
+                "                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>" +
+                "                                Lo sentimos, pero tu intento de compra reciente no fue exitoso." +
+                "                            </p>" +
+                "                            <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 30px 0;'>" +
+                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 18px; border-bottom: 2px solid #504ab7; padding-bottom: 10px;'>Detalles de la Transacción</h3>" +
+                "                                <table width='100%' cellpadding='8' cellspacing='0' style='font-size: 14px;'>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold; width: 120px;'>Paquete:</td>" +
+                "                                        <td style='color: #ffffff;'>" + packageType + "</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold;'>Estado:</td>" +
+                "                                        <td style='color: #ff6b6b; font-weight: bold;'>❌ Fallido</td>" +
+                "                                    </tr>" +
+                "                                    <tr>" +
+                "                                        <td style='color: #aae16b; font-weight: bold;'>Razón:</td>" +
+                "                                        <td style='color: #ffffff;'>" + errorMessage + "</td>" +
+                "                                    </tr>" +
+                "                                </table>" +
+                "                            </div>" +
+                "                            <div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0;'>" +
+                "                                <h3 style='color: #aae16b; margin-top: 0; font-size: 18px;'>¿Qué hacer ahora?</h3>" +
+                "                                <ul style='color: #ffffff; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 10px 0;'>" +
+                "                                    <li>Por favor verifica que tu cuenta de <strong style='color: #aae16b;'>PayPal</strong> esté activa y tenga fondos suficientes</li>" +
+                "                                    <li>Intenta realizar la compra nuevamente</li>" +
+                "                                    <li>Si el problema persiste, contacta a nuestro equipo de soporte</li>" +
+                "                                </ul>" +
+                "                            </div>" +
+                "                            <div style='background-color: #504ab7; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #aae16b; text-align: center;'>" +
+                "                                <p style='font-size: 14px; line-height: 1.6; color: #ffffff; margin: 0;'>" +
+                "                                    <strong>💡 Consejo:</strong> Asegúrate de completar el proceso de pago en la ventana de PayPal sin cerrarla." +
+                "                                </p>" +
+                "                            </div>" +
+                "                            <p style='font-size: 14px; line-height: 1.6; color: #b0b0b0; margin: 30px 0 0 0;'>" +
+                "                                Saludos cordiales,<br>" +
+                "                                <strong style='color: #aae16b;'>El Equipo de " + appName + "</strong>" +
+                "                            </p>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                    <tr>" +
+                "                        <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>" +
+                "                            <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>" +
+                "                                Este es un mensaje automático. Por favor no respondas a este correo." +
+                "                            </p>" +
+                "                            <p style='margin: 10px 0 0 0; font-size: 12px; color: #b0b0b0;'>" +
+                "                                © 2025 SkillSwap. Todos los derechos reservados." +
+                "                            </p>" +
+                "                        </td>" +
+                "                    </tr>" +
+                "                </table>" +
+                "            </td>" +
+                "        </tr>" +
+                "    </table>" +
+                "</body>" +
+                "</html>";
     }
 }
