@@ -264,7 +264,7 @@ public class VideoCallRestController {
             session.setProcessingDate(null);
             sessionRepository.save(session);
 
-            System.out.println("🗑 Transcripción eliminada para sesión " + sessionId);
+            System.out.println(" Transcripción eliminada para sesión " + sessionId);
 
             return ResponseEntity.ok(Map.of(
                     "message", "Transcripción eliminada exitosamente",
@@ -1104,7 +1104,7 @@ public class VideoCallRestController {
 // ========================================
 
     /**
-     * 🤖 Genera resumen de sesión con IA y lo envía por email a participantes
+     *  Genera resumen de sesión con IA y lo envía por email a participantes
      * POST /videocall/summary/generate/{sessionId}
      */
     @PostMapping("/summary/generate/{sessionId}")
@@ -1122,7 +1122,7 @@ public class VideoCallRestController {
             }
 
             System.out.println("========================================");
-            System.out.println("🤖 GENERANDO RESUMEN DE SESIÓN");
+            System.out.println(" GENERANDO RESUMEN DE SESIÓN");
             System.out.println("   Session ID: " + sessionId);
             System.out.println("   Solicitado por: " + person.getFullName());
             System.out.println("========================================");
@@ -1168,17 +1168,17 @@ public class VideoCallRestController {
             response.put("emailsSent", emailsSent);
 
             System.out.println("========================================");
-            System.out.println("✅ PROCESO COMPLETADO");
-            System.out.println("   Resumen generado: ✓");
-            System.out.println("   PDF creado: ✓");
-            System.out.println("   Emails enviados: " + (emailsSent ? "✓" : "✗"));
+            System.out.println(" PROCESO COMPLETADO");
+            System.out.println("   Resumen generado: ");
+            System.out.println("   PDF creado: ");
+            System.out.println("   Emails enviados: " + (emailsSent ? "" : ""));
             System.out.println("========================================");
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             System.err.println("========================================");
-            System.err.println("❌ ERROR GENERANDO RESUMEN");
+            System.err.println(" ERROR GENERANDO RESUMEN");
             System.err.println("   Error: " + e.getMessage());
             System.err.println("========================================");
             e.printStackTrace();
@@ -1246,7 +1246,7 @@ public class VideoCallRestController {
     public ResponseEntity<?> downloadSummaryPdf(@PathVariable Long sessionId) {
         try {
             System.out.println("========================================");
-            System.out.println("📥 DESCARGA DE RESUMEN PDF");
+            System.out.println(" DESCARGA DE RESUMEN PDF");
             System.out.println("   Session ID: " + sessionId);
             System.out.println("========================================");
 
@@ -1284,7 +1284,7 @@ public class VideoCallRestController {
                             java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"));
 
             System.out.println("========================================");
-            System.out.println("✅ PDF DE RESUMEN LISTO");
+            System.out.println(" PDF DE RESUMEN LISTO");
             System.out.println("   Archivo: " + fileName);
             System.out.println("========================================");
 
@@ -1294,7 +1294,7 @@ public class VideoCallRestController {
 
         } catch (Exception e) {
             System.err.println("========================================");
-            System.err.println("❌ ERROR DESCARGANDO PDF");
+            System.err.println(" ERROR DESCARGANDO PDF");
             System.err.println("   Error: " + e.getMessage());
             System.err.println("========================================");
             e.printStackTrace();

@@ -93,7 +93,7 @@ public class BookingRestController {
             @PathVariable Long id,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            System.out.println("📥 [BOOKING] PUT /api/bookings/" + id + "/cancel");
+            System.out.println(" [BOOKING] PUT /api/bookings/" + id + "/cancel");
 
             String token = authHeader.replace("Bearer ", "");
             String userEmail = jwtService.extractUsername(token);

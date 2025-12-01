@@ -44,7 +44,7 @@ public class VideoCallService {
 
         // Validar estado de la sesión
         if (developmentMode) {
-            System.out.println("🛠️ [DEV MODE] Permitiendo acceso a sesión");
+            System.out.println("️ [DEV MODE] Permitiendo acceso a sesión");
             if (session.getStatus() == SessionStatus.CANCELLED) {
                 throw new RuntimeException("La sesión ha sido cancelada");
             }
@@ -68,7 +68,7 @@ public class VideoCallService {
         String roomName = "skillswap_session_" + sessionId;
 
         System.out.println("========================================");
-        System.out.println("🎬 GENERANDO DATOS DE VIDEOLLAMADA");
+        System.out.println(" GENERANDO DATOS DE VIDEOLLAMADA");
         System.out.println("   Session ID: " + sessionId);
         System.out.println("   Room Name: " + roomName);
         System.out.println("   Usuario: " + person.getFullName());

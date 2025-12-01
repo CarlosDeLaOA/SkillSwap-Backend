@@ -174,7 +174,7 @@ public class TransactionEmailService {
 
             helper.setFrom(fromEmail);
             helper.setTo(userEmail);
-            helper.setSubject("⚠️ Pago Fallido - " + appName);
+            helper.setSubject("️ Pago Fallido - " + appName);
 
             String emailBody = String.format("""
                 Hola %s,

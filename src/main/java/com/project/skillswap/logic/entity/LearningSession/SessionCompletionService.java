@@ -71,7 +71,7 @@ public class SessionCompletionService {
             LearningSession session = learningSessionRepository.findById(sessionId)
                     .orElseThrow(() -> new IllegalArgumentException("Sesión no encontrada: " + sessionId));
 
-            logger.info("   ✓ Sesión encontrada:");
+            logger.info("    Sesión encontrada:");
             logger.info("     - ID: {}", session.getId());
             logger.info("     - Título: {}", session.getTitle());
             logger.info("     - Skill: {}", session.getSkill() != null ? session.getSkill().getName() : "N/A");
@@ -82,7 +82,7 @@ public class SessionCompletionService {
             logger.info("");
             logger.info("2️⃣  Validando transcripción...");
             validateSessionHasTranscription(session);
-            logger.info("   ✓ Transcripción encontrada: {} caracteres",
+            logger.info("    Transcripción encontrada: {} caracteres",
                     session.getFullText() != null ? session.getFullText().length() : 0);
 
             // Paso 3: Marcar bookings como asistidos AUTOMÁTICAMENTE
@@ -90,10 +90,10 @@ public class SessionCompletionService {
             logger.info("3️⃣  Procesando bookings...");
             int markedAsAttended = markAllBookingsAsAttendedWithFlush(sessionId);
 
-            logger.info("   ✓ Bookings marcados como asistidos: {}", markedAsAttended);
+            logger.info("    Bookings marcados como asistidos: {}", markedAsAttended);
 
             if (markedAsAttended == 0) {
-                logger.warn("   ⚠️  No hay bookings para esta sesión");
+                logger.warn("   ️  No hay bookings para esta sesión");
                 logger.info("   → Saltando envío de invitaciones de quiz");
                 logger.info("");
                 logger.info("╔════════════════════════════════════════════════════════════╗");
@@ -108,7 +108,7 @@ public class SessionCompletionService {
             entityManager.clear(); // Limpiar caché
             session = learningSessionRepository.findById(sessionId)
                     .orElseThrow(() -> new IllegalArgumentException("Sesión no encontrada: " + sessionId));
-            logger.info("   ✓ Sesión recargada");
+            logger.info("    Sesión recargada");
 
             // Paso 5: Enviar invitaciones
             logger.info("");
@@ -118,17 +118,17 @@ public class SessionCompletionService {
             logger.info("");
             if (success) {
                 logger.info("╔════════════════════════════════════════════════════════════╗");
-                logger.info("║  ✅ PROCESAMIENTO COMPLETADO EXITOSAMENTE                 ║");
+                logger.info("║   PROCESAMIENTO COMPLETADO EXITOSAMENTE                 ║");
                 logger.info("╚════════════════════════════════════════════════════════════╝");
             } else {
                 logger.warn("╔════════════════════════════════════════════════════════════╗");
-                logger.warn("║  ⚠️  PROCESAMIENTO COMPLETADO CON ERRORES                 ║");
+                logger.warn("║  ️  PROCESAMIENTO COMPLETADO CON ERRORES                 ║");
                 logger.warn("╚════════════════════════════════════════════════════════════╝");
             }
 
         } catch (IllegalArgumentException e) {
             logger.error("╔════════════════════════════════════════════════════════════╗");
-            logger.error("║  ❌ ERROR: SESIÓN NO ENCONTRADA                            ║");
+            logger.error("║   ERROR: SESIÓN NO ENCONTRADA                            ║");
             logger.error("╠════════════════════════════════════════════════════════════╣");
             logger.error("║  Session ID: {:<45} ║", sessionId);
             logger.error("║  Mensaje: {:<48} ║", e.getMessage());
@@ -136,7 +136,7 @@ public class SessionCompletionService {
 
         } catch (IllegalStateException e) {
             logger.error("╔════════════════════════════════════════════════════════════╗");
-            logger.error("║  ❌ ERROR: VALIDACIÓN FALLIDA                              ║");
+            logger.error("║   ERROR: VALIDACIÓN FALLIDA                              ║");
             logger.error("╠════════════════════════════════════════════════════════════╣");
             logger.error("║  Session ID: {:<45} ║", sessionId);
             logger.error("║  Mensaje: {:<48} ║", e.getMessage());
@@ -144,7 +144,7 @@ public class SessionCompletionService {
 
         } catch (Exception e) {
             logger.error("╔════════════════════════════════════════════════════════════╗");
-            logger.error("║  ❌ ERROR CRÍTICO EN PROCESAMIENTO                         ║");
+            logger.error("║   ERROR CRÍTICO EN PROCESAMIENTO                         ║");
             logger.error("╠════════════════════════════════════════════════════════════╣");
             logger.error("║  Session ID: {:<45} ║", sessionId);
             logger.error("║  Error: {:<48} ║", e.getMessage());
@@ -188,17 +188,17 @@ public class SessionCompletionService {
 
             if (success) {
                 logger.info("════════════════════════════════════════════════════════════");
-                logger.info(" ✅ INVITACIONES ENVIADAS EXITOSAMENTE");
+                logger.info("  INVITACIONES ENVIADAS EXITOSAMENTE");
                 logger.info("════════════════════════════════════════════════════════════");
             } else {
                 logger.warn("════════════════════════════════════════════════════════════");
-                logger.warn(" ⚠️  NO SE ENVIARON INVITACIONES");
+                logger.warn(" ️  NO SE ENVIARON INVITACIONES");
                 logger.warn("════════════════════════════════════════════════════════════");
             }
 
         } catch (Exception e) {
             logger.error("════════════════════════════════════════════════════════════");
-            logger.error(" ❌ ERROR AL ENVIAR INVITACIONES");
+            logger.error("  ERROR AL ENVIAR INVITACIONES");
             logger.error(" Error: {}", e.getMessage(), e);
             logger.error("════════════════════════════════════════════════════════════");
             throw e;
@@ -215,7 +215,7 @@ public class SessionCompletionService {
      */
     private void validateSessionHasTranscription(LearningSession session) {
         if (session.getFullText() == null || session.getFullText().trim().isEmpty()) {
-            logger.error("   ✗ La sesión {} no tiene transcripción generada", session.getId());
+            logger.error("    La sesión {} no tiene transcripción generada", session.getId());
             throw new IllegalStateException("La sesión no tiene transcripción generada");
         }
     }
@@ -273,15 +273,15 @@ public class SessionCompletionService {
                 logger.info("Transaction rollback-only? {}",
                         TransactionAspectSupport.currentTransactionStatus().isRollbackOnly());
 
-                logger.info("   ✓ Booking {} marcado como asistido: {} (Learner ID: {})",
+                logger.info("    Booking {} marcado como asistido: {} (Learner ID: {})",
                         booking.getId(), learnerEmail, learnerId);
 
                 // Verificar que se guardó
                 Booking verificacion = bookingRepository.findById(booking.getId()).orElse(null);
                 if (verificacion != null && Boolean.TRUE.equals(verificacion.getAttended())) {
-                    logger.debug("   → ✓ VERIFICADO en BD: Booking {} está attended=true", booking.getId());
+                    logger.debug("   →  VERIFICADO en BD: Booking {} está attended=true", booking.getId());
                 } else {
-                    logger.error("   → ✗ ERROR: Booking {} NO se guardó correctamente en BD!", booking.getId());
+                    logger.error("   →  ERROR: Booking {} NO se guardó correctamente en BD!", booking.getId());
                 }
             }
 
@@ -309,15 +309,15 @@ public class SessionCompletionService {
             boolean result = quizEmailService.sendQuizInvitations(session);
 
             if (result) {
-                logger.info("   ✓ QuizEmailService completado exitosamente");
+                logger.info("    QuizEmailService completado exitosamente");
             } else {
-                logger.warn("   ⚠️  QuizEmailService no envió ningún email");
+                logger.warn("   ️  QuizEmailService no envió ningún email");
             }
 
             return result;
 
         } catch (Exception e) {
-            logger.error("   ✗ Error al llamar QuizEmailService: {}", e.getMessage(), e);
+            logger.error("    Error al llamar QuizEmailService: {}", e.getMessage(), e);
             return false;
         }
     }

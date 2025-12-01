@@ -66,7 +66,7 @@ public class QuizEmailService {
             logger.info("Total de learners que asistieron: {}", attendedLearners.size());
 
             if (attendedLearners.isEmpty()) {
-                logger.warn("⚠️ No hay participantes que hayan asistido a la sesión {}", session.getId());
+                logger.warn("️ No hay participantes que hayan asistido a la sesión {}", session.getId());
                 logger.info("========================================");
                 return false;
             }
@@ -80,7 +80,7 @@ public class QuizEmailService {
                 try {
                     if (sendQuizInvitationEmail(learner, session)) {
                         successfulEmails++;
-                        logger.info("✓ Email enviado exitosamente a: {}", learner.getEmail());
+                        logger.info(" Email enviado exitosamente a: {}", learner.getEmail());
 
                         // Crear notificación
                         try {
@@ -91,11 +91,11 @@ public class QuizEmailService {
                         }
                     } else {
                         failedEmails++;
-                        logger.error("✗ Error al enviar email a: {}", learner.getEmail());
+                        logger.error(" Error al enviar email a: {}", learner.getEmail());
                     }
                 } catch (Exception e) {
                     failedEmails++;
-                    logger.error("✗ Excepción al procesar learner {}: {}", learner.getEmail(), e.getMessage(), e);
+                    logger.error(" Excepción al procesar learner {}: {}", learner.getEmail(), e.getMessage(), e);
                 }
             }
 
@@ -104,14 +104,14 @@ public class QuizEmailService {
             logger.info("   Total participantes: {}", attendedLearners.size());
             logger.info("   Emails enviados: {}", successfulEmails);
             logger.info("   Emails fallidos: {}", failedEmails);
-            logger.info("   Resultado: {}", successfulEmails > 0 ? "ÉXITO ✓" : "FALLÓ ✗");
+            logger.info("   Resultado: {}", successfulEmails > 0 ? "ÉXITO " : "FALLÓ ");
             logger.info("========================================");
 
             return successfulEmails > 0;
 
         } catch (Exception e) {
             logger.error("========================================");
-            logger.error(" ❌ ERROR CRÍTICO AL ENVIAR INVITACIONES");
+            logger.error("  ERROR CRÍTICO AL ENVIAR INVITACIONES");
             logger.error("   Sesión ID: {}", session.getId());
             logger.error("   Error: {}", e.getMessage(), e);
             logger.error("========================================");
@@ -183,7 +183,7 @@ public class QuizEmailService {
 
             helper.setFrom(fromEmail);
             helper.setTo(learner.getEmail());
-            helper.setSubject("📝 Completa tu evaluación - " + session.getTitle());
+            helper.setSubject(" Completa tu evaluación - " + session.getTitle());
 
             String htmlContent = buildQuizInvitationEmailTemplate(learner, session, quizUrl);
             helper.setText(htmlContent, true);
@@ -241,7 +241,7 @@ public class QuizEmailService {
                 "                    </tr>" +
                 "                    <tr>" +
                 "                        <td style='padding: 40px 30px; color: #ffffff;'>" +
-                "                            <h2 style='color: #aae16b; margin-top: 0; font-size: 24px;'>📝 ¡Completa tu evaluación!</h2>" +
+                "                            <h2 style='color: #aae16b; margin-top: 0; font-size: 24px;'> ¡Completa tu evaluación!</h2>" +
                 "                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>" +
                 "                                Hola <strong style='color: #aae16b;'>" + learner.getFullName() + "</strong>," +
                 "                            </p>" +
@@ -263,13 +263,13 @@ public class QuizEmailService {
                 "                            <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>" +
                 "                                <tr>" +
                 "                                    <td align='center'>" +
-                "                                        <a href='" + quizUrl + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'>🎯 Iniciar Evaluación</a>" +
+                "                                        <a href='" + quizUrl + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold;'> Iniciar Evaluación</a>" +
                 "                                    </td>" +
                 "                                </tr>" +
                 "                            </table>" +
                 "                            <div style='background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; padding: 15px; margin: 20px 0;'>" +
                 "                                <p style='margin: 0; font-size: 14px; color: #856404;'>" +
-                "                                    <strong>💡 Tip:</strong> Si apruebas, recibirás una <strong>credencial</strong>. ¡Acumula 10 credenciales de la misma habilidad y obtendrás un <strong>certificado oficial</strong>!" +
+                "                                    <strong> Tip:</strong> Si apruebas, recibirás una <strong>credencial</strong>. ¡Acumula 10 credenciales de la misma habilidad y obtendrás un <strong>certificado oficial</strong>!" +
                 "                                </p>" +
                 "                            </div>" +
                 "                            <p style='font-size: 14px; line-height: 1.6; color: #b0b0b0; margin: 20px 0;'>" +

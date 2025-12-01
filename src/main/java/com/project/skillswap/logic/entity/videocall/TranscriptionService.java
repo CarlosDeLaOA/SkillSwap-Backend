@@ -157,10 +157,10 @@ public class TranscriptionService {
             } catch (Exception ignored) {}
 
             try {
-                System.out.println("📧 INICIANDO ENVÍO DE INVITACIONES QUIZ");
+                System.out.println(" INICIANDO ENVÍO DE INVITACIONES QUIZ");
                 sessionCompletionService.processSessionCompletion(session.getId());
             } catch (Exception e) {
-                System.err.println("❌ ERROR AL ENVIAR INVITACIONES QUIZ");
+                System.err.println(" ERROR AL ENVIAR INVITACIONES QUIZ");
                 e.printStackTrace();
             }
             // 9. Respuesta final

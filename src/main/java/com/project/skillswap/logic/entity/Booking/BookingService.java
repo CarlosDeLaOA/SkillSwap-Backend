@@ -346,7 +346,7 @@ public class BookingService {
                 waitlistBooking.setStatus(BookingStatus.WAITING);
                 waitlistBooking.setBookingDate(new Date());
                 waitlistBooking.setAccessLink(null);
-                System.out.println("♻️ [WAITLIST] Reutilizando booking CANCELLED existente");
+                System.out.println("️ [WAITLIST] Reutilizando booking CANCELLED existente");
                 break;
             }
         }

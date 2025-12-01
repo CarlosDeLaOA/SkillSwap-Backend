@@ -8,7 +8,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.Executor;
 
 /**
- * ⚙ Configuración para procesamiento asíncrono
+ *  Configuración para procesamiento asíncrono
  * Permite que las transcripciones se procesen en segundo plano
  */
 @Configuration
@@ -24,7 +24,7 @@ public class AsyncConfiguration {
         executor.setThreadNamePrefix("transcription-");
         executor.initialize();
 
-        System.out.println("⚙️ Executor de transcripción configurado");
+        System.out.println("️ Executor de transcripción configurado");
         System.out.println("   Core pool size: 2");
         System.out.println("   Max pool size: 4");
         System.out.println("   Queue capacity: 10");

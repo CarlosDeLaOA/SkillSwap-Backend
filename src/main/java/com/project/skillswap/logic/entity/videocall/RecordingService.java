@@ -40,7 +40,7 @@ public class RecordingService {
 
     public RecordingService() {
         activeRecordings.clear();
-        System.out.println("🎙️ Servicio de grabación inicializado");
+        System.out.println("️ Servicio de grabación inicializado");
     }
 
     /**
@@ -145,7 +145,7 @@ public class RecordingService {
 
             //  VALIDACIÓN 2: Tamaño mínimo
             if (audioFile.getSize() < 10000) { // 10KB
-                System.out.println("⚠ ADVERTENCIA: Archivo muy pequeño");
+                System.out.println(" ADVERTENCIA: Archivo muy pequeño");
                 System.out.println("   Tamaño: " + audioFile.getSize() + " bytes");
                 System.out.println("   Esto puede indicar que no hay audio audible");
             }
@@ -183,7 +183,7 @@ public class RecordingService {
             Path mp3FilePath = Paths.get(RECORDINGS_DIR + mp3FileName);
 
             System.out.println("========================================");
-            System.out.println("🎵 INICIANDO CONVERSIÓN A MP3");
+            System.out.println(" INICIANDO CONVERSIÓN A MP3");
             System.out.println("   Origen: " + tempFileName);
             System.out.println("   Destino: " + mp3FileName);
             System.out.println("========================================");
@@ -226,12 +226,12 @@ public class RecordingService {
             System.out.println("========================================");
             System.out.println(" PROCESO COMPLETADO EXITOSAMENTE");
             System.out.println("   Estado: Listo para transcripción");
-            System.out.println("   Guardado en BD: ✓");
+            System.out.println("   Guardado en BD: ");
             System.out.println("========================================");
 
             // ⭐⭐⭐ TRIGGER TRANSCRIPCIÓN AUTOMÁTICA (AQUÍ ES EL LUGAR CORRECTO) ⭐⭐⭐
             System.out.println("========================================");
-            System.out.println("🤖 INICIANDO TRANSCRIPCIÓN AUTOMÁTICA");
+            System.out.println(" INICIANDO TRANSCRIPCIÓN AUTOMÁTICA");
             System.out.println("   Session ID: " + sessionId);
             System.out.println("   Archivo MP3: " + mp3FileName);
             System.out.println("========================================");
@@ -241,23 +241,23 @@ public class RecordingService {
                         .thenAccept(transcriptionResult -> {
                             if (transcriptionResult.isSuccess()) {
                                 System.out.println("========================================");
-                                System.out.println("✅ TRANSCRIPCIÓN AUTOMÁTICA COMPLETADA");
+                                System.out.println(" TRANSCRIPCIÓN AUTOMÁTICA COMPLETADA");
                                 System.out.println("   Session ID: " + sessionId);
                                 System.out.println("========================================");
                             } else {
                                 System.err.println("========================================");
-                                System.err.println("❌ ERROR EN TRANSCRIPCIÓN AUTOMÁTICA");
+                                System.err.println(" ERROR EN TRANSCRIPCIÓN AUTOMÁTICA");
                                 System.err.println("   Session ID: " + sessionId);
                                 System.err.println("   Error: " + transcriptionResult.getErrorMessage());
                                 System.err.println("========================================");
                             }
                         });
 
-                System.out.println("✅ Transcripción iniciada en segundo plano");
+                System.out.println(" Transcripción iniciada en segundo plano");
 
             } catch (Exception e) {
                 System.err.println("========================================");
-                System.err.println("❌ ERROR AL INICIAR TRANSCRIPCIÓN");
+                System.err.println(" ERROR AL INICIAR TRANSCRIPCIÓN");
                 System.err.println("   Error: " + e.getMessage());
                 System.err.println("========================================");
                 e.printStackTrace();
@@ -285,7 +285,7 @@ public class RecordingService {
      */
     private boolean verifyAudioContent(Path filePath) {
         try {
-            System.out.println("🔍 VERIFICANDO CONTENIDO DE AUDIO...");
+            System.out.println(" VERIFICANDO CONTENIDO DE AUDIO...");
 
             MultimediaObject source = new MultimediaObject(filePath.toFile());
             ws.schild.jave.info.MultimediaInfo info = source.getInfo();
@@ -484,7 +484,7 @@ public class RecordingService {
     }
 
     /**
-     * 🧹 Limpia grabación huérfana
+     *  Limpia grabación huérfana
      */
     public void forceStopRecording(Long sessionId) {
         RecordingSession recording = activeRecordings.remove(sessionId);

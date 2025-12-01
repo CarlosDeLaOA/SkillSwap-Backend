@@ -17,7 +17,7 @@ public class UpcomingSessionResponse {
     private String videoCallLink;
     private String skillName;
 
-    // ✅ NUEVOS CAMPOS para cancelación de bookings (solo para LEARNERS)
+    //  NUEVOS CAMPOS para cancelación de bookings (solo para LEARNERS)
     private Long bookingId;
     private String bookingType;  // INDIVIDUAL o GROUP
     //#endregion

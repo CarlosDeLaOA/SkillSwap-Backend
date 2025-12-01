@@ -38,7 +38,7 @@ public class InstructorSessionController {
             return ResponseEntity.ok(sessions);
 
         } catch (Exception e) {
-            System.err.println("❌ [ERROR] Error al listar sesiones: " + e.getMessage());
+            System.err.println(" [ERROR] Error al listar sesiones: " + e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
@@ -61,7 +61,7 @@ public class InstructorSessionController {
             return ResponseEntity.ok(updatedSession);
 
         } catch (RuntimeException e) {
-            System.err.println("❌ [ERROR] Error al actualizar sesión: " + e.getMessage());
+            System.err.println(" [ERROR] Error al actualizar sesión: " + e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }

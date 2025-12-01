@@ -55,25 +55,25 @@ public class QuizInvitationRestController {
             response.put("message", "Invitaciones de quiz enviadas exitosamente");
             response.put("sessionId", sessionId);
 
-            logger.info("✅ Invitaciones enviadas exitosamente para session {}", sessionId);
+            logger.info(" Invitaciones enviadas exitosamente para session {}", sessionId);
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
-            logger.error("❌ Sesión no encontrada: {}", sessionId);
+            logger.error(" Sesión no encontrada: {}", sessionId);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
             error.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
 
         } catch (IllegalStateException e) {
-            logger.error("❌ Error de estado: {}", e.getMessage());
+            logger.error(" Error de estado: {}", e.getMessage());
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
             error.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
 
         } catch (Exception e) {
-            logger.error("❌ Error al enviar invitaciones: {}", e.getMessage(), e);
+            logger.error(" Error al enviar invitaciones: {}", e.getMessage(), e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
             error.put("message", "Error al enviar invitaciones: " + e.getMessage());

@@ -158,7 +158,7 @@ public class LearningSessionService {
 
         LearningSession savedSession = learningSessionRepository.save(session);
 
-        System.out.println("📝 [LearningSessionService] Session created with ID: " + savedSession.getId());
+        System.out.println(" [LearningSessionService] Session created with ID: " + savedSession.getId());
 
 
         String videoCallLink = frontendBaseUrl + "/app/video-call/" + savedSession.getId();
@@ -167,7 +167,7 @@ public class LearningSessionService {
 
         savedSession = learningSessionRepository.save(savedSession);
 
-        System.out.println("🔗 [LearningSessionService] Video call link assigned: " + videoCallLink);
+        System.out.println(" [LearningSessionService] Video call link assigned: " + videoCallLink);
 
         return savedSession;
     }
@@ -283,7 +283,7 @@ public class LearningSessionService {
                         participantEmails
                 );
                 System.out.println(String.format(
-                        "📧 [EMAIL] Sent %d/%d cancellation notifications",
+                        " [EMAIL] Sent %d/%d cancellation notifications",
                         emailsSent,
                         participantsCount
                 ));

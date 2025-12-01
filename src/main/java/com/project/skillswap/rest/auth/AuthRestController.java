@@ -466,7 +466,7 @@ public class AuthRestController {
                         .body(createErrorResponse("URI de redirección requerida"));
             }
 
-            System.out.println("🔵 [CheckUser] Verificando usuario existente...");
+            System.out.println(" [CheckUser] Verificando usuario existente...");
 
             Map<String, Object> tokenResponse = googleOAuthService.exchangeCodeForToken(code, redirectUri);
             String accessToken = (String) tokenResponse.get("accessToken");
@@ -505,7 +505,7 @@ public class AuthRestController {
 
                 response.put("userInfo", userInfo);
                 response.put("accessToken", accessToken);
-                System.out.println("⚠️ Usuario existe sin roles: " + email);
+                System.out.println("️ Usuario existe sin roles: " + email);
                 return ResponseEntity.ok(response);
             }
 

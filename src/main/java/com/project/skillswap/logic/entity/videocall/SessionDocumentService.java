@@ -107,7 +107,7 @@ public class SessionDocumentService {
 
             documents.put(documentId, documentInfo);
 
-            System.out.println("📄 Documento subido exitosamente");
+            System.out.println(" Documento subido exitosamente");
             System.out.println("   Sesión: " + sessionId);
             System.out.println("   Nombre: " + originalFilename);
             System.out.println("   Tamaño: " + file.getSize() + " bytes");
@@ -185,7 +185,7 @@ public class SessionDocumentService {
             // Eliminar registro
             documents.remove(documentId);
 
-            System.out.println("🗑 Documento eliminado: " + doc.getName());
+            System.out.println(" Documento eliminado: " + doc.getName());
 
         } catch (IOException e) {
             throw new RuntimeException("Error al eliminar el archivo: " + e.getMessage());

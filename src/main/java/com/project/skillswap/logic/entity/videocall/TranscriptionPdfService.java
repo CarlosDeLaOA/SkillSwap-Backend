@@ -16,7 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 
 /**
- * 📄 Servicio para generar PDFs de transcripciones
+ *Servicio para generar PDFs de transcripciones
  */
 @Service
 public class TranscriptionPdfService {
@@ -30,7 +30,7 @@ public class TranscriptionPdfService {
     public byte[] generateTranscriptionPdf(LearningSession session) {
         try {
             System.out.println("========================================");
-            System.out.println("📄 GENERANDO PDF DE TRANSCRIPCIÓN");
+            System.out.println(" GENERANDO PDF DE TRANSCRIPCIÓN");
             System.out.println("   Session ID: " + session.getId());
             System.out.println("========================================");
 
@@ -152,7 +152,7 @@ public class TranscriptionPdfService {
             byte[] pdfBytes = baos.toByteArray();
 
             System.out.println("========================================");
-            System.out.println("✅ PDF GENERADO EXITOSAMENTE");
+            System.out.println(" PDF GENERADO EXITOSAMENTE");
             System.out.println("   Tamaño: " + formatFileSize(pdfBytes.length));
             System.out.println("========================================");
 
@@ -160,7 +160,7 @@ public class TranscriptionPdfService {
 
         } catch (Exception e) {
             System.err.println("========================================");
-            System.err.println("❌ ERROR GENERANDO PDF");
+            System.err.println(" ERROR GENERANDO PDF");
             System.err.println("   Error: " + e.getMessage());
             System.err.println("========================================");
             e.printStackTrace();
