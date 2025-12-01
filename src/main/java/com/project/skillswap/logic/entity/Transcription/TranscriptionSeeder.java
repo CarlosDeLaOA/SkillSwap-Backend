@@ -1,189 +1,133 @@
-
 package com.project.skillswap.logic.entity.Transcription;
+
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
+import com.project.skillswap.logic.entity.LearningSession.SessionStatus;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-/**
- * Seeder component that creates initial transcriptions in the database
- */
-@Order(5)
+@Order(8)
 @Component
 public class TranscriptionSeeder implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(TranscriptionSeeder.class);
 
-    //#region Dependencies
     private final TranscriptionRepository transcriptionRepository;
     private final LearningSessionRepository learningSessionRepository;
-    //#endregion
+    private final Random random = new Random();
 
-    //#region Constructor
-    /**
-     * Creates a new TranscriptionSeeder instance
-     *
-     * @param transcriptionRepository the transcription repository
-     * @param learningSessionRepository the learning session repository
-     */
-    public TranscriptionSeeder(
-            TranscriptionRepository transcriptionRepository,
-            LearningSessionRepository learningSessionRepository) {
+    public TranscriptionSeeder(TranscriptionRepository transcriptionRepository,
+                               LearningSessionRepository learningSessionRepository) {
         this.transcriptionRepository = transcriptionRepository;
         this.learningSessionRepository = learningSessionRepository;
     }
-    //#endregion
 
-    //#region Event Handling
-    /**
-     * Handles the application context refreshed event to seed initial data
-     *
-     * @param event the context refreshed event
-     */
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        if (transcriptionRepository.count() > 0) {
+            logger.info("TranscriptionSeeder: Ya existen transcripciones, omitiendo seed");
+            return;
+        }
         this.seedTranscriptions();
     }
-    //#endregion
 
-    //#region Seeding Logic
-    /**
-     * Seeds transcriptions into the database
-     */
     private void seedTranscriptions() {
-        List<TranscriptionData> transcriptionsToCreate = createTranscriptionDataList();
-
-        for (TranscriptionData transcriptionData : transcriptionsToCreate) {
-            Optional<LearningSession> session = learningSessionRepository.findById(transcriptionData.learningSessionId);
-
-            if (session.isEmpty()) {
-                continue;
+        List<LearningSession> finishedSessions = new ArrayList<>();
+        for (LearningSession s : learningSessionRepository.findAll()) {
+            if (s.getStatus() == SessionStatus.FINISHED) {
+                finishedSessions.add(s);
             }
+        }
 
-            Optional<Transcription> existingTranscription = transcriptionRepository.findByLearningSession(session.get());
+        Collections.shuffle(finishedSessions);
 
-            if (existingTranscription.isPresent()) {
-                continue;
-            }
+        if (finishedSessions.isEmpty()) {
+            logger.warn("No hay sesiones finalizadas para crear transcripciones");
+            return;
+        }
+        int transcriptionsToCreate = (int) (finishedSessions.size() * 0.7);
+        Collections.shuffle(finishedSessions);
 
-            Transcription transcription = createTranscription(transcriptionData, session.get());
+        List<LearningSession> sessionsToTranscribe = finishedSessions.subList(0,
+                Math.min(transcriptionsToCreate, finishedSessions.size()));
+
+        for (LearningSession session : sessionsToTranscribe) {
+            Transcription transcription = createTranscription(session);
             transcriptionRepository.save(transcription);
         }
+
+        logger.info("TranscriptionSeeder: " + sessionsToTranscribe.size() + " transcripciones creadas");
     }
 
-    /**
-     * Creates a Transcription entity from TranscriptionData
-     *
-     * @param data the transcription data
-     * @param session the learning session
-     * @return the created Transcription entity
-     */
-    private Transcription createTranscription(TranscriptionData data, LearningSession session) {
+    private Transcription createTranscription(LearningSession session) {
         Transcription transcription = new Transcription();
+
         transcription.setLearningSession(session);
-        transcription.setFullText(data.fullText);
-        transcription.setDurationSeconds(data.durationSeconds);
+
+        // Generar texto de transcripción simulado
+        String transcriptionText = generateTranscriptionText(session);
+        transcription.setFullText(transcriptionText);
+
+        // Duración en segundos (basada en la duración de la sesión)
+        int durationSeconds = session.getDurationMinutes() * 60;
+        transcription.setDurationSeconds(durationSeconds);
+
+        // Fecha de procesamiento (1-3 días después de la sesión)
+        Calendar processingCal = Calendar.getInstance();
+        processingCal.setTime(session.getScheduledDatetime());
+        processingCal.add(Calendar.DAY_OF_MONTH, 1 + random.nextInt(3));
+        transcription.setProcessingDate(processingCal.getTime());
+
         return transcription;
     }
 
-    /**
-     * Creates the list of transcription data to be seeded
-     *
-     * @return list of TranscriptionData objects
-     */
-    private List<TranscriptionData> createTranscriptionDataList() {
-        List<TranscriptionData> transcriptions = new ArrayList<>();
+    private String generateTranscriptionText(LearningSession session) {
+        String[] introTemplates = {
+                "Bienvenidos a esta sesión de {title}. Hoy vamos a explorar los conceptos fundamentales y prácticos.",
+                "Hola a todos, gracias por unirse a {title}. Comencemos con una introducción al tema.",
+                "Buenas tardes, en esta sesión de {title} vamos a profundizar en aspectos importantes.",
+                "Les doy la bienvenida a {title}. Prepárense para una sesión intensa y productiva."
+        };
 
-        transcriptions.add(new TranscriptionData(
-                5L,
-                "This is a complete transcription of the Java programming session. We covered variables, data types, control structures, and object-oriented programming basics. The session was very informative and interactive.",
-                3600
-        ));
+        String[] contentTemplates = {
+                "Primero, es importante entender que... Como pueden ver en este ejemplo... " +
+                        "Ahora vamos a practicar juntos... ¿Tienen alguna pregunta hasta aquí? " +
+                        "Perfecto, continuemos con el siguiente punto... Esto es crucial porque... " +
+                        "Déjenme mostrarles cómo se hace... Exactamente, así es... ",
 
-        transcriptions.add(new TranscriptionData(
-                6L,
-                "React hooks session transcription. Topics covered: useState, useEffect, useContext, custom hooks, and best practices for functional components in React applications.",
-                5400
-        ));
+                "Iniciemos revisando los conceptos básicos... Muy bien, ahora que tenemos claro esto... " +
+                        "La clave está en... Como mencioné antes... Presten atención a este detalle... " +
+                        "Vamos a hacer un ejercicio práctico... Excelente participación... " +
+                        "Ahora les toca a ustedes intentarlo... ",
 
-        transcriptions.add(new TranscriptionData(
-                7L,
-                "Machine learning fundamentals session. Discussion about supervised learning, unsupervised learning, neural networks, and practical applications of ML in real-world scenarios.",
-                7200
-        ));
-        transcriptions.add(new TranscriptionData(
-                75L,
-                "Session on Python Intermediate topics: decorators, generators, and context managers. " +
-                        "We covered how decorators work with @ syntax, creating generator functions with yield, " +
-                        "and implementing context managers using __enter__ and __exit__ methods. " +
-                        "Students practiced creating custom decorators for logging and timing functions. " +
-                        "We also explored the functools module and practical applications of these concepts " +
-                        "in real-world Python development. The session included hands-on coding exercises " +
-                        "and debugging common pitfalls.",
-                9000
-        ));
+                "Comencemos con una demostración... Fíjense en cómo... " +
+                        "Este es un error común que deben evitar... La mejor práctica es... " +
+                        "¿Notan la diferencia? Exacto... Sigamos adelante... " +
+                        "Aquí tienen un consejo útil... Recuerden siempre que... "
+        };
 
-        transcriptions.add(new TranscriptionData(
-                76L,
-                "Advanced SQL for data analysis session covering window functions, CTEs, and query optimization. " +
-                        "Topics included: ROW_NUMBER(), RANK(), DENSE_RANK(), LAG() and LEAD() functions. " +
-                        "We practiced writing Common Table Expressions (CTEs) for complex queries and learned " +
-                        "about recursive CTEs. Query optimization techniques covered index usage, execution plans, " +
-                        "and avoiding common performance bottlenecks. Students worked on real-world analytics queries " +
-                        "including moving averages, cumulative sums, and year-over-year comparisons.",
-                7200
-        ));
+        String[] conclusionTemplates = {
+                "Para resumir lo que vimos hoy... Recuerden practicar en casa... " +
+                        "Nos vemos en la próxima sesión. ¡Muchas gracias por participar!",
 
-        transcriptions.add(new TranscriptionData(
-                77L,
-                "Git collaborative workflows session focused on team development practices. " +
-                        "We covered Git Flow branching strategy, trunk-based development, and feature branch workflows. " +
-                        "Topics included: creating and managing branches, handling merge conflicts, " +
-                        "rebasing vs merging, code review processes, and pull request best practices. " +
-                        "Students practiced collaborative scenarios including resolving conflicts, " +
-                        "cherry-picking commits, and using git stash effectively. " +
-                        "We also discussed commit message conventions and semantic versioning.",
-                5400
-        ));
+                "En conclusión, los puntos principales fueron... No olviden revisar el material... " +
+                        "Si tienen dudas, pueden contactarme. ¡Excelente trabajo hoy!",
 
-        transcriptions.add(new TranscriptionData(
-                78L,
-                "Node.js backend development with Express framework. Complete guide to building RESTful APIs. " +
-                        "Topics covered: Express routing, middleware creation and usage, request/response handling, " +
-                        "error handling patterns, authentication with JWT, password hashing with bcrypt, " +
-                        "database integration with MongoDB and Mongoose, environment variables with dotenv, " +
-                        "input validation with express-validator, and API documentation with Swagger. " +
-                        "Students built a complete CRUD API with authentication and deployed it. " +
-                        "We also covered testing with Jest and Supertest.",
-                10800
-        ));
+                "Hemos cubierto mucho material importante... Asegúrense de repasar... " +
+                        "Espero que hayan disfrutado la sesión. ¡Hasta la próxima!"
+        };
 
+        String intro = introTemplates[random.nextInt(introTemplates.length)];
+        String content = contentTemplates[random.nextInt(contentTemplates.length)];
+        String conclusion = conclusionTemplates[random.nextInt(conclusionTemplates.length)];
 
-        return transcriptions;
+        return intro.replace("{title}", session.getTitle()) +
+                "\n\n" + content + content +
+                "\n\n" + conclusion;
     }
-    //#endregion
-
-    //#region Inner Class
-    /**
-     * Data class holding information for creating transcriptions
-     */
-    private static class TranscriptionData {
-        Long learningSessionId;
-        String fullText;
-        Integer durationSeconds;
-
-        TranscriptionData(Long learningSessionId, String fullText, Integer durationSeconds) {
-            this.learningSessionId = learningSessionId;
-            this.fullText = fullText;
-            this.durationSeconds = durationSeconds;
-        }
-    }
-    //#endregion
 }
