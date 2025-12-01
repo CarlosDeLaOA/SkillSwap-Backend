@@ -6,6 +6,7 @@ import com.project.skillswap.logic.entity.Learner.Learner;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Table(name = "feedback", indexes = {
@@ -41,6 +42,12 @@ public class Feedback {
 
     @Column(name = "audio_transcription", columnDefinition = "TEXT")
     private String audioTranscription;
+
+    @Column(name = "duration_seconds")
+    private Integer durationSeconds;
+
+    @Column(name = "processing_date")
+    private LocalDateTime processingDate;
 
     @CreationTimestamp
     @Column(updatable = false, name = "creation_date")
@@ -106,6 +113,22 @@ public class Feedback {
 
     public void setAudioTranscription(String audioTranscription) {
         this.audioTranscription = audioTranscription;
+    }
+
+    public Integer getDurationSeconds() {
+        return durationSeconds;
+    }
+
+    public void setDurationSeconds(Integer durationSeconds) {
+        this.durationSeconds = durationSeconds;
+    }
+
+    public LocalDateTime getProcessingDate() {
+        return processingDate;
+    }
+
+    public void setProcessingDate(LocalDateTime processingDate) {
+        this.processingDate = processingDate;
     }
 
     public Date getCreationDate() {

@@ -1,4 +1,3 @@
-
 package com.project.skillswap.logic.entity.LearningSession;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -105,23 +104,21 @@ public class LearningSessionService {
      * @param sessionId ID de la sesión
      * @param authenticatedPerson Persona autenticada
      * @return Sesión encontrada
-     * @throws IllegalArgumentException Si la sesión no existe o no pertenece al instructor
+     * @throws IllegalArgumentException Si la sesión no existe
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly=true)
     public LearningSession getSessionById(Long sessionId, Person authenticatedPerson) {
-        Optional<LearningSession> sessionOptional = learningSessionRepository.findById(sessionId);
+        Optional<LearningSession> sessionOptional=learningSessionRepository.findById(sessionId);
 
         if (sessionOptional.isEmpty()) {
             throw new IllegalArgumentException("La sesión no existe");
         }
 
-        LearningSession session = sessionOptional.get();
-
-        if (!session.getInstructor().getId().equals(authenticatedPerson.getInstructor().getId())) {
-            throw new IllegalArgumentException("No tienes permiso para acceder a esta sesión");
+        if (authenticatedPerson==null) {
+            throw new IllegalArgumentException("Debes estar autenticado");
         }
 
-        return session;
+        return sessionOptional.get();
     }
     //#endregion
 

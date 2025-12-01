@@ -1,4 +1,3 @@
-
 package com.project.skillswap.logic.entity.videocall;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -449,7 +448,11 @@ public class VideoCallRestController {
                         .body(Map.of("message", "Usuario no autenticado"));
             }
 
-            if (!isSessionInstructor(person, sessionId)) {
+            boolean isInstructor = isSessionInstructor(person, sessionId);
+
+
+            if (!isInstructor) {
+                System.out.println("DENEGADO: Solo el instructor puede iniciar la grabación");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "Solo el instructor puede iniciar la grabación"));
             }
@@ -775,11 +778,9 @@ public class VideoCallRestController {
             logger.info("   Session ID: " + sessionId);
             logger.info("========================================");
 
-            //  Obtener la sesión
             LearningSession session = sessionRepository.findById(sessionId)
                     .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-            //  Validar que existe transcripción
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
                 logger.info(" No hay transcripción disponible para esta sesión");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -789,7 +790,6 @@ public class VideoCallRestController {
                         ));
             }
 
-            //  Calcular estadísticas
             String fullText = session.getFullText();
             int wordCount = fullText.split("\\s+").length;
             int durationSeconds = session.getDurationSeconds() != null ? session.getDurationSeconds() : 0;
@@ -798,7 +798,6 @@ public class VideoCallRestController {
             logger.info("   Palabras: " + wordCount);
             logger.info("   Duración: " + durationSeconds + " segundos");
             logger.info("   Caracteres: " + fullText.length());
-
 
             Map<String, Object> transcriptionData = new HashMap<>();
             transcriptionData.put("transcription", fullText);
@@ -823,8 +822,6 @@ public class VideoCallRestController {
                     ));
         }
     }
-
-
 
     @GetMapping("/transcription/{sessionId}/download-txt")
     public ResponseEntity<?> downloadTranscriptionTxt(@PathVariable Long sessionId) {
@@ -897,7 +894,6 @@ public class VideoCallRestController {
                     .body(("Error: " + e.getMessage()).getBytes());
         }
     }
-
 
     /**
      *  Descarga directa de archivo PDF
@@ -1130,11 +1126,9 @@ public class VideoCallRestController {
             logger.info("   Solicitado por: " + person.getFullName());
             logger.info("========================================");
 
-            // 1. Obtener sesión
             LearningSession session = sessionRepository.findById(sessionId)
                     .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-            // 2. Validar que tenga transcripción
             if (session.getFullText() == null || session.getFullText().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of(
@@ -1143,11 +1137,10 @@ public class VideoCallRestController {
                         ));
             }
 
-            // 3. Generar resumen con IA
+
             String summary = summaryService.generateSummary(session);
 
-            // 4. Validar resumen
-            if (!summaryService.validateSummary(summary)) {
+            if (! summaryService.validateSummary(summary)) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(Map.of(
                                 "success", false,
@@ -1155,10 +1148,8 @@ public class VideoCallRestController {
                         ));
             }
 
-            // 5. Generar PDF del resumen
             byte[] summaryPdf = summaryPdfService.generateSummaryPdf(session, summary);
 
-            // 6. Enviar a todos los participantes
             boolean emailsSent = summaryEmailService.sendSummaryToParticipants(session, summaryPdf, summary);
 
             Map<String, Object> response = new HashMap<>();
@@ -1267,10 +1258,8 @@ public class VideoCallRestController {
                         .body("No hay transcripción disponible".getBytes());
             }
 
-            // Generar resumen
             String summary = summaryService.generateSummary(session);
 
-            // Generar PDF
             byte[] pdfBytes = summaryPdfService.generateSummaryPdf(session, summary);
 
             String fileName = "resumen_sesion_" + session.getId() + "_" +
@@ -1337,11 +1326,9 @@ public class VideoCallRestController {
                         ));
             }
 
-            // Generar resumen y PDF
             String summary = summaryService.generateSummary(session);
             byte[] summaryPdf = summaryPdfService.generateSummaryPdf(session, summary);
 
-            // Reenviar emails
             boolean emailsSent = summaryEmailService.sendSummaryToParticipants(session, summaryPdf, summary);
 
             return ResponseEntity.ok(Map.of(
