@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.Instructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Instructor.InstructorPayPalService;
@@ -18,6 +20,7 @@ import java.util.Map;
 @RequestMapping("/api/instructor/paypal")
 @CrossOrigin(origins = "*")
 public class InstructorPayPalController {
+    private static final Logger logger = LoggerFactory.getLogger(InstructorPayPalController.class);
 
     @Autowired
     private PersonRepository personRepository;
@@ -53,7 +56,7 @@ public class InstructorPayPalController {
             return ResponseEntity.ok(info);
 
         } catch (Exception e) {
-            System.err.println("[PAYPAL_CONTROLLER] Error: " + e.getMessage());
+            logger.info("[PAYPAL_CONTROLLER] Error: " + e.getMessage());
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
         }
@@ -95,7 +98,7 @@ public class InstructorPayPalController {
             ));
 
         } catch (Exception e) {
-            System.err.println("[PAYPAL_CONTROLLER] Error: " + e.getMessage());
+            logger.info("[PAYPAL_CONTROLLER] Error: " + e.getMessage());
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
         }
@@ -141,7 +144,7 @@ public class InstructorPayPalController {
             ));
 
         } catch (Exception e) {
-            System.err.println("[PAYPAL_CONTROLLER] Error: " + e.getMessage());
+            logger.info("[PAYPAL_CONTROLLER] Error: " + e.getMessage());
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
         }

@@ -19,7 +19,6 @@ import java.util.Map;
 @RequestMapping("/api/quiz")
 @CrossOrigin(origins = "*")
 public class QuizRestController {
-    private static final Logger logger = LoggerFactory.getLogger(QuizRestController.class);
 
     //#region Dependencies
     private final QuizService quizService;

@@ -19,8 +19,8 @@ import java.util.List;
  */
 @Component
 public class CertificationScheduler {
-
     private static final Logger logger = LoggerFactory.getLogger(CertificationScheduler.class);
+
     private static final int CREDENTIALS_REQUIRED = 10;
 
     @Autowired

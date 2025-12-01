@@ -20,7 +20,6 @@ import java.util.Locale;
  */
 @Service
 public class BookingEmailService {
-    private static final Logger logger = LoggerFactory.getLogger(BookingEmailService.class);
 
     //#region Dependencies
     private final JavaMailSender mailSender;

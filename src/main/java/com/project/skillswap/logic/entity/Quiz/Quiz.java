@@ -29,7 +29,6 @@ import java.util.List;
 @Entity
 public class Quiz {
     private static final Logger logger = LoggerFactory.getLogger(Quiz.class);
-
     //#region Fields
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

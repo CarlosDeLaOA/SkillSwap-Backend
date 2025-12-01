@@ -7,7 +7,6 @@ import java.util.Date;
  * Response containing feedback information for instructors
  */
 public class FeedbackResponse {
-    private static final Logger logger = LoggerFactory.getLogger(FeedbackResponse.class);
 
     //#region Fields
     private Long id;

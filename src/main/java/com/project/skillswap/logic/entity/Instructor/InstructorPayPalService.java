@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.Instructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.paypal.core.PayPalEnvironment;
 import com.paypal.core.PayPalHttpClient;
@@ -24,6 +26,7 @@ import java.util.Map;
 
 @Service
 public class InstructorPayPalService {
+    private static final Logger logger = LoggerFactory.getLogger(InstructorPayPalService.class);
 
     @Value("${paypal.client.id}")
     private String clientId;
@@ -68,7 +71,7 @@ public class InstructorPayPalService {
     @Transactional
     public void linkPayPalAccount(Long instructorId, String paypalEmail) {
 
-        System.out.println("[PAYPAL_LINK] Vinculando cuenta PayPal para instructor: " + instructorId);
+        logger.info("[PAYPAL_LINK] Vinculando cuenta PayPal para instructor: " + instructorId);
 
         // Validar instructor
         Instructor instructor = instructorRepository.findById(instructorId)
@@ -89,7 +92,7 @@ public class InstructorPayPalService {
         instructor.setVerifiedAccount(true);
         instructorRepository.save(instructor);
 
-        System.out.println("[PAYPAL_LINK]  Cuenta PayPal vinculada: " + paypalEmail);
+        logger.info("[PAYPAL_LINK]  Cuenta PayPal vinculada: " + paypalEmail);
     }
 
     /**
@@ -98,8 +101,8 @@ public class InstructorPayPalService {
     @Transactional
     public Transaction withdrawToPayPal(Long instructorId, BigDecimal skillCoinsAmount) {
 
-        System.out.println("[PAYPAL_WITHDRAWAL] Procesando retiro para instructor: " + instructorId);
-        System.out.println("[PAYPAL_WITHDRAWAL] Cantidad: " + skillCoinsAmount + " SkillCoins");
+        logger.info("[PAYPAL_WITHDRAWAL] Procesando retiro para instructor: " + instructorId);
+        logger.info("[PAYPAL_WITHDRAWAL] Cantidad: " + skillCoinsAmount + " SkillCoins");
 
         // 1. Validar instructor
         Instructor instructor = instructorRepository.findById(instructorId)
@@ -131,15 +134,15 @@ public class InstructorPayPalService {
         BigDecimal usdAmount = skillCoinsAmount.multiply(CONVERSION_RATE)
                 .setScale(2, RoundingMode.HALF_UP);
 
-        System.out.println("[PAYPAL_WITHDRAWAL] Monto a transferir: $" + usdAmount + " USD");
-        System.out.println("[PAYPAL_WITHDRAWAL] Cuenta destino: " + instructor.getPaypalAccount());
+        logger.info("[PAYPAL_WITHDRAWAL] Monto a transferir: $" + usdAmount + " USD");
+        logger.info("[PAYPAL_WITHDRAWAL] Cuenta destino: " + instructor.getPaypalAccount());
 
         // 6. Crear payout en PayPal
         String payoutBatchId;
         try {
             payoutBatchId = createPayPalPayout(instructor.getPaypalAccount(), usdAmount, person.getFullName());
         } catch (Exception e) {
-            System.err.println("[PAYPAL_WITHDRAWAL]  Error al crear payout: " + e.getMessage());
+            logger.info("[PAYPAL_WITHDRAWAL]  Error al crear payout: " + e.getMessage());
             throw new RuntimeException("Error al procesar el retiro. Por favor intenta nuevamente.");
         }
 
@@ -149,7 +152,7 @@ public class InstructorPayPalService {
         );
         instructorRepository.save(instructor);
 
-        System.out.println("[PAYPAL_WITHDRAWAL]  Balance actualizado: " + instructor.getSkillcoinsBalance());
+        logger.info("[PAYPAL_WITHDRAWAL]  Balance actualizado: " + instructor.getSkillcoinsBalance());
 
         // 8. Crear transacción de retiro
         Transaction transaction = new Transaction();
@@ -164,8 +167,8 @@ public class InstructorPayPalService {
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
-        System.out.println("[PAYPAL_WITHDRAWAL]  Transacción creada: " + savedTransaction.getId());
-        System.out.println("[PAYPAL_WITHDRAWAL]  Payout enviado con ID: " + payoutBatchId);
+        logger.info("[PAYPAL_WITHDRAWAL]  Transacción creada: " + savedTransaction.getId());
+        logger.info("[PAYPAL_WITHDRAWAL]  Payout enviado con ID: " + payoutBatchId);
 
         return savedTransaction;
     }
@@ -176,7 +179,7 @@ public class InstructorPayPalService {
      */
     private String createPayPalPayout(String recipientEmail, BigDecimal amount, String recipientName) throws Exception {
 
-        System.out.println("[PAYPAL_API] Creando payout para: " + recipientEmail);
+        logger.info("[PAYPAL_API] Creando payout para: " + recipientEmail);
 
         // Crear el item del payout
         PayoutItem payoutItem = new PayoutItem();
@@ -205,14 +208,14 @@ public class InstructorPayPalService {
             HttpResponse<CreatePayoutResponse> response = getPayPalClient().execute(request);
             CreatePayoutResponse result = response.result();
 
-            System.out.println("[PAYPAL_API]  Payout creado exitosamente");
-            System.out.println("[PAYPAL_API] Batch ID: " + result.batchHeader().payoutBatchId());
-            System.out.println("[PAYPAL_API] Status: " + result.batchHeader().batchStatus());
+            logger.info("[PAYPAL_API]  Payout creado exitosamente");
+            logger.info("[PAYPAL_API] Batch ID: " + result.batchHeader().payoutBatchId());
+            logger.info("[PAYPAL_API] Status: " + result.batchHeader().batchStatus());
 
             return result.batchHeader().payoutBatchId();
 
         } catch (Exception e) {
-            System.err.println("[PAYPAL_API]  Error: " + e.getMessage());
+            logger.info("[PAYPAL_API]  Error: " + e.getMessage());
             e.printStackTrace();
             throw new Exception("Error al procesar el payout en PayPal: " + e.getMessage());
         }
@@ -223,7 +226,7 @@ public class InstructorPayPalService {
      */
     public Map<String, Object> getPayPalInfo(Long instructorId) {
 
-        System.out.println("[PAYPAL_INFO] Obteniendo info para instructor: " + instructorId);
+        logger.info("[PAYPAL_INFO] Obteniendo info para instructor: " + instructorId);
 
         Instructor instructor = instructorRepository.findById(instructorId)
                 .orElseThrow(() -> new RuntimeException("Instructor no encontrado"));
@@ -258,7 +261,7 @@ public class InstructorPayPalService {
         }
         info.put("estimatedUsd", estimatedUsd);
 
-        System.out.println("[PAYPAL_INFO] Info generada: hasLinkedAccount=" + hasAccount +
+        logger.info("[PAYPAL_INFO] Info generada: hasLinkedAccount=" + hasAccount +
                 ", balance=" + currentBalance);
 
         return info;

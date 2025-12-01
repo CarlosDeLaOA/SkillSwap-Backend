@@ -28,7 +28,6 @@ import java.util.*;
 @RequestMapping("/api/coins")
 @CrossOrigin(origins = "*")
 public class CoinPurchaseController {
-    private static final Logger logger = LoggerFactory.getLogger(CoinPurchaseController.class);
 
     @Autowired
     private CoinPurchaseService coinPurchaseService;

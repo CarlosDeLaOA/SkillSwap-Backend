@@ -14,7 +14,6 @@ import java.util.Optional;
  */
 @Service
 public class SkillService {
-    private static final Logger logger = LoggerFactory.getLogger(SkillService.class);
 
     //<editor-fold desc="Dependencies">
     @Autowired

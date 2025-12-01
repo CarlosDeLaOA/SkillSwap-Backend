@@ -23,7 +23,6 @@ import java.util.Map;
  */
 @Service
 public class SessionHistoryService {
-    private static final Logger logger = LoggerFactory.getLogger(SessionHistoryService.class);
 
     @Autowired
     private LearningSessionRepository sessionRepository;

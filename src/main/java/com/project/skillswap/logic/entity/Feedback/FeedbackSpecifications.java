@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.Feedback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.data.jpa.domain.Specification;
 
@@ -15,6 +17,7 @@ import java.util.Date;
  * Page<Feedback> feedbacks = feedbackRepository.findAll(spec, pageable);
  */
 public class FeedbackSpecifications {
+    private static final Logger logger = LoggerFactory.getLogger(FeedbackSpecifications.class);
 
     //#region Especificaciones por Instructor
 

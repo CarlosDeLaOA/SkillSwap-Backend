@@ -17,7 +17,6 @@ import java.util.Date;
 })
 @Entity
 public class Transcription {
-    private static final Logger logger = LoggerFactory.getLogger(Transcription.class);
 
     //#region Fields
     @Id

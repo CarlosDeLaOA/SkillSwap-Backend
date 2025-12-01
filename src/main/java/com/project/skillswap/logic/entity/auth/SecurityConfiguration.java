@@ -17,7 +17,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfiguration {
-    private static final Logger logger = LoggerFactory.getLogger(SecurityConfiguration.class);
 
     //#region Dependencies
     private final AuthenticationProvider authenticationProvider;

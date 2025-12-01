@@ -1,10 +1,13 @@
 package com.project.skillswap.logic.entity.Feedback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Excepción personalizada para operaciones relacionadas con Feedback/Reseñas
  * Se lanza cuando ocurren errores específicos en el dominio de feedback
  */
 public class FeedbackException extends RuntimeException {
+    private static final Logger logger = LoggerFactory.getLogger(FeedbackException.class);
 
     //#region Constructores
 

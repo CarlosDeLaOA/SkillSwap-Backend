@@ -17,7 +17,6 @@ import java.util.Map;
 @RequestMapping("/verification")
 @CrossOrigin(origins = "*")
 public class EmailVerificationRestController {
-    private static final Logger logger = LoggerFactory.getLogger(EmailVerificationRestController.class);
 
     //#region Dependencies
     private final VerificationService verificationService;

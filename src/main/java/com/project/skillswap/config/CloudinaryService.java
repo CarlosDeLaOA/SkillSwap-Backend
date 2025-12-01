@@ -20,7 +20,6 @@ import java.util.Map;
 @Service
 public class CloudinaryService {
     private static final Logger logger = LoggerFactory.getLogger(CloudinaryService.class);
-
     @Autowired
     private Cloudinary cloudinary;
 

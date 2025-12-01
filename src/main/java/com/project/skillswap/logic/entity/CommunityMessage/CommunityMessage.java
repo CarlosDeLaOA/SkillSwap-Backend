@@ -20,7 +20,6 @@ import java.util.Date;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class CommunityMessage {
-    private static final Logger logger = LoggerFactory.getLogger(CommunityMessage.class);
 
     //#region Fields
     @Id

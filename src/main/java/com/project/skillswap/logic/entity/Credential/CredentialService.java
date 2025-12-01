@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
  */
 @Service
 public class CredentialService {
-    private static final Logger logger = LoggerFactory.getLogger(CredentialService.class);
 
     //#region Dependencies
     private final CredentialRepository credentialRepository;

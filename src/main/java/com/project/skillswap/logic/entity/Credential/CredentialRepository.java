@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.Credential;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Notification.CredentialAlertDTO;

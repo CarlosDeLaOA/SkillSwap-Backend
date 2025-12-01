@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.Feedback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Instructor.InstructorRepository;
@@ -25,6 +27,7 @@ import java.util.Optional;
 @Service
 @Transactional(readOnly = true)
 public class FeedbackService {
+    private static final Logger logger = LoggerFactory.getLogger(FeedbackService.class);
 
     //#region Dependencias
     private final FeedbackRepository feedbackRepository;
@@ -163,7 +166,7 @@ public class FeedbackService {
      */
     @Transactional
     public Feedback saveFeedback(Feedback feedback) {
-        System.out.println("[FeedbackService] Guardando feedback ID: " + feedback.getId());
+        logger.info("[FeedbackService] Guardando feedback ID: " + feedback.getId());
         return feedbackRepository.save(feedback);
     }
 
@@ -180,41 +183,41 @@ public class FeedbackService {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-            System.out.println("[FeedbackService] Authentication object: " + authentication);
-            System.out.println("[FeedbackService] Is Authenticated: " + (authentication != null ?   authentication.isAuthenticated() : "NULL"));
+            logger.info("[FeedbackService] Authentication object: " + authentication);
+            logger.info("[FeedbackService] Is Authenticated: " + (authentication != null ?   authentication.isAuthenticated() : "NULL"));
 
             if (authentication == null || !authentication.isAuthenticated()) {
-                System.out.println("[FeedbackService] Authentication is null or not authenticated");
+                logger.info("[FeedbackService] Authentication is null or not authenticated");
                 throw FeedbackException.userNotInstructor();
             }
 
             String email = authentication.getName();
-            System.out.println("[FeedbackService] Email from authentication: " + email);
+            logger.info("[FeedbackService] Email from authentication: " + email);
 
             Person person = personRepository.findByEmail(email)
                     .orElseThrow(() -> {
-                        System.out.println("[FeedbackService] Person not found for email: " + email);
+                        logger.info("[FeedbackService] Person not found for email: " + email);
                         return FeedbackException.userNotInstructor();
                     });
 
-            System.out.println("[FeedbackService] Person found: " + person.getId() + " (" + person.getFullName() + ")");
+            logger.info("[FeedbackService] Person found: " + person.getId() + " (" + person.getFullName() + ")");
 
             Instructor instructor = person.getInstructor();
-            System.out.println("[FeedbackService] Instructor object: " + instructor);
+            logger.info("[FeedbackService] Instructor object: " + instructor);
 
             if (instructor == null) {
-                System.out.println("[FeedbackService] User has no instructor role");
+                logger.info("[FeedbackService] User has no instructor role");
                 throw FeedbackException.userNotInstructor();
             }
 
-            System.out.println("[FeedbackService] Instructor ID: " + instructor.getId());
+            logger.info("[FeedbackService] Instructor ID: " + instructor.getId());
             return instructor.getId();
 
         } catch (FeedbackException e) {
-            System.out.println("[FeedbackService] FeedbackException: " + e.getMessage());
+            logger.info("[FeedbackService] FeedbackException: " + e.getMessage());
             throw e;
         } catch (Exception e) {
-            System.out.println("[FeedbackService] Exception: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            logger.info("[FeedbackService] Exception: " + e.getClass().getSimpleName() + " - " + e.getMessage());
             e.printStackTrace();
             throw FeedbackException.processingError("Error al obtener instructor autenticado: " + e.getMessage());
         }
@@ -226,13 +229,13 @@ public class FeedbackService {
      * @throws FeedbackException Si el instructor no existe
      */
     private void validateInstructorExists(Long instructorId) {
-        System.out.println("[FeedbackService] Validating instructor ID: " + instructorId);
+        logger.info("[FeedbackService] Validating instructor ID: " + instructorId);
         boolean exists = instructorRepository.existsById(instructorId);
         if (!exists) {
-            System.out.println("[FeedbackService] Instructor not found: " + instructorId);
+            logger.info("[FeedbackService] Instructor not found: " + instructorId);
             throw FeedbackException.instructorNotFound(instructorId);
         }
-        System.out.println("[FeedbackService] Instructor exists: " + instructorId);
+        logger.info("[FeedbackService] Instructor exists: " + instructorId);
     }
 
     /**
@@ -258,7 +261,7 @@ public class FeedbackService {
 
             return stats;
         } catch (Exception e) {
-            System.out.println("[FeedbackService] Error calculating stats: " + e.getMessage());
+            logger.info("[FeedbackService] Error calculating stats: " + e.getMessage());
             throw FeedbackException.statisticsError(instructorId);
         }
     }

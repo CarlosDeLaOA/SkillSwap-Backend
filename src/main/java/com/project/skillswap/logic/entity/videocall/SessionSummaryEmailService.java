@@ -21,7 +21,6 @@ import java.util.*;
  */
 @Service
 public class SessionSummaryEmailService {
-    private static final Logger logger = LoggerFactory.getLogger(SessionSummaryEmailService.class);
 
     //#region Dependencies & Config
 

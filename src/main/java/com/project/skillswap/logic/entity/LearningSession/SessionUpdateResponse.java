@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.Map;
 
 public class SessionUpdateResponse {
-    private static final Logger logger = LoggerFactory.getLogger(SessionUpdateResponse.class);
     private Long id;
     private String title;
     private String description;

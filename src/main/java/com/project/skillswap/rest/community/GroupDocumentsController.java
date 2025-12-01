@@ -1,4 +1,6 @@
 package com.project.skillswap.rest.community;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.CommunityDocument.CommunityDocument;
 import com.project.skillswap.logic.entity.CommunityDocument.CommunityDocumentRepository;
@@ -21,6 +23,7 @@ import java.util.*;
 @RequestMapping("/api/group-documents")
 @CrossOrigin(origins="*")
 public class GroupDocumentsController {
+    private static final Logger logger = LoggerFactory.getLogger(GroupDocumentsController.class);
 
     //#region Dependencies
     @Autowired
@@ -47,9 +50,9 @@ public class GroupDocumentsController {
             @RequestParam(value="sessionDate", required=false) String sessionDate,
             @RequestParam(value="description", required=false) String description) {
         try {
-            System.out.println("[GROUP-DOCS] POST /api/group-documents/upload");
-            System.out.println("[GROUP-DOCS] Community: "+communityId);
-            System.out.println("[GROUP-DOCS] File: "+file.getOriginalFilename());
+            logger.info("[GROUP-DOCS] POST /api/group-documents/upload");
+            logger.info("[GROUP-DOCS] Community: "+communityId);
+            logger.info("[GROUP-DOCS] File: "+file.getOriginalFilename());
 
             if (file.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -82,7 +85,7 @@ public class GroupDocumentsController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            System.err.println("[GROUP-DOCS] Error upload: "+e.getMessage());
+            logger.info("[GROUP-DOCS] Error upload: "+e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error al subir documento: "+e.getMessage()));
@@ -100,7 +103,7 @@ public class GroupDocumentsController {
     public ResponseEntity<Map<String, Object>> getCommunityStorage(
             @PathVariable Long communityId) {
         try {
-            System.out.println("[GROUP-DOCS] GET /api/group-documents/community/"+communityId+"/storage");
+            logger.info("[GROUP-DOCS] GET /api/group-documents/community/"+communityId+"/storage");
 
             Optional<LearningCommunity> communityOpt=communityRepository.findById(communityId);
             if (communityOpt.isEmpty()) {
@@ -135,7 +138,7 @@ public class GroupDocumentsController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("[GROUP-DOCS] Error: "+e.getMessage());
+            logger.info("[GROUP-DOCS] Error: "+e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error: "+e.getMessage()));
         }
@@ -148,7 +151,7 @@ public class GroupDocumentsController {
     public ResponseEntity<Map<String, Object>> getCommunityDocumentsByDate(
             @PathVariable Long communityId) {
         try {
-            System.out.println("[GROUP-DOCS] GET /api/group-documents/community/"+communityId+"/by-date");
+            logger.info("[GROUP-DOCS] GET /api/group-documents/community/"+communityId+"/by-date");
 
             Optional<LearningCommunity> communityOpt=communityRepository.findById(communityId);
             if (communityOpt.isEmpty()) {
@@ -175,7 +178,7 @@ public class GroupDocumentsController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("[GROUP-DOCS] Error: "+e.getMessage());
+            logger.info("[GROUP-DOCS] Error: "+e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error: "+e.getMessage()));
         }
@@ -188,7 +191,7 @@ public class GroupDocumentsController {
     public ResponseEntity<Map<String, Object>> getCommunityDocumentsBySession(
             @PathVariable Long communityId) {
         try {
-            System.out.println("[GROUP-DOCS] GET /api/group-documents/community/"+communityId+"/by-session");
+            logger.info("[GROUP-DOCS] GET /api/group-documents/community/"+communityId+"/by-session");
 
             Optional<LearningCommunity> communityOpt=communityRepository.findById(communityId);
             if (communityOpt.isEmpty()) {
@@ -215,7 +218,7 @@ public class GroupDocumentsController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("[GROUP-DOCS] Error: "+e.getMessage());
+            logger.info("[GROUP-DOCS] Error: "+e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error: "+e.getMessage()));
         }
@@ -228,7 +231,7 @@ public class GroupDocumentsController {
     public ResponseEntity<Map<String, Object>> getDocumentsByCommunity(
             @PathVariable Long communityId) {
         try {
-            System.out.println("[GROUP-DOCS] GET /api/group-documents/community/"+communityId);
+            logger.info("[GROUP-DOCS] GET /api/group-documents/community/"+communityId);
 
             Optional<LearningCommunity> communityOpt=communityRepository.findById(communityId);
             if (communityOpt.isEmpty()) {
@@ -251,7 +254,7 @@ public class GroupDocumentsController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("[GROUP-DOCS] Error: "+e.getMessage());
+            logger.info("[GROUP-DOCS] Error: "+e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error: "+e.getMessage()));
         }
@@ -264,7 +267,7 @@ public class GroupDocumentsController {
     public ResponseEntity<Map<String, Object>> getDeletedDocuments(
             @PathVariable Long communityId) {
         try {
-            System.out.println("[GROUP-DOCS] GET /api/group-documents/community/"+communityId+"/deleted");
+            logger.info("[GROUP-DOCS] GET /api/group-documents/community/"+communityId+"/deleted");
 
             Optional<LearningCommunity> communityOpt=communityRepository.findById(communityId);
             if (communityOpt.isEmpty()) {
@@ -287,7 +290,7 @@ public class GroupDocumentsController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("[GROUP-DOCS] Error: "+e.getMessage());
+            logger.info("[GROUP-DOCS] Error: "+e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error: "+e.getMessage()));
         }

@@ -17,7 +17,6 @@ import java.util.List;
 
 @Service
 public class PayPalService {
-    private static final Logger logger = LoggerFactory.getLogger(PayPalService.class);
 
     @Value("${paypal.client.id}")
     private String clientId;

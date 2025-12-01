@@ -20,7 +20,6 @@ import java.util.Optional;
 @Order(8)
 @Component
 public class FeedbackSeeder implements ApplicationListener<ContextRefreshedEvent> {
-    private static final Logger logger = LoggerFactory.getLogger(FeedbackSeeder.class);
 
     //#region Dependencies
     private final FeedbackRepository feedbackRepository;

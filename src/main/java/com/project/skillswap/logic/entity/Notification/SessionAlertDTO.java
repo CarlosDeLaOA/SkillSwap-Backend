@@ -8,7 +8,6 @@ import java.util.Date;
  * DTO para alertas de sesiones próximas de la semana
  */
 public class SessionAlertDTO {
-    private static final Logger logger = LoggerFactory.getLogger(SessionAlertDTO.class);
     private Long sessionId;
     private String sessionTitle;
     private String skillName;

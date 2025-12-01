@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.Feedback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.Learner.Learner;

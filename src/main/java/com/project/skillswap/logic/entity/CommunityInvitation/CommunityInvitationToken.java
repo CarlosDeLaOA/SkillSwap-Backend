@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 })
 @Entity
 public class CommunityInvitationToken {
-    private static final Logger logger = LoggerFactory.getLogger(CommunityInvitationToken.class);
 
     //#region Fields
     @Id

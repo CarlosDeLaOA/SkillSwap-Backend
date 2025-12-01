@@ -14,7 +14,6 @@ import java.util.Map;
  */
 @Service
 public class DashboardService {
-    private static final Logger logger = LoggerFactory.getLogger(DashboardService.class);
 
     //#region Dependencies
     @Autowired

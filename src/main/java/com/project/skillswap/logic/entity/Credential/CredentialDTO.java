@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 public class CredentialDTO {
-    private static final Logger logger = LoggerFactory.getLogger(CredentialDTO.class);
     private Long id;
     private LearnerDTO learner;
     private SkillDTO skill;

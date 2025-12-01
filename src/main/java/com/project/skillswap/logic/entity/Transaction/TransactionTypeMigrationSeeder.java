@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 @Order(1)  // Se ejecuta primero, antes de otros seeders
 @Component
 public class TransactionTypeMigrationSeeder implements ApplicationListener<ContextRefreshedEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(TransactionTypeMigrationSeeder.class);
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -26,7 +29,7 @@ public class TransactionTypeMigrationSeeder implements ApplicationListener<Conte
             return;
         }
 
-        System.out.println("[MIGRATION] Verificando columna 'type' de transaction...");
+        logger.info("[MIGRATION] Verificando columna 'type' de transaction...");
 
         try {
             // Intentar obtener el tipo de columna actual
@@ -38,11 +41,11 @@ public class TransactionTypeMigrationSeeder implements ApplicationListener<Conte
                     String.class
             );
 
-            System.out.println("[MIGRATION] Tipo actual de columna: " + currentType);
+            logger.info("[MIGRATION] Tipo actual de columna: " + currentType);
 
             // Verificar si ya tiene WITHDRAWAL
             if (currentType != null && !currentType.contains("WITHDRAWAL")) {
-                System.out.println("[MIGRATION]  Falta 'WITHDRAWAL' en el enum, actualizando...");
+                logger.info("[MIGRATION]  Falta 'WITHDRAWAL' en el enum, actualizando...");
 
                 // Ejecutar ALTER TABLE para agregar WITHDRAWAL
                 jdbcTemplate.execute(
@@ -50,13 +53,13 @@ public class TransactionTypeMigrationSeeder implements ApplicationListener<Conte
                                 "MODIFY COLUMN type ENUM('PURCHASE', 'SESSION_PAYMENT', 'COLLECTION', 'REFUND', 'WITHDRAWAL') NOT NULL"
                 );
 
-                System.out.println("[MIGRATION]  Columna 'type' actualizada con éxito");
+                logger.info("[MIGRATION]  Columna 'type' actualizada con éxito");
             } else {
-                System.out.println("[MIGRATION]  Columna 'type' ya tiene WITHDRAWAL, no se requiere migración");
+                logger.info("[MIGRATION]  Columna 'type' ya tiene WITHDRAWAL, no se requiere migración");
             }
 
         } catch (Exception e) {
-            System.err.println("[MIGRATION]  Error verificando/actualizando columna 'type': " + e.getMessage());
+            logger.info("[MIGRATION]  Error verificando/actualizando columna 'type': " + e.getMessage());
             e.printStackTrace();
         }
 

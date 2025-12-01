@@ -13,7 +13,6 @@ import java.util.Optional;
 @Order(2)
 @Component
 public class KnowledgeAreaSeeder implements ApplicationListener<ContextRefreshedEvent> {
-    private static final Logger logger = LoggerFactory.getLogger(KnowledgeAreaSeeder.class);
 
     private final KnowledgeAreaRepository knowledgeAreaRepository;
 

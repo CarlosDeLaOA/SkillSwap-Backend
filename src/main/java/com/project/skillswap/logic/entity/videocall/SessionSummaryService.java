@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 public class SessionSummaryService {
-    private static final Logger logger = LoggerFactory.getLogger(SessionSummaryService.class);
 
     //#region Configuración
 

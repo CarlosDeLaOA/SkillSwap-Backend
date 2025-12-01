@@ -1,4 +1,6 @@
 package com.project.skillswap.rest.feedback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.Feedback.Feedback;
 import com.project.skillswap.logic.entity.Feedback.FeedbackService;
@@ -28,6 +30,7 @@ import java.util.Optional;
 @RequestMapping("/feedbacks")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class FeedbackRestController {
+    private static final Logger logger = LoggerFactory.getLogger(FeedbackRestController.class);
 
     //#region Dependencies
     private final FeedbackService feedbackService;
@@ -88,14 +91,14 @@ public class FeedbackRestController {
                         .body(Map.of("success", false, "message", "Solo learners pueden dejar feedback"));
             }
 
-            System.out.println("========================================");
-            System.out.println("[FeedbackRestController] Subiendo audio para feedback");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("   Learner: " + person.getFullName());
-            System.out.println("   Archivo: " + audioFile.getOriginalFilename());
-            System.out.println("   Tamaño: " + audioFile.getSize() + " bytes");
-            System.out.println("   Duracion: " + durationSeconds + " segundos");
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info("[FeedbackRestController] Subiendo audio para feedback");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("   Learner: " + person.getFullName());
+            logger.info("   Archivo: " + audioFile.getOriginalFilename());
+            logger.info("   Tamaño: " + audioFile.getSize() + " bytes");
+            logger.info("   Duracion: " + durationSeconds + " segundos");
+            logger.info("========================================");
 
             if (durationSeconds > 120) {
                 return ResponseEntity.badRequest()
@@ -117,12 +120,12 @@ public class FeedbackRestController {
                 feedback = feedbackService.saveFeedback(feedback);
             }
 
-            System.out.println("   Feedback ID: " + feedback.getId());
+            logger.info("   Feedback ID: " + feedback.getId());
 
             Map<String, Object> uploadResult = feedbackAudioService.uploadAudioToCloudinary(
                     feedback.getId(), audioFile, durationSeconds);
 
-            System.out.println("[FeedbackRestController] Audio subido exitosamente");
+            logger.info("[FeedbackRestController] Audio subido exitosamente");
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
@@ -131,7 +134,7 @@ public class FeedbackRestController {
             ));
 
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error subiendo audio: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error subiendo audio: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("success", false, "message", "Error: " + e.getMessage()));
@@ -181,7 +184,7 @@ public class FeedbackRestController {
             ));
 
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error obteniendo status: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error obteniendo status: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("success", false, "message", "Error: " + e.getMessage()));
         }
@@ -223,7 +226,7 @@ public class FeedbackRestController {
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error eliminando audio: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error eliminando audio: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("success", false, "message", "Error: " + e.getMessage()));
         }
@@ -276,7 +279,7 @@ public class FeedbackRestController {
             ));
 
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error obteniendo feedback: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error obteniendo feedback: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("success", false, "message", "Error: " + e.getMessage()));
         }
@@ -325,13 +328,13 @@ public class FeedbackRestController {
                 comment = (String) feedbackData.get("comment");
             }
 
-            System.out.println("========================================");
-            System.out.println("[FeedbackRestController] Enviando feedback");
-            System.out.println("   Session ID: " + sessionId);
-            System.out.println("   Learner: " + person.getFullName());
-            System.out.println("   Rating: " + rating);
-            System.out.println("   Tiene comentario: " + (comment != null && !comment.isEmpty()));
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info("[FeedbackRestController] Enviando feedback");
+            logger.info("   Session ID: " + sessionId);
+            logger.info("   Learner: " + person.getFullName());
+            logger.info("   Rating: " + rating);
+            logger.info("   Tiene comentario: " + (comment != null && !comment.isEmpty()));
+            logger.info("========================================");
 
             Optional<Feedback> existingFeedback = feedbackService.getFeedbackBySessionAndLearner(session, learner);
             Feedback feedback;
@@ -353,8 +356,8 @@ public class FeedbackRestController {
 
             feedbackService.saveFeedback(feedback);
 
-            System.out.println("[FeedbackRestController] Feedback guardado exitosamente");
-            System.out.println("   Feedback ID: " + feedback.getId());
+            logger.info("[FeedbackRestController] Feedback guardado exitosamente");
+            logger.info("   Feedback ID: " + feedback.getId());
 
             Map<String, Object> responseData = buildFeedbackResponse(feedback);
 
@@ -365,7 +368,7 @@ public class FeedbackRestController {
             ));
 
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error enviando feedback: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error enviando feedback: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("success", false, "message", "Error: " + e.getMessage()));
@@ -390,7 +393,7 @@ public class FeedbackRestController {
             Page<Feedback> feedbacks = feedbackService.getMyFeedbacks(pageable);
             return ResponseEntity.ok(feedbacks);
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error obteniendo feedbacks: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error obteniendo feedbacks: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -411,7 +414,7 @@ public class FeedbackRestController {
             Page<Feedback> feedbacks = feedbackService.getFeedbacksByInstructor(instructorId, pageable);
             return ResponseEntity.ok(feedbacks);
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error obteniendo feedbacks: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error obteniendo feedbacks: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -429,7 +432,7 @@ public class FeedbackRestController {
             List<Feedback> feedbacks = feedbackService.getRecentFeedbacks(limit);
             return ResponseEntity.ok(feedbacks);
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error obteniendo feedbacks recientes: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error obteniendo feedbacks recientes: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -449,7 +452,7 @@ public class FeedbackRestController {
             List<Feedback> feedbacks = feedbackService.getRecentFeedbacksByInstructor(instructorId, limit);
             return ResponseEntity.ok(feedbacks);
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error obteniendo feedbacks recientes: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error obteniendo feedbacks recientes: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -466,7 +469,7 @@ public class FeedbackRestController {
             Feedback feedback = feedbackService.getFeedbackById(feedbackId);
             return ResponseEntity.ok(feedback);
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error obteniendo feedback: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error obteniendo feedback: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -482,7 +485,7 @@ public class FeedbackRestController {
             Long count = feedbackService.getTotalFeedbackCount();
             return ResponseEntity.ok(Map.of("totalFeedbacks", count));
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error obteniendo conteo: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error obteniendo conteo: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -499,7 +502,7 @@ public class FeedbackRestController {
             Long count = feedbackService.getTotalFeedbackCountByInstructor(instructorId);
             return ResponseEntity.ok(Map.of("totalFeedbacks", count));
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error obteniendo conteo: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error obteniendo conteo: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -515,7 +518,7 @@ public class FeedbackRestController {
             Map<String, Object> stats = feedbackService.getFeedbackStats();
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error obteniendo estadisticas: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error obteniendo estadisticas: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -532,7 +535,7 @@ public class FeedbackRestController {
             Map<String, Object> stats = feedbackService.getFeedbackStatsByInstructor(instructorId);
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
-            System.err.println("[FeedbackRestController] Error obteniendo estadisticas: " + e.getMessage());
+            logger.info("[FeedbackRestController] Error obteniendo estadisticas: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }

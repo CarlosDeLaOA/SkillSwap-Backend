@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @EnableScheduling
 public class TokenBlacklistService {
-    private static final Logger logger = LoggerFactory.getLogger(TokenBlacklistService.class);
 
     private final Map<String, Instant> blacklist = new ConcurrentHashMap<>();
 

@@ -25,7 +25,6 @@ import java.text.SimpleDateFormat;
  */
 @Service
 public class SessionSummaryPdfService {
-    private static final Logger logger = LoggerFactory.getLogger(SessionSummaryPdfService.class);
 
     //#region Public API
 

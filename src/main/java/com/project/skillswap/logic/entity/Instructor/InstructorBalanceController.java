@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.Instructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Instructor.InstructorRepository;
@@ -16,6 +18,7 @@ import java.util.Map;
 @RequestMapping("/api/instructor")
 @CrossOrigin(origins = "*")
 public class InstructorBalanceController {
+    private static final Logger logger = LoggerFactory.getLogger(InstructorBalanceController.class);
 
     @Autowired
     private PersonRepository personRepository;
@@ -49,7 +52,7 @@ public class InstructorBalanceController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("[INSTRUCTOR_BALANCE] Error: " + e.getMessage());
+            logger.info("[INSTRUCTOR_BALANCE] Error: " + e.getMessage());
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
         }

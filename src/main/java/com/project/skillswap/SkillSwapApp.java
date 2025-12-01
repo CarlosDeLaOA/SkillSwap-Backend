@@ -7,7 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class SkillSwapApp {
-    private static final Logger logger = LoggerFactory.getLogger(SkillSwapApp.class);
 
     public static void main(String[] args) {
         SpringApplication.run(SkillSwapApp.class, args);

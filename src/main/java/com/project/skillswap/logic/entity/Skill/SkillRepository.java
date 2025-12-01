@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.Skill;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.Knowledgearea.KnowledgeArea;
 import org.springframework.data.jpa.repository.JpaRepository;

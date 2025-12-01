@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class EmailCommunityService {
-    private static final Logger logger = LoggerFactory.getLogger(EmailCommunityService.class);
 
     //#region Dependencies
     private final JavaMailSender mailSender;

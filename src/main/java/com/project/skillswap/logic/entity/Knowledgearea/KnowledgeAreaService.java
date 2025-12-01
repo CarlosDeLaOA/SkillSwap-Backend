@@ -9,7 +9,6 @@ import java.util.List;
 
 @Service
 public class KnowledgeAreaService {
-    private static final Logger logger = LoggerFactory.getLogger(KnowledgeAreaService.class);
 
     @Autowired
     private KnowledgeAreaRepository knowledgeAreaRepository;

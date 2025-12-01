@@ -15,7 +15,6 @@ import java.util.Optional;
 @Order(3)
 @Component
 public class SkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
-    private static final Logger logger = LoggerFactory.getLogger(SkillSeeder.class);
 
     private final SkillRepository skillRepository;
     private final KnowledgeAreaRepository knowledgeAreaRepository;

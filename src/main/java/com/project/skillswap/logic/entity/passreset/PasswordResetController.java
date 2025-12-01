@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/auth/password/reset")
 public class PasswordResetController {
-    private static final Logger logger = LoggerFactory.getLogger(PasswordResetController.class);
 
     private final PasswordResetService passwordResetService;
 

@@ -15,7 +15,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Configuration
 public class ApplicationConfiguration {
-    private static final Logger logger = LoggerFactory.getLogger(ApplicationConfiguration.class);
 
     //#region Dependencies
     @Autowired

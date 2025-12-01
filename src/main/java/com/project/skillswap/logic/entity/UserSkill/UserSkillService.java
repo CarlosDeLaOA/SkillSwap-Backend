@@ -18,7 +18,6 @@ import java.util.Optional;
  */
 @Service
 public class UserSkillService {
-    private static final Logger logger = LoggerFactory.getLogger(UserSkillService.class);
 
     //<editor-fold desc="Dependencies">
     @Autowired

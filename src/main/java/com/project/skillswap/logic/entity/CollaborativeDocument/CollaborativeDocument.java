@@ -13,7 +13,6 @@ import java.util.Objects;
 @Entity
 @Table(name = "collaborative_documents")
 public class CollaborativeDocument {
-    private static final Logger logger = LoggerFactory.getLogger(CollaborativeDocument.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

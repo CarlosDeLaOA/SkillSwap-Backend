@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import java.time.LocalDateTime;
 
 public class DocumentResponse {
-    private static final Logger logger = LoggerFactory.getLogger(DocumentResponse.class);
     private Long id;
     private String documentId;
     private Long sessionId;

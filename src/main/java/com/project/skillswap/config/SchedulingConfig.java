@@ -12,5 +12,5 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class SchedulingConfig {
     private static final Logger logger = LoggerFactory.getLogger(SchedulingConfig.class);
-    //
+
 }

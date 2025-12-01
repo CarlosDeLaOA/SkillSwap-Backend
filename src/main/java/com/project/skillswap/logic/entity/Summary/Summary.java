@@ -13,7 +13,6 @@ import java.util.Date;
 })
 @Entity
 public class Summary {
-    private static final Logger logger = LoggerFactory.getLogger(Summary.class);
 
     //<editor-fold desc="Fields">
     @Id

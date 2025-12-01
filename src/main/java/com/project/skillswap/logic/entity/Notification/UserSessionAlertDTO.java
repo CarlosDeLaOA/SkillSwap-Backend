@@ -9,7 +9,6 @@ import java.util.List;
  * DTO que agrupa sesiones por usuario para el envío de alertas
  */
 public class UserSessionAlertDTO {
-    private static final Logger logger = LoggerFactory.getLogger(UserSessionAlertDTO.class);
     private Long personId;
     private String fullName;
     private String email;

@@ -20,7 +20,6 @@ import java.util.Locale;
  */
 @Service
 public class AlertEmailService {
-    private static final Logger logger = LoggerFactory.getLogger(AlertEmailService.class);
 
     private final JavaMailSender mailSender;
 

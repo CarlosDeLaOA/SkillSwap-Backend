@@ -3,7 +3,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 public class Meta {
-    private static final Logger logger = LoggerFactory.getLogger(Meta.class);
     private String method;
     private String url;
 

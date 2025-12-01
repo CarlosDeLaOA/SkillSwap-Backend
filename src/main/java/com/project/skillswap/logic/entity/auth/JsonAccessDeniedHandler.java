@@ -15,7 +15,6 @@ import java.util.Map;
 
 @Component
 public class JsonAccessDeniedHandler implements AccessDeniedHandler {
-    private static final Logger logger = LoggerFactory.getLogger(JsonAccessDeniedHandler.class);
 
     //#region Dependencies
     private final ObjectMapper mapper = new ObjectMapper();

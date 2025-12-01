@@ -2,7 +2,6 @@ package com.project.skillswap.logic.entity.dashboard;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 public class MonthlyAttendanceResponse {
-    private static final Logger logger = LoggerFactory.getLogger(MonthlyAttendanceResponse.class);
 
     private String month;
     private Integer presentes;

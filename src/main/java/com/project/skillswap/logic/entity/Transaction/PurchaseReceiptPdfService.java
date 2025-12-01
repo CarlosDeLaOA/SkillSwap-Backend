@@ -29,7 +29,6 @@ import java.util.Date;
  */
 @Service
 public class PurchaseReceiptPdfService {
-    private static final Logger logger = LoggerFactory.getLogger(PurchaseReceiptPdfService.class);
 
     private static final DeviceRgb SKILLSWAP_PURPLE = new DeviceRgb(80, 74, 183);
     private static final DeviceRgb SKILLSWAP_GREEN = new DeviceRgb(170, 225, 107);

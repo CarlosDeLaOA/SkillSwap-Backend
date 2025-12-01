@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 })
 @Entity
 public class VerificationToken {
-    private static final Logger logger = LoggerFactory.getLogger(VerificationToken.class);
 
     //#region Fields
     @Id

@@ -3,7 +3,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 public class HttpResponse<T> {
-    private static final Logger logger = LoggerFactory.getLogger(HttpResponse.class);
+
     private  String message;
     private T data;
 

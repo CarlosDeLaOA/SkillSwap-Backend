@@ -22,7 +22,6 @@ import java.util.Optional;
 @Order(4)
 @Component
 public class UserSkillSeeder implements ApplicationListener<ContextRefreshedEvent> {
-    private static final Logger logger = LoggerFactory.getLogger(UserSkillSeeder.class);
 
     //#region Dependencies
     private final UserSkillRepository userSkillRepository;

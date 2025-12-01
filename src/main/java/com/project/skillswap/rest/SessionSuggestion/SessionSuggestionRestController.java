@@ -1,4 +1,6 @@
 package com.project.skillswap.rest.SessionSuggestion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.SessionSuggestion.SessionSuggestionService;
 import com.project.skillswap.logic.entity.SessionSuggestion.SessionSuggestionResponse;
@@ -23,6 +25,7 @@ import java.util.Optional;
 @RequestMapping("/api/suggestions")
 @CrossOrigin(origins = "*")
 public class SessionSuggestionRestController {
+    private static final Logger logger = LoggerFactory.getLogger(SessionSuggestionRestController.class);
 
     @Autowired
     private SessionSuggestionService suggestionService;

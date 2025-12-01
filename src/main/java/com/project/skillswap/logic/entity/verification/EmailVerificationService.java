@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class EmailVerificationService {
-    private static final Logger logger = LoggerFactory.getLogger(EmailVerificationService.class);
 
     //#region Dependencies
     private final JavaMailSender mailSender;

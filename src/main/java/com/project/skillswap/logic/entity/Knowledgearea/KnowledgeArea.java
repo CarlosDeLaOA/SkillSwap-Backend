@@ -13,7 +13,6 @@ import java.util.List;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class KnowledgeArea {
-    private static final Logger logger = LoggerFactory.getLogger(KnowledgeArea.class);
 
     //<editor-fold desc="Fields">
     @Id

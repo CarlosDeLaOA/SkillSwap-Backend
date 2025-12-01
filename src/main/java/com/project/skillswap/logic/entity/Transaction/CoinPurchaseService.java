@@ -24,7 +24,6 @@ import java.util.Optional;
  */
 @Service
 public class CoinPurchaseService {
-    private static final Logger logger = LoggerFactory.getLogger(CoinPurchaseService.class);
 
     @Autowired
     private TransactionRepository transactionRepository;

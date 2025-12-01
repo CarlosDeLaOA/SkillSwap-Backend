@@ -7,7 +7,6 @@ import org.slf4j.Logger;
  * Se usa para comunicación bidireccional entre cliente y servidor
  */
 public class DocumentMessage {
-    private static final Logger logger = LoggerFactory.getLogger(DocumentMessage.class);
 
     private String documentId;
     private String content;

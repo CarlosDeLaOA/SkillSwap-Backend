@@ -17,7 +17,6 @@ import java.util.UUID;
         }
 )
 public class PasswordResetToken {
-    private static final Logger logger = LoggerFactory.getLogger(PasswordResetToken.class);
 
     // id uuid NOT NULL PRIMARY KEY
     // #NEW: UUID sin @GeneratedValue; lo asignamos en @PrePersist

@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.Feedback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -27,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 public class FeedbackAudioService {
+    private static final Logger logger = LoggerFactory.getLogger(FeedbackAudioService.class);
 
     //#region Dependencies
     @Autowired
@@ -68,13 +71,13 @@ public class FeedbackAudioService {
      */
     public Map<String, Object> uploadAudioToCloudinary(Long feedbackId, MultipartFile audioFile, Integer durationSeconds) {
         try {
-            System.out.println("========================================");
-            System.out.println("[FeedbackAudioService] Uploading audio to Cloudinary");
-            System.out.println("   Feedback ID: " + feedbackId);
-            System.out.println("   File: " + audioFile.getOriginalFilename());
-            System.out.println("   Size: " + formatFileSize(audioFile.getSize()));
-            System.out.println("   Duration: " + durationSeconds + " seconds");
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info("[FeedbackAudioService] Uploading audio to Cloudinary");
+            logger.info("   Feedback ID: " + feedbackId);
+            logger.info("   File: " + audioFile.getOriginalFilename());
+            logger.info("   Size: " + formatFileSize(audioFile.getSize()));
+            logger.info("   Duration: " + durationSeconds + " seconds");
+            logger.info("========================================");
 
             if (audioFile.isEmpty()) {
                 throw new RuntimeException("El archivo de audio esta vacio");
@@ -103,11 +106,11 @@ public class FeedbackAudioService {
             String audioUrl = uploadResult.get("secure_url").toString();
             String publicId = uploadResult.get("public_id").toString();
 
-            System.out.println("========================================");
-            System.out.println("[FeedbackAudioService] Audio uploaded successfully");
-            System.out.println("   URL: " + audioUrl);
-            System.out.println("   Public ID: " + publicId);
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info("[FeedbackAudioService] Audio uploaded successfully");
+            logger.info("   URL: " + audioUrl);
+            logger.info("   Public ID: " + publicId);
+            logger.info("========================================");
 
             feedback.setAudioUrl(audioUrl);
             feedback.setDurationSeconds(durationSeconds);
@@ -126,7 +129,7 @@ public class FeedbackAudioService {
             return result;
 
         } catch (IOException e) {
-            System.err.println("[FeedbackAudioService] Error uploading to Cloudinary: " + e.getMessage());
+            logger.info("[FeedbackAudioService] Error uploading to Cloudinary: " + e.getMessage());
             throw new RuntimeException("Error al subir audio a Cloudinary: " + e.getMessage());
         }
     }
@@ -185,7 +188,7 @@ public class FeedbackAudioService {
                                     "invalidate", true
                             ));
 
-                    System.out.println("[FeedbackAudioService] Audio deleted from Cloudinary: " + publicId);
+                    logger.info("[FeedbackAudioService] Audio deleted from Cloudinary: " + publicId);
                 }
             }
 
@@ -202,7 +205,7 @@ public class FeedbackAudioService {
             return result;
 
         } catch (Exception e) {
-            System.err.println("[FeedbackAudioService] Error deleting audio: " + e.getMessage());
+            logger.info("[FeedbackAudioService] Error deleting audio: " + e.getMessage());
             throw new RuntimeException("Error al eliminar audio: " + e.getMessage());
         }
     }
@@ -220,11 +223,11 @@ public class FeedbackAudioService {
     @Async
     private void startTranscriptionAsync(Long feedbackId, MultipartFile audioFile, Long sessionId) {
         try {
-            System.out.println("========================================");
-            System.out.println("[FeedbackAudioService] Starting async transcription for feedback: " + feedbackId);
-            System.out.println("   File: " + audioFile.getOriginalFilename());
-            System.out.println("   Size: " + formatFileSize(audioFile.getSize()));
-            System.out.println("========================================");
+            logger.info("========================================");
+            logger.info("[FeedbackAudioService] Starting async transcription for feedback: " + feedbackId);
+            logger.info("   File: " + audioFile.getOriginalFilename());
+            logger.info("   Size: " + formatFileSize(audioFile.getSize()));
+            logger.info("========================================");
 
             Feedback feedback = feedbackRepository.findById(feedbackId)
                     .orElseThrow(() -> new RuntimeException("Feedback no encontrado"));
@@ -236,24 +239,24 @@ public class FeedbackAudioService {
                     feedback.setAudioTranscription(transcription);
                     feedbackRepository.save(feedback);
 
-                    System.out.println("========================================");
-                    System.out.println("[FeedbackAudioService] ✅ Transcription completed");
-                    System.out.println("   Length: " + transcription.length() + " characters");
-                    System.out.println("========================================");
+                    logger.info("========================================");
+                    logger.info("[FeedbackAudioService] ✅ Transcription completed");
+                    logger.info("   Length: " + transcription.length() + " characters");
+                    logger.info("========================================");
                 } else {
-                    System.err.println("[FeedbackAudioService] ❌ Empty transcription");
+                    logger.info("[FeedbackAudioService] ❌ Empty transcription");
                     feedback.setAudioTranscription("ERROR: Transcripción vacía");
                     feedbackRepository.save(feedback);
                 }
             } catch (Exception transcriptionError) {
-                System.err.println("[FeedbackAudioService] ❌ Transcription error: " + transcriptionError.getMessage());
+                logger.info("[FeedbackAudioService] ❌ Transcription error: " + transcriptionError.getMessage());
                 transcriptionError.printStackTrace();
                 feedback.setAudioTranscription("ERROR: " + transcriptionError.getMessage());
                 feedbackRepository.save(feedback);
             }
 
         } catch (Exception e) {
-            System.err.println("[FeedbackAudioService] Error in async transcription: " + e.getMessage());
+            logger.info("[FeedbackAudioService] Error in async transcription: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -264,7 +267,7 @@ public class FeedbackAudioService {
      * @return Transcripción en texto
      */
     private String transcribeAudioFile(MultipartFile audioFile) throws IOException {
-        System.out.println("[FeedbackAudioService] Transcribing audio file: " + audioFile.getOriginalFilename());
+        logger.info("[FeedbackAudioService] Transcribing audio file: " + audioFile.getOriginalFilename());
 
         OkHttpClient httpClient = new OkHttpClient.Builder()
                 .connectTimeout(60, TimeUnit.SECONDS)
@@ -300,7 +303,7 @@ public class FeedbackAudioService {
 
             if (jsonResponse.has("text")) {
                 String transcription = jsonResponse.get("text").getAsString();
-                System.out.println("[FeedbackAudioService] Transcription result: " + transcription.substring(0, Math.min(100, transcription.length())) + "...");
+                logger.info("[FeedbackAudioService] Transcription result: " + transcription.substring(0, Math.min(100, transcription.length())) + "...");
                 return transcription;
             }
 

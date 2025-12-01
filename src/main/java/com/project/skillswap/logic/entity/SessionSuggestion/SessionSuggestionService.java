@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.SessionSuggestion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 */
 @Service
 public class SessionSuggestionService {
+    private static final Logger logger = LoggerFactory.getLogger(SessionSuggestionService.class);
 
     @Autowired
     private SessionSuggestionRepository sessionSuggestionRepository;

@@ -6,7 +6,6 @@ import org.slf4j.Logger;
  * DTO para alertas de credenciales cercanas a certificado (8 o 9 de 10)
  */
 public class CredentialAlertDTO {
-    private static final Logger logger = LoggerFactory.getLogger(CredentialAlertDTO.class);
     private Long learnerId;
     private String learnerName;
     private String learnerEmail;

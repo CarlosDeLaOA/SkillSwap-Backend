@@ -23,7 +23,6 @@ import java.util.Map;
  */
 @Service
 public class InstructorSessionService {
-    private static final Logger logger = LoggerFactory.getLogger(InstructorSessionService.class);
 
     //#region Dependencies
 

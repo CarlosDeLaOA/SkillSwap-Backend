@@ -24,7 +24,6 @@ import java.util.Locale;
  */
 @Service
 public class TransactionEmailService {
-    private static final Logger logger = LoggerFactory.getLogger(TransactionEmailService.class);
 
     @Autowired
     private JavaMailSender mailSender;

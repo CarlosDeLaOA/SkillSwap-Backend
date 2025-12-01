@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class SmtpMailService implements MailService {
-    private static final Logger logger = LoggerFactory.getLogger(SmtpMailService.class);
     private final JavaMailSender mailSender;
 
     // Usa el from del properties; por defecto cae al username si no lo definís

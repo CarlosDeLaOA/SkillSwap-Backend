@@ -3,7 +3,6 @@ package com.project.skillswap.logic.entity.CollaborativeDocument;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 public class DocumentUpdateRequest {
-    private static final Logger logger = LoggerFactory.getLogger(DocumentUpdateRequest.class);
     private String documentId;
     private String content;
     private Long version;

@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.Booking;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Instructor.InstructorRepository;
@@ -19,6 +21,7 @@ import java.math.BigDecimal;
 
 @Service
 public class SessionPaymentService {
+    private static final Logger logger = LoggerFactory.getLogger(SessionPaymentService.class);
 
     @Autowired
     private LearnerRepository learnerRepository;
@@ -47,26 +50,26 @@ public class SessionPaymentService {
         // 1. Validar que la sesión sea premium
         if (!session.getIsPremium() || session.getSkillcoinsCost() == null ||
                 session.getSkillcoinsCost().compareTo(BigDecimal.ZERO) <= 0) {
-            System.out.println(" [PAYMENT] Sesión gratuita, no se requiere pago");
+            logger.info(" [PAYMENT] Sesión gratuita, no se requiere pago");
             return;
         }
 
         BigDecimal cost = session.getSkillcoinsCost();
         BigDecimal learnerBalance = learner.getSkillcoinsBalance();
 
-        System.out.println(" [PAYMENT] Procesando pago de sesión premium:");
-        System.out.println("    Sesión: " + session.getTitle());
-        System.out.println("    Costo: " + cost + " SkillCoins");
-        System.out.println("    Learner: " + learner.getPerson().getFullName());
-        System.out.println("    Balance actual: " + learnerBalance + " SkillCoins");
+        logger.info(" [PAYMENT] Procesando pago de sesión premium:");
+        logger.info("    Sesión: " + session.getTitle());
+        logger.info("    Costo: " + cost + " SkillCoins");
+        logger.info("    Learner: " + learner.getPerson().getFullName());
+        logger.info("    Balance actual: " + learnerBalance + " SkillCoins");
 
         // 2. Validar balance suficiente
         if (learnerBalance.compareTo(cost) < 0) {
             BigDecimal deficit = cost.subtract(learnerBalance);
-            System.err.println(" [PAYMENT] Balance insuficiente");
-            System.err.println("   Necesitas: " + cost + " SkillCoins");
-            System.err.println("   Tienes: " + learnerBalance + " SkillCoins");
-            System.err.println("   Falta: " + deficit + " SkillCoins");
+            logger.info(" [PAYMENT] Balance insuficiente");
+            logger.info("   Necesitas: " + cost + " SkillCoins");
+            logger.info("   Tienes: " + learnerBalance + " SkillCoins");
+            logger.info("   Falta: " + deficit + " SkillCoins");
 
             throw new IllegalStateException(
                     String.format("Balance insuficiente. Necesitas %s SkillCoins pero solo tienes %s. " +
@@ -80,8 +83,8 @@ public class SessionPaymentService {
         learner.setSkillcoinsBalance(newLearnerBalance);
         learnerRepository.save(learner);
 
-        System.out.println("    Debitado de learner");
-        System.out.println("    Nuevo balance: " + newLearnerBalance + " SkillCoins");
+        logger.info("    Debitado de learner");
+        logger.info("    Nuevo balance: " + newLearnerBalance + " SkillCoins");
 
         // 4. Acreditar al instructor
         Instructor instructor = session.getInstructor();
@@ -90,8 +93,8 @@ public class SessionPaymentService {
         instructor.setSkillcoinsBalance(newInstructorBalance);
         instructorRepository.save(instructor);
 
-        System.out.println("    Acreditado a instructor: " + instructor.getPerson().getFullName());
-        System.out.println("    Nuevo balance instructor: " + newInstructorBalance + " SkillCoins");
+        logger.info("    Acreditado a instructor: " + instructor.getPerson().getFullName());
+        logger.info("    Nuevo balance instructor: " + newInstructorBalance + " SkillCoins");
 
         // 5. Crear transacción de pago del learner (débito)
         Transaction learnerTransaction = new Transaction();
@@ -111,10 +114,10 @@ public class SessionPaymentService {
         instructorTransaction.setStatus(TransactionStatus.COMPLETED);
         instructorTransaction = transactionRepository.save(instructorTransaction);
 
-        System.out.println("    Transacciones registradas");
-        System.out.println("    TX Learner (débito): #" + learnerTransaction.getId());
-        System.out.println("    TX Instructor (crédito): #" + instructorTransaction.getId());
-        System.out.println(" [PAYMENT] Pago procesado exitosamente");
+        logger.info("    Transacciones registradas");
+        logger.info("    TX Learner (débito): #" + learnerTransaction.getId());
+        logger.info("    TX Instructor (crédito): #" + instructorTransaction.getId());
+        logger.info(" [PAYMENT] Pago procesado exitosamente");
     }
 
     /**
@@ -131,16 +134,16 @@ public class SessionPaymentService {
 
         if (!session.getIsPremium() || session.getSkillcoinsCost() == null ||
                 session.getSkillcoinsCost().compareTo(BigDecimal.ZERO) <= 0) {
-            System.out.println(" [REFUND] Sesión gratuita, no hay reembolso");
+            logger.info(" [REFUND] Sesión gratuita, no hay reembolso");
             return;
         }
 
         BigDecimal cost = session.getSkillcoinsCost();
 
-        System.out.println(" [REFUND] Procesando reembolso de sesión:");
-        System.out.println("    Sesión: " + session.getTitle());
-        System.out.println("    Monto: " + cost + " SkillCoins");
-        System.out.println("    Learner: " + learner.getPerson().getFullName());
+        logger.info(" [REFUND] Procesando reembolso de sesión:");
+        logger.info("    Sesión: " + session.getTitle());
+        logger.info("    Monto: " + cost + " SkillCoins");
+        logger.info("    Learner: " + learner.getPerson().getFullName());
 
         // 1. Devolver al learner
         BigDecimal learnerBalance = learner.getSkillcoinsBalance();
@@ -148,8 +151,8 @@ public class SessionPaymentService {
         learner.setSkillcoinsBalance(newLearnerBalance);
         learnerRepository.save(learner);
 
-        System.out.println("    Reembolsado a learner");
-        System.out.println("    Balance: " + learnerBalance + " → " + newLearnerBalance + " SkillCoins");
+        logger.info("    Reembolsado a learner");
+        logger.info("    Balance: " + learnerBalance + " → " + newLearnerBalance + " SkillCoins");
 
         // 2. Deducir del instructor
         Instructor instructor = session.getInstructor();
@@ -158,8 +161,8 @@ public class SessionPaymentService {
         instructor.setSkillcoinsBalance(newInstructorBalance);
         instructorRepository.save(instructor);
 
-        System.out.println("    Deducido de instructor: " + instructor.getPerson().getFullName());
-        System.out.println("    Balance: " + instructorBalance + " → " + newInstructorBalance + " SkillCoins");
+        logger.info("    Deducido de instructor: " + instructor.getPerson().getFullName());
+        logger.info("    Balance: " + instructorBalance + " → " + newInstructorBalance + " SkillCoins");
 
         // 3. Crear transacción de reembolso para el learner
         Transaction refundTransaction = new Transaction();
@@ -170,7 +173,7 @@ public class SessionPaymentService {
         refundTransaction.setStatus(TransactionStatus.COMPLETED);
         refundTransaction = transactionRepository.save(refundTransaction);
 
-        System.out.println("    Transacción de reembolso registrada: #" + refundTransaction.getId());
-        System.out.println(" [REFUND] Reembolso procesado exitosamente");
+        logger.info("    Transacción de reembolso registrada: #" + refundTransaction.getId());
+        logger.info(" [REFUND] Reembolso procesado exitosamente");
     }
 }

@@ -7,8 +7,6 @@ import java.util.Date;
  * Response containing credential information for learners
  */
 public class CredentialResponse {
-    private static final Logger logger = LoggerFactory.getLogger(CredentialResponse.class);
-
     //#region Fields
     private Long id;
     private String skillName;

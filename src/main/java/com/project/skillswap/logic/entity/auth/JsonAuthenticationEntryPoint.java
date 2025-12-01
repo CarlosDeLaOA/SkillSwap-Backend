@@ -19,7 +19,6 @@ import java.util.Map;
 
 @Component
 public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
-    private static final Logger logger = LoggerFactory.getLogger(JsonAuthenticationEntryPoint.class);
 
     //#region Dependencies
     private final ObjectMapper mapper = new ObjectMapper();

@@ -452,7 +452,7 @@ public class VideoCallRestController {
 
 
             if (!isInstructor) {
-                System.out.println("DENEGADO: Solo el instructor puede iniciar la grabación");
+                logger.info("DENEGADO: Solo el instructor puede iniciar la grabación");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "Solo el instructor puede iniciar la grabación"));
             }

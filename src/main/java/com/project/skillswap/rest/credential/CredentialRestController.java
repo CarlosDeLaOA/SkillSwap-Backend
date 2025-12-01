@@ -17,7 +17,6 @@ import java.util.List;
 @RequestMapping("/communities")
 @CrossOrigin(origins = "*")
 public class CredentialRestController {
-    private static final Logger logger = LoggerFactory.getLogger(CredentialRestController.class);
 
     @Autowired
     private CredentialService credentialService;

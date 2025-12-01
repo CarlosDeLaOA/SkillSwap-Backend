@@ -6,7 +6,6 @@ import org.slf4j.Logger;
  * DTO para responder después de cancelar una sesión
  */
 public class CancelSessionResponse {
-    private static final Logger logger = LoggerFactory.getLogger(CancelSessionResponse.class);
 
     private Long sessionId;
     private String sessionTitle;

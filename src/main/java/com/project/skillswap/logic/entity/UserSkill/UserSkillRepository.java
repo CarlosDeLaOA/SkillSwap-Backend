@@ -1,4 +1,6 @@
 package com.project.skillswap.logic.entity.UserSkill;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Skill.Skill;

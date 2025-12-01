@@ -7,7 +7,6 @@ import org.slf4j.Logger;
  * DTO para recibir la solicitud de cancelación de sesión
  */
 public class CancelSessionRequest {
-    private static final Logger logger = LoggerFactory.getLogger(CancelSessionRequest.class);
 
     private String reason;
 
