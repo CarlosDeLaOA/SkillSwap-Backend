@@ -56,46 +56,36 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
         int totalCredentials = 0;
 
         for (Learner learner : learners) {
-            // Obtener todos los quizzes aprobados del learner
+            // Obtener TODOS los quizzes del learner (ya están todos aprobados)
             List<Quiz> learnerQuizzes = quizRepository.findAll().stream()
                     .filter(q -> q.getLearner().getId().equals(learner.getId()))
                     .filter(q -> q.getPassed() != null && q.getPassed())
                     .toList();
 
-            int credentialsCreated = 0;
-
-            // Crear una credencial por cada quiz aprobado
-            for (Quiz quiz : learnerQuizzes) {
-                LearningSession session = quiz.getLearningSession();
-                Skill skill = session.getSkill();
-
-                Credential credential = createCredential(learner, skill, session, quiz);
-                credentialRepository.save(credential);
-                credentialsCreated++;
-                totalCredentials++;
+            if (learnerQuizzes.isEmpty()) {
+                logger.warn("Learner " + learner.getId() + " no tiene quizzes aprobados");
+                continue;
             }
 
-            // Verificar que el learner tenga al menos 60 credenciales
-            // Si no tiene suficientes, crear credenciales adicionales usando quizzes existentes
-            int minCredentials = learner.getCredentialsObtained();
-            if (credentialsCreated < minCredentials && !learnerQuizzes.isEmpty()) {
-                int additionalNeeded = minCredentials - credentialsCreated;
+            int credentialsCreated = 0;
 
-                for (int i = 0; i < additionalNeeded; i++) {
-                    // Reutilizar quizzes aleatoriamente para alcanzar el mínimo
-                    Quiz randomQuiz = learnerQuizzes.get(random.nextInt(learnerQuizzes.size()));
-                    LearningSession session = randomQuiz.getLearningSession();
+            // Crear una credencial por cada quiz
+            for (Quiz quiz : learnerQuizzes) {
+                try {
+                    LearningSession session = quiz.getLearningSession();
                     Skill skill = session.getSkill();
 
-                    Credential credential = createCredential(learner, skill, session, randomQuiz);
+                    Credential credential = createCredential(learner, skill, session, quiz);
                     credentialRepository.save(credential);
                     credentialsCreated++;
                     totalCredentials++;
+                } catch (Exception e) {
+                    logger.error("Error creando credencial para learner " + learner.getId() + ": " + e.getMessage());
                 }
             }
 
             logger.info("Learner " + learner.getId() + " (" + learner.getPerson().getFullName() +
-                    "): " + credentialsCreated + " credenciales creadas");
+                    "): " + credentialsCreated + " credenciales creadas de " + learnerQuizzes.size() + " quizzes");
         }
 
         logger.info("CredentialSeeder: " + totalCredentials + " credenciales creadas en total");
@@ -108,6 +98,8 @@ public class CredentialSeeder implements ApplicationListener<ContextRefreshedEve
         credential.setSkill(skill);
         credential.setLearningSession(session);
         credential.setQuiz(quiz);
+
+        // Porcentaje logrado (basado en el score del quiz)
         BigDecimal percentage = BigDecimal.valueOf(quiz.getScoreObtained());
         credential.setPercentageAchieved(percentage);
 

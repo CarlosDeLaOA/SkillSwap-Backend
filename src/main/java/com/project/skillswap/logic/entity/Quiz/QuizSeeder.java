@@ -14,13 +14,12 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.*;
+
 @Order(9)
 @Component
-public class QuizSeeder {
-
+public class QuizSeeder implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(QuizSeeder.class);
 
     private final QuizRepository quizRepository;
@@ -39,64 +38,104 @@ public class QuizSeeder {
         this.bookingRepository = bookingRepository;
     }
 
-    @TransactionalEventListener
-    @Order(9)
-    public void seedQuizzesAfterTransaction(ContextRefreshedEvent event) {
+    @Override
+    @Transactional
+    public void onApplicationEvent(ContextRefreshedEvent event) {
         if (quizRepository.count() > 0) {
             logger.info("QuizSeeder: Ya existen quizzes, omitiendo seed");
             return;
         }
+        this.seedQuizzes();
+    }
 
+    private void seedQuizzes() {
         List<Learner> learners = learnerRepository.findAll();
+        List<LearningSession> allFinishedSessions = learningSessionRepository.findAll().stream()
+                .filter(s -> s.getStatus() == SessionStatus.FINISHED)
+                .toList();
+
         if (learners.isEmpty()) {
             logger.warn("No hay learners para crear quizzes");
+            return;
+        }
+
+        if (allFinishedSessions.isEmpty()) {
+            logger.warn("No hay sesiones finalizadas para crear quizzes");
             return;
         }
 
         int totalQuizzes = 0;
 
         for (Learner learner : learners) {
-            List<Booking> bookings = bookingRepository.findAll().stream()
+            int quizzesCreated = 0;
+            int minQuizzesNeeded = learner.getCredentialsObtained(); // Mínimo 60
+
+            // ESTRATEGIA 1: Crear quizzes basados en bookings atendidos
+            List<Booking> attendedBookings = bookingRepository.findAll().stream()
                     .filter(b -> b.getLearner().getId().equals(learner.getId()))
                     .filter(b -> b.getAttended() != null && b.getAttended())
                     .toList();
 
-            List<Booking> attendedFinishedBookings = new ArrayList<>();
-            for (Booking booking : bookings) {
-                // Cargar sesión explícitamente dentro de la transacción
-                LearningSession session = learningSessionRepository
-                        .findById(booking.getLearningSession().getId())
-                        .orElseThrow();
-
+            for (Booking booking : attendedBookings) {
+                LearningSession session = booking.getLearningSession();
+                // Verificar que la sesión esté FINISHED
                 if (session.getStatus() == SessionStatus.FINISHED) {
-                    attendedFinishedBookings.add(booking);
+                    Quiz quiz = createQuiz(learner, session);
+                    quizRepository.save(quiz);
+                    quizzesCreated++;
+                    totalQuizzes++;
+                }
+
+                // Si ya alcanzamos el mínimo, salir del loop
+                if (quizzesCreated >= minQuizzesNeeded) {
+                    break;
                 }
             }
 
-            for (Booking booking : attendedFinishedBookings) {
-                Quiz quiz = createQuiz(learner, learningSessionRepository
-                        .findById(booking.getLearningSession().getId())
-                        .orElseThrow());
-                quizRepository.save(quiz);
-                totalQuizzes++;
+            // ESTRATEGIA 2: Si aún no alcanza el mínimo, crear quizzes adicionales
+            if (quizzesCreated < minQuizzesNeeded) {
+                int additionalNeeded = minQuizzesNeeded - quizzesCreated;
+                logger.info("Learner " + learner.getId() + " (" + learner.getPerson().getFullName() +
+                        ") necesita " + additionalNeeded + " quizzes adicionales");
+
+                // Crear quizzes adicionales usando sesiones finalizadas aleatorias
+                List<LearningSession> shuffledSessions = new ArrayList<>(allFinishedSessions);
+                Collections.shuffle(shuffledSessions);
+
+                for (int i = 0; i < additionalNeeded && i < shuffledSessions.size(); i++) {
+                    LearningSession session = shuffledSessions.get(i);
+                    Quiz quiz = createQuiz(learner, session);
+                    quizRepository.save(quiz);
+                    quizzesCreated++;
+                    totalQuizzes++;
+                }
             }
+
+            logger.info("Learner " + learner.getId() + " (" + learner.getPerson().getFullName() +
+                    "): " + quizzesCreated + " quizzes creados (requerido: " + minQuizzesNeeded + ")");
         }
 
-        logger.info("QuizSeeder: " + totalQuizzes + " quizzes creados");
+        logger.info("QuizSeeder: " + totalQuizzes + " quizzes creados en total");
     }
 
     private Quiz createQuiz(Learner learner, LearningSession session) {
         Quiz quiz = new Quiz();
+
         quiz.setLearner(learner);
         quiz.setLearningSession(session);
 
+        // CRITICAL: Establecer el skill desde la session
+        quiz.setSkill(session.getSkill());
+
+        // Score (70-100) - SIEMPRE APROBADO para garantizar credenciales
         int scoreObtained = 70 + random.nextInt(31);
         quiz.setScoreObtained(scoreObtained);
-        quiz.setPassed(scoreObtained >= 70);
+        quiz.setPassed(true); // SIEMPRE TRUE
 
+        // Fecha de finalización (mismo día de la sesión o hasta 2 días después)
         Calendar completionCal = Calendar.getInstance();
         completionCal.setTime(session.getScheduledDatetime());
-        completionCal.add(Calendar.DAY_OF_MONTH, random.nextInt(3));
+        completionCal.add(Calendar.DAY_OF_MONTH, random.nextInt(3)); // 0-2 días después
         completionCal.add(Calendar.HOUR_OF_DAY, random.nextInt(24));
         quiz.setCompletionDate(completionCal.getTime());
 

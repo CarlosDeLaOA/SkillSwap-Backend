@@ -65,18 +65,18 @@ public class AttendanceRecordSeeder implements ApplicationListener<ContextRefres
 
         record.setLearningSession(session);
 
-        // Duración real puede variar un poco de la programada
-        int variance = random.nextInt(21) - 10; // -10 a +10 minutos
+        int variance = random.nextInt(21) - 10;
         int actualDuration = session.getDurationMinutes() + variance;
-        actualDuration = Math.max(actualDuration, 15); // Mínimo 15 minutos
+        actualDuration = Math.max(actualDuration, 15);
         record.setActualDurationMinutes(actualDuration);
+        List<Booking> allBookings = bookingRepository.findAll();
+        long attendedCount = allBookings.stream()
+                .filter(b -> b.getLearningSession().getId().equals(session.getId()))
+                .filter(b -> b.getAttended() != null && b.getAttended())
+                .count();
 
-        // Contar participantes que asistieron (bookings con attended = true)
-        List<Booking> bookings = bookingRepository.findByLearningSessionId(session.getId());
-        long attendedCount = bookings.stream().filter(b -> b.getAttended() != null && b.getAttended()).count();
         record.setTotalParticipants((int) attendedCount);
 
-        // Start datetime = scheduled datetime (puede tener unos minutos de variación)
         Calendar startCal = Calendar.getInstance();
         startCal.setTime(session.getScheduledDatetime());
         startCal.add(Calendar.MINUTE, random.nextInt(11) - 5); // -5 a +5 minutos
