@@ -14,14 +14,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-/**
- * Servicio para el envío de correos electrónicos relacionados con bookings.
- */
 @Service
 public class BookingEmailService {
     private static final Logger logger = LoggerFactory.getLogger(BookingEmailService.class);
 
-    //#region Dependencies
     private final JavaMailSender mailSender;
 
     @Value("${app.frontend.url:http://localhost:4200}")
@@ -33,9 +29,7 @@ public class BookingEmailService {
     public BookingEmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
-    //#endregion
 
-    //#region Public Methods
     public void sendBookingConfirmationEmail(Booking booking, Person person) throws MessagingException {
         String subject = "Confirmación de registro - " + booking.getLearningSession().getTitle();
         String htmlContent = buildBookingConfirmationTemplate(booking, person);
@@ -84,9 +78,7 @@ public class BookingEmailService {
         String htmlContent = buildInstructorNotificationTemplate(session, instructorPerson, learnerName, isGroup, spotsFreed);
         sendHtmlEmail(instructorPerson.getEmail(), subject, htmlContent);
     }
-    //#endregion
 
-    //#region Private Methods
     private void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -242,7 +234,7 @@ public class BookingEmailService {
                 "                                    <a href='" + videoCallLink + "' style='color: #aae16b; text-decoration: none;'>" + videoCallLink + "</a>" +
                 "                                </p>" +
                 "                                <p style='font-size: 12px; color: #b0b0b0; margin: 5px 0 0 0;'>" +
-                "                                    Guarda este enlace en un lugar seguro. Lo necesitarás para acceder a la sesión." +
+                "                                    Guarda este enlace en un lugar seguro.  Lo necesitarás para acceder a la sesión." +
                 "                                </p>" +
                 "                            </div>" +
                 "                            <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>" +
@@ -270,7 +262,7 @@ public class BookingEmailService {
                 "                    <tr>" +
                 "                        <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>" +
                 "                            <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>" +
-                "                                © 2025 SkillSwap. Todos los derechos reservados." +
+                "                                © 2025 SkillSwap.  Todos los derechos reservados." +
                 "                            </p>" +
                 "                        </td>" +
                 "                    </tr>" +
@@ -324,7 +316,7 @@ public class BookingEmailService {
                 "                            <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>" +
                 "                                <tr>" +
                 "                                    <td align='center'>" +
-                "                                        <a href='" + sessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%, #8ec756 100%); color: #141414; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4);'>Explorar Sesiones</a>" +
+                "                                        <a href='" + sessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%, #8ec756 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4);'>Explorar Sesiones</a>" +
                 "                                    </td>" +
                 "                                </tr>" +
                 "                            </table>" +
@@ -333,7 +325,7 @@ public class BookingEmailService {
                 "                    <tr>" +
                 "                        <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>" +
                 "                            <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>" +
-                "                                © 2025 SkillSwap.Todos los derechos reservados." +
+                "                                © 2025 SkillSwap. Todos los derechos reservados." +
                 "                            </p>" +
                 "                        </td>" +
                 "                    </tr>" +
@@ -377,7 +369,7 @@ public class BookingEmailService {
                 "<div style='background-color: #39434b; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #504ab7;'>" +
                 "<h4 style='color: #aae16b; margin-top: 0; font-size: 16px;'>Enlace de acceso a la sesión:</h4>" +
                 "<p style='font-size: 14px; word-break: break-all; color: #aae16b; background-color: #141414; padding: 15px; border-radius: 5px; margin: 10px 0;'><a href='" + accessLink + "' style='color: #aae16b; text-decoration: none;'>" + accessLink + "</a></p>" +
-                "<p style='font-size: 12px; color: #b0b0b0; margin: 5px 0 0 0;'>Este es tu enlace personal de acceso.  Cada miembro de tu comunidad recibirá su propio enlace.</p></div>" +
+                "<p style='font-size: 12px; color: #b0b0b0; margin: 5px 0 0 0;'>Este es tu enlace personal de acceso.   Cada miembro de tu comunidad recibirá su propio enlace.</p></div>" +
                 "<table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'><tr><td align='center'>" +
                 "<a href='" + videoCallLink + "' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%, #8ec756 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4); margin: 0 5px;'>Ir a la Videollamada</a>" +
                 "<a href='" + googleCalendarLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #6b63d8 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(80, 74, 183, 0.4); margin: 0 5px;'>Agregar a Google Calendar</a>" +
@@ -457,10 +449,10 @@ public class BookingEmailService {
                 "<tr><td style='color: #aae16b;'><strong>Habilidad:</strong></td><td style='color: #ffffff;'>" + skillName + "</td></tr>" +
                 "<tr><td style='color: #aae16b;'><strong>Categoría:</strong></td><td style='color: #ffffff;'>" + categoryName + "</td></tr></table></div>" +
                 "<div style='background-color: #39434b; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #504ab7;'><h4 style='color: #aae16b; margin-top: 0; font-size: 16px;'>¿Qué sigue?</h4>" +
-                "<p style='color: #ffffff; font-size: 14px; line-height: 1.8; margin: 10px 0;'>Te notificaremos por email cuando se libere un cupo en esta sesión.  Serás el primero en la lista de espera.</p>" +
+                "<p style='color: #ffffff; font-size: 14px; line-height: 1.8; margin: 10px 0;'>Te notificaremos por email cuando se libere un cupo en esta sesión.   Serás el primero en la lista de espera.</p>" +
                 "<p style='color: #ffffff; font-size: 14px; line-height: 1.8; margin: 10px 0;'>Recibirás un enlace de acceso cuando se confirme tu registro.</p></div>" +
                 "<table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'><tr><td align='center'>" +
-                "<a href='" + mySessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%, #8ec756 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0. 4); margin: 0 5px;'>Ver Mis Sesiones</a>" +
+                "<a href='" + mySessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%, #8ec756 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4); margin: 0 5px;'>Ver Mis Sesiones</a>" +
                 "<a href='" + googleCalendarLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #6b63d8 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(80, 74, 183, 0.4); margin: 0 5px;'>Agregar a Google Calendar</a>" +
                 "</td></tr></table></td></tr><tr><td style='background-color: #39434b; padding: 20px 30px; text-align: center;'><p style='margin: 0; font-size: 12px; color: #b0b0b0;'>© 2025 SkillSwap.Todos los derechos reservados.</p></td></tr></table></td></tr></table></body></html>";
     }
@@ -477,17 +469,18 @@ public class BookingEmailService {
                 "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #39434b;'><table width='100%' cellpadding='0' cellspacing='0' style='background-color: #39434b; padding: 40px 20px;'><tr><td align='center'>" +
                 "<table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>" +
                 "<tr><td style='background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); padding: 40px 20px; text-align: center;'><h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1></td></tr>" +
-                "<tr><td style='padding: 40px 30px; color: #ffffff;'><h2 style='color: #aae16b; margin-top: 0; font-size: 24px;'>¡Cupo Disponible!</h2>" +
+                "<tr><td style='padding: 40px 30px; color: #ffffff;'><h2 style='color: #aae16b; margin-top: 0; font-size: 24px;'>¡Cupo Disponible! </h2>" +
                 "<p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>Hola <strong style='color: #aae16b;'>" + person.getFullName() + "</strong>,</p>" +
                 "<p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>¡Buenas noticias! Se ha liberado un cupo en la sesión en la que estabas en lista de espera:</p>" +
                 "<div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #aae16b;'><h3 style='color: #aae16b; margin-top: 0; font-size: 20px;'>" + sessionTitle + "</h3>" +
                 "<p style='font-size: 14px; color: #b0b0b0; margin: 10px 0;'>Fecha: " + formattedDate + " - " + formattedTime + "</p></div>" +
                 "<p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>Haz clic en el botón de abajo para confirmar tu registro antes de que el cupo se asigne a otro usuario.</p>" +
                 "<table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'><tr><td align='center'>" +
-                "<a href='" + sessionLink + "' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%, #8ec756 100%); color: #141414; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4); margin: 0 5px;'>Confirmar Registro</a>" +
+                "<a href='" + sessionLink + "' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%, #8ec756 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4); margin: 0 5px;'>Confirmar Registro</a>" +
                 "<a href='" + googleCalendarLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #6b63d8 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(80, 74, 183, 0.4); margin: 0 5px;'>Agregar a Google Calendar</a>" +
                 "</td></tr></table></td></tr><tr><td style='background-color: #39434b; padding: 20px 30px; text-align: center;'><p style='margin: 0; font-size: 12px; color: #b0b0b0;'>© 2025 SkillSwap.Todos los derechos reservados.</p></td></tr></table></td></tr></table></body></html>";
     }
+
     private String buildWaitlistExitConfirmationTemplate(Booking booking, Person person) {
         LearningSession session = booking.getLearningSession();
         String sessionTitle = session.getTitle();
@@ -504,9 +497,9 @@ public class BookingEmailService {
                 "<p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>Has salido exitosamente de la lista de espera de la siguiente sesión:</p>" +
                 "<div style='background-color: #39434b; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #ffa500;'><h3 style='color: #ffffff; margin-top: 0; font-size: 18px;'>" + sessionTitle + "</h3>" +
                 "<p style='font-size: 14px; color: #b0b0b0; margin: 5px 0;'>Fecha: " + formattedDate + " - " + formattedTime + "</p></div>" +
-                "<p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>Ya no recibirás notificaciones sobre esta sesión. Puedes explorar otras sesiones disponibles que podrían interesarte.</p>" +
+                "<p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>Ya no recibirás notificaciones sobre esta sesión.  Puedes explorar otras sesiones disponibles que podrían interesarte.</p>" +
                 "<table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'><tr><td align='center'>" +
-                "<a href='" + sessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%, #8ec756 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0. 4);'>Explorar Sesiones</a>" +
+                "<a href='" + sessionsLink + "' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%, #8ec756 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4);'>Explorar Sesiones</a>" +
                 "</td></tr></table></td></tr><tr><td style='background-color: #39434b; padding: 20px 30px; text-align: center;'><p style='margin: 0; font-size: 12px; color: #b0b0b0;'>© 2025 SkillSwap. Todos los derechos reservados.</p></td></tr></table></td></tr></table></body></html>";
     }
 
@@ -525,7 +518,7 @@ public class BookingEmailService {
                 "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #39434b;'><table width='100%' cellpadding='0' cellspacing='0' style='background-color: #39434b; padding: 40px 20px;'><tr><td align='center'>" +
                 "<table width='600' cellpadding='0' cellspacing='0' style='background-color: #141414; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>" +
                 "<tr><td style='background: linear-gradient(135deg, #504ab7 0%, #aae16b 100%); padding: 40px 20px; text-align: center;'><h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;'>SkillSwap</h1></td></tr>" +
-                "<tr><td style='padding: 40px 30px; color: #ffffff;'><h2 style='color: #ffa500; margin-top: 0; font-size: 24px;'> Cancelación de Registro</h2>" +
+                "<tr><td style='padding: 40px 30px; color: #ffffff;'><h2 style='color: #ffa500; margin-top: 0; font-size: 24px;'>Cancelación de Registro</h2>" +
                 "<p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>Hola <strong style='color: #aae16b;'>" + instructorPerson.getFullName() + "</strong>,</p>" +
                 "<p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>Te informamos que <strong style='color: #aae16b;'>" + learnerName + "</strong> ha cancelado su registro " + cancellationType + " en tu sesión:</p>" +
                 "<div style='background-color: #39434b; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #ffa500;'><h3 style='color: #aae16b; margin-top: 0; font-size: 18px;'>" + sessionTitle + "</h3>" +
@@ -540,5 +533,4 @@ public class BookingEmailService {
                 "<a href='" + googleCalendarLink + "' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%, #6b63d8 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(80, 74, 183, 0.4); margin: 0 5px;'>Agregar a Google Calendar</a>" +
                 "</td></tr></table></td></tr><tr><td style='background-color: #39434b; padding: 20px 30px; text-align: center;'><p style='margin: 0; font-size: 12px; color: #b0b0b0;'>© 2025 SkillSwap.Todos los derechos reservados.</p></td></tr></table></td></tr></table></body></html>";
     }
-    //#endregion
 }

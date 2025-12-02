@@ -112,6 +112,7 @@ public class SessionEmailService {
         String formattedDate = formatDate(session.getScheduledDatetime());
         String formattedTime = formatTime(session.getScheduledDatetime());
         String sessionLink = frontendUrl + "/app/sessions/" + session.getId();
+        String videoCallLink = session.getVideoCallLink(); // ← AGREGADO
         String googleCalendarLink = buildGoogleCalendarLink(session);
 
         return """
@@ -182,9 +183,14 @@ public class SessionEmailService {
                             </div>
                             <table width='100%%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>
                                 <tr>
-                                    <td align='center'>
-                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4); margin: 0 5px;'>Ver Sesión</a>
-                                        <a href='%s' style='display: inline-block; background: linear-gradient(135deg, #504ab7 0%%, #6b63d8 100%%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(80, 74, 183, 0.4); margin: 0 5px;'>Agregar a Google Calendar</a>
+                                    <td width='32%%' style='padding-right: 5px;'>
+                                        <a href='%s' style='display: block; background: linear-gradient(135deg, #aae16b 0%%, #8ec756 100%%); color: #ffffff; text-decoration: none; padding: 15px 10px; border-radius: 25px; font-size: 13px; font-weight: bold; text-align: center; box-shadow: 0 4px 15px rgba(170, 225, 107, 0.4);'>Ver Sesión</a>
+                                    </td>
+                                    <td width='32%%' style='padding: 0 5px;'>
+                                        <a href='%s' style='display: block; background: linear-gradient(135deg, #504ab7 0%%, #6b63d8 100%%); color: #ffffff; text-decoration: none; padding: 15px 10px; border-radius: 25px; font-size: 13px; font-weight: bold; text-align: center; box-shadow: 0 4px 15px rgba(80, 74, 183, 0.4);'>Unirse a Videollamada</a>
+                                    </td>
+                                    <td width='32%%' style='padding-left: 5px;'>
+                                        <a href='%s' style='display: block; background: linear-gradient(135deg, #ff9800 0%%, #ff5722 100%%); color: #ffffff; text-decoration: none; padding: 15px 10px; border-radius: 25px; font-size: 13px; font-weight: bold; text-align: center; box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);'>Agregar a Calendar</a>
                                     </td>
                                 </tr>
                             </table>
@@ -202,7 +208,7 @@ public class SessionEmailService {
                     <tr>
                         <td style='background-color: #39434b; padding: 20px 30px; text-align: center;'>
                             <p style='margin: 0; font-size: 12px; color: #b0b0b0;'>
-                                © 2025 SkillSwap. Todos los derechos reservados.
+                                © 2025 SkillSwap.   Todos los derechos reservados.
                             </p>
                         </td>
                     </tr>
@@ -225,6 +231,7 @@ public class SessionEmailService {
                 getLanguageName(session.getLanguage()),
                 session.getMaxCapacity(),
                 sessionLink,
+                videoCallLink,
                 googleCalendarLink
         );
     }
