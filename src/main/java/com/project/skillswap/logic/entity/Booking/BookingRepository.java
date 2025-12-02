@@ -24,7 +24,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     long countConfirmedBookingsBySessionId(@Param("sessionId") Long sessionId);
 
     @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Booking b " +
-            "WHERE b.learningSession.id = :sessionId AND b.learner.id = :learnerId AND b.status != 'CANCELLED'")
+            "WHERE b.learningSession.id = :sessionId " +
+            "AND b.learner.id = :learnerId " +
+            "AND (b.status = 'CONFIRMED' OR b.status = 'WAITING')")
     boolean existsActiveBookingBySessionAndLearner(@Param("sessionId") Long sessionId, @Param("learnerId") Long learnerId);
 
     /**
