@@ -6,6 +6,8 @@ import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Learner.LearnerRepository;
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Instructor.InstructorRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.annotation.Order;
@@ -24,6 +26,7 @@ import java.util.Optional;
 @Order(9)
 @Component
 public class TestFeedbackSeeder implements ApplicationListener<ContextRefreshedEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(TestFeedbackSeeder.class);
 
     //#region Dependencies
     private final FeedbackRepository feedbackRepository;
@@ -57,11 +60,11 @@ public class TestFeedbackSeeder implements ApplicationListener<ContextRefreshedE
         // Verificar que el instructor (ID 17) exista
         Optional<Instructor> instructorOpt = instructorRepository.findById(17);
         if (instructorOpt.isEmpty()) {
-            System.out.println("[TestFeedbackSeeder] Instructor ID 17 no encontrado.Saltando seed.");
+            logger.info("TestFeedbackSeeder: Instructor ID 17 no encontrado, omitiendo seed");
             return;
         }
 
-        System.out.println("[TestFeedbackSeeder]  Iniciando seed de feedbacks para Instructor 17 (Mia Morales)...");
+        logger.info("TestFeedbackSeeder: Iniciando seed de feedbacks para Instructor 17 (Mia Morales)");
 
         List<TestFeedbackData> feedbacksToCreate = createTestFeedbackDataList();
 
@@ -73,7 +76,8 @@ public class TestFeedbackSeeder implements ApplicationListener<ContextRefreshedE
             Optional<Learner> learner = learnerRepository.findById(feedbackData.learnerId);
 
             if (session.isEmpty() || learner.isEmpty()) {
-                System.out.println("[TestFeedbackSeeder]   Sesión " + feedbackData.learningSessionId + " o Learner " + feedbackData.learnerId + " no encontrados.Saltando.");
+                logger.debug("TestFeedbackSeeder: Sesión {} o Learner {} no encontrados",
+                        feedbackData.learningSessionId, feedbackData.learnerId);
                 skippedCount++;
                 continue;
             }
@@ -83,7 +87,8 @@ public class TestFeedbackSeeder implements ApplicationListener<ContextRefreshedE
             );
 
             if (existingFeedback.isPresent()) {
-                System.out.println("[TestFeedbackSeeder] ️  Feedback ya existe para sesión " + feedbackData.learningSessionId + " y learner " + feedbackData.learnerId + ".Saltando.");
+                logger.debug("TestFeedbackSeeder: Feedback ya existe para sesión {} y learner {}",
+                        feedbackData.learningSessionId, feedbackData.learnerId);
                 skippedCount++;
                 continue;
             }
@@ -91,15 +96,16 @@ public class TestFeedbackSeeder implements ApplicationListener<ContextRefreshedE
             try {
                 Feedback feedback = createTestFeedback(feedbackData, session.get(), learner.get());
                 feedbackRepository.save(feedback);
-                System.out.println("[TestFeedbackSeeder]  Feedback creado - Sesión: " + feedbackData.learningSessionId + ", Learner: " + feedbackData.learnerId + ", Rating: " + feedbackData.rating);
+                logger.debug("TestFeedbackSeeder: Feedback creado - Sesión: {}, Learner: {}, Rating: {}",
+                        feedbackData.learningSessionId, feedbackData.learnerId, feedbackData.rating);
                 createdCount++;
             } catch (Exception e) {
-                System.out.println("[TestFeedbackSeeder]  Error al crear feedback: " + e.getMessage());
+                logger.error("TestFeedbackSeeder: Error al crear feedback: {}", e.getMessage());
                 skippedCount++;
             }
         }
 
-        System.out.println("[TestFeedbackSeeder] Seed completado.Creados: " + createdCount + ", Saltados: " + skippedCount);
+        logger.info("TestFeedbackSeeder: Seed completado. Creados: {}, Saltados: {}", createdCount, skippedCount);
     }
 
     private Feedback createTestFeedback(TestFeedbackData data, LearningSession session, Learner learner) {
@@ -131,7 +137,7 @@ public class TestFeedbackSeeder implements ApplicationListener<ContextRefreshedE
         ));
         feedbacks.add(new TestFeedbackData(
                 3053L, 2L, 5,
-                "Perfecta.La instructora explica conceptos complejos de forma entendible.",
+                "Perfecta. La instructora explica conceptos complejos de forma entendible.",
                 "https://example.com/audio/feedback_3053_2.mp3",
                 "Perfect.The instructor explains complex concepts in an understandable way."
         ));
@@ -187,7 +193,7 @@ public class TestFeedbackSeeder implements ApplicationListener<ContextRefreshedE
         // Sesión 3264: Álgebra Lineal para ML
         feedbacks.add(new TestFeedbackData(
                 3264L, 3L, 5,
-                "Recomendado 100%.Cambió mi comprensión del álgebra lineal.",
+                "Recomendado 100%. Cambió mi comprensión del álgebra lineal.",
                 "https://example.com/audio/feedback_3264_3.mp3",
                 "Highly recommended.It changed my understanding of linear algebra."
         ));

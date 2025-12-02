@@ -70,6 +70,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/videocall/**").authenticated()
                         .requestMatchers("/ws-documents/**").permitAll()
                         .requestMatchers("/api/collaborative-documents/**").permitAll()
+                        .requestMatchers("/api/group-documents/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/group-documents/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/communities/create").authenticated()
                         .requestMatchers(HttpMethod.GET, "/communities/accept-invitation").authenticated()
                         .requestMatchers("/communities/my-communities").authenticated()
