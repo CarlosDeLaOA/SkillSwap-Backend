@@ -14,6 +14,7 @@ import com.project.skillswap.logic.entity.LearningSession.SessionStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,9 @@ public class BookingService {
     @Autowired
     private CommunityMemberRepository communityMemberRepository;
 
+    @Autowired
+    private SessionPaymentService sessionPaymentService;
+
     /**
      * Crea un booking individual
      */
@@ -50,7 +54,7 @@ public class BookingService {
 
         logger.info("[BOOKING] Creando booking para email: " + userEmail);
 
-        // 1. Obtener Person por email
+        // 1.Obtener Person por email
         Person person = personRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con email: " + userEmail));
 
@@ -62,23 +66,23 @@ public class BookingService {
 
         logger.info("[BOOKING] Learner encontrado con ID: " + learner.getId());
 
-        // 3. Validar que la sesión existe
+        // 3.Validar que la sesión existe
         LearningSession session = learningSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Sesión no encontrada con ID: " + sessionId));
 
         logger.info("[BOOKING] Sesión encontrada: " + session.getTitle());
 
-        // 4. Validar que la sesión está en estado SCHEDULED o ACTIVE
-        if (!SessionStatus.SCHEDULED.equals(session.getStatus()) && !SessionStatus.ACTIVE.equals(session.getStatus())) {
+        // 4.Validar que la sesión está en estado SCHEDULED o ACTIVE
+        if (!SessionStatus.SCHEDULED.equals(session.getStatus()) && ! SessionStatus.ACTIVE.equals(session.getStatus())) {
             throw new RuntimeException("No se puede registrar en una sesión que no está programada o activa");
         }
 
-        // 5. Validar que el usuario no esté ya registrado
+        // 5.Validar que el usuario no esté ya registrado
         if (bookingRepository.existsActiveBookingBySessionAndLearner(sessionId, learner.getId())) {
             throw new RuntimeException("Ya estás registrado en esta sesión");
         }
 
-        // 6. Validar que haya cupo disponible
+        // 6.Validar que haya cupo disponible
         long confirmedBookings = bookingRepository.countConfirmedBookingsBySessionId(sessionId);
         logger.info("[BOOKING] Cupos confirmados: " + confirmedBookings + "/" + session.getMaxCapacity());
 
@@ -91,25 +95,36 @@ public class BookingService {
             throw new RuntimeException("La sesión no tiene un enlace de videollamada configurado");
         }
 
-        // 8. Crear el booking
+        // 8. Procesar pago si la sesión es premium
+        try {
+            sessionPaymentService.processSessionPayment(learner, session);
+            logger.info("[BOOKING] Pago procesado exitosamente");
+        } catch (IllegalStateException e) {
+            logger.info("[BOOKING] Error de pago: " + e.getMessage());
+            throw new RuntimeException(e.getMessage());
+        } catch (Exception e) {
+            logger.info("[BOOKING] Error inesperado en el pago: " + e.getMessage());
+            throw new RuntimeException("Error al procesar el pago de la sesión");
+        }
+
+        // 9.Crear el booking
         Booking booking = new Booking();
         booking.setLearningSession(session);
         booking.setLearner(learner);
         booking.setType(BookingType.INDIVIDUAL);
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setAttended(false);
-        booking.setAccessLink(session.getVideoCallLink()); // Usar el video_call_link de la sesión
+        booking.setAccessLink(session.getVideoCallLink());
 
         Booking savedBooking = bookingRepository.save(booking);
         logger.info("[BOOKING] Booking creado exitosamente con ID: " + savedBooking.getId());
 
-        // 9. Enviar email de confirmación con el video_call_link
+        // 10.Enviar email de confirmación con el video_call_link
         try {
             bookingEmailService.sendBookingConfirmationEmail(savedBooking, person);
             logger.info("[BOOKING] Email de confirmación enviado a: " + person.getEmail());
         } catch (Exception e) {
             logger.info("[BOOKING] Error al enviar email: " + e.getMessage());
-            // No lanzamos excepción para que el booking se complete aunque falle el email
         }
 
         return savedBooking;
@@ -123,7 +138,7 @@ public class BookingService {
 
         logger.info("[BOOKING] Creando booking grupal para comunidad: " + communityId);
 
-        // 1. Validar que el usuario existe y tiene perfil de learner
+        // 1.Validar que el usuario existe y tiene perfil de learner
         Person person = personRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con email: " + userEmail));
 
@@ -132,22 +147,22 @@ public class BookingService {
             throw new RuntimeException("El usuario no tiene un perfil de estudiante");
         }
 
-        // 2. Validar que la comunidad existe
+        // 2.Validar que la comunidad existe
         LearningCommunity community = learningCommunityRepository.findById(communityId)
                 .orElseThrow(() -> new RuntimeException("Comunidad no encontrada con ID: " + communityId));
 
-        if (!community.getActive()) {
+        if (! community.getActive()) {
             throw new RuntimeException("La comunidad no está activa");
         }
 
-        // 3. Obtener todos los miembros activos de la comunidad
+        // 3.Obtener todos los miembros activos de la comunidad
         List<CommunityMember> allMembers = communityMemberRepository.findActiveMembersByCommunityId(communityId);
 
         if (allMembers.isEmpty()) {
             throw new RuntimeException("La comunidad no tiene miembros activos");
         }
 
-        // 4. Validar que el usuario es miembro de la comunidad
+        // 4.Validar que el usuario es miembro de la comunidad
         boolean isUserMember = allMembers.stream()
                 .anyMatch(cm -> cm.getLearner().getId().equals(requestingLearner.getId()));
 
@@ -157,30 +172,30 @@ public class BookingService {
 
         logger.info("[BOOKING] Registrando " + allMembers.size() + " miembros de la comunidad");
 
-        // 5. Validar que la sesión existe
+        // 5.Validar que la sesión existe
         LearningSession session = learningSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Sesión no encontrada con ID: " + sessionId));
 
         logger.info("[BOOKING] Sesión encontrada: " + session.getTitle());
 
-        // 6. Validar que la sesión está en estado SCHEDULED o ACTIVE
+        // 6.Validar que la sesión está en estado SCHEDULED o ACTIVE
         if (!SessionStatus.SCHEDULED.equals(session.getStatus()) && !SessionStatus.ACTIVE.equals(session.getStatus())) {
             throw new RuntimeException("No se puede registrar en una sesión que no está programada o activa");
         }
 
-        // 7. Validar que la sesión tenga un video_call_link configurado
+        // 7.Validar que la sesión tenga un video_call_link configurado
         if (session.getVideoCallLink() == null || session.getVideoCallLink().isEmpty()) {
             throw new RuntimeException("La sesión no tiene un enlace de videollamada configurado");
         }
 
-        // 8. Validar que ningún miembro esté ya registrado
+        // 8.Validar que ningún miembro esté ya registrado
         for (CommunityMember member : allMembers) {
             if (bookingRepository.existsActiveBookingBySessionAndLearner(sessionId, member.getLearner().getId())) {
                 throw new RuntimeException("Uno o más miembros ya están registrados en esta sesión");
             }
         }
 
-        // 9. Validar que haya cupo suficiente para todos los miembros
+        // 9.Validar que haya cupo suficiente para todos los miembros
         long confirmedBookings = bookingRepository.countConfirmedBookingsBySessionId(sessionId);
         int availableSpots = session.getMaxCapacity() - (int) confirmedBookings;
 
@@ -190,7 +205,35 @@ public class BookingService {
             throw new RuntimeException("No hay suficientes cupos disponibles. Disponibles: " + availableSpots + ", Necesarios: " + allMembers.size());
         }
 
-        // 10. Crear bookings para todos los miembros
+        // 10.Procesar pagos para todos los miembros si la sesión es premium
+        if (session.getIsPremium() && session.getSkillcoinsCost() != null &&
+                session.getSkillcoinsCost().compareTo(BigDecimal.ZERO) > 0) {
+
+            logger.info("[BOOKING] Validando pagos para " + allMembers.size() + " miembros...");
+
+            for (CommunityMember member : allMembers) {
+                BigDecimal memberBalance = member.getLearner().getSkillcoinsBalance();
+                if (memberBalance.compareTo(session.getSkillcoinsCost()) < 0) {
+                    throw new RuntimeException(
+                            "El miembro " + member.getLearner().getPerson().getFullName() +
+                                    " no tiene SkillCoins suficientes. Necesita: " + session.getSkillcoinsCost() +
+                                    ", tiene: " + memberBalance
+                    );
+                }
+            }
+
+            for (CommunityMember member : allMembers) {
+                try {
+                    sessionPaymentService.processSessionPayment(member.getLearner(), session);
+                    logger.info("[BOOKING] Pago procesado para: " + member.getLearner().getPerson().getFullName());
+                } catch (Exception e) {
+                    logger.error("[BOOKING] Error en pago grupal: " + e.getMessage());
+                    throw new RuntimeException("Error al procesar pago del grupo: " + e.getMessage());
+                }
+            }
+        }
+
+        // 11.Crear bookings para todos los miembros
         List<Booking> createdBookings = new ArrayList<>();
 
         for (CommunityMember member : allMembers) {
@@ -201,7 +244,7 @@ public class BookingService {
             booking.setStatus(BookingStatus.CONFIRMED);
             booking.setAttended(false);
             booking.setCommunity(community);
-            booking.setAccessLink(session.getVideoCallLink()); // Usar el video_call_link de la sesión
+            booking.setAccessLink(session.getVideoCallLink());
 
             Booking savedBooking = bookingRepository.save(booking);
             createdBookings.add(savedBooking);
@@ -211,7 +254,7 @@ public class BookingService {
 
         logger.info("[BOOKING] " + createdBookings.size() + " bookings grupales creados exitosamente");
 
-        // 11. Preparar datos para emails (antes de que la transacción termine)
+        // 12.Preparar datos para emails (antes de que la transacción termine)
         List<Map<String, Object>> emailData = new ArrayList<>();
         for (Booking booking : createdBookings) {
             Person memberPerson = booking.getLearner().getPerson();
@@ -234,7 +277,7 @@ public class BookingService {
             emailData.add(data);
         }
 
-        // 12. Enviar emails de forma asíncrona a todos los miembros
+        // 13.Enviar emails de forma asíncrona a todos los miembros
         CompletableFuture.runAsync(() -> {
             for (Map<String, Object> data : emailData) {
                 try {
@@ -278,9 +321,6 @@ public class BookingService {
     /**
      * Une a un usuario a la lista de espera de una sesión
      */
-    /**
-     * Une a un usuario a la lista de espera de una sesión
-     */
     @Transactional
     public Booking joinWaitlist(Long sessionId, String userEmail) {
 
@@ -295,7 +335,7 @@ public class BookingService {
             throw new RuntimeException("El usuario no tiene un perfil de estudiante");
         }
 
-        // 2. Validar que la sesión existe
+        // 2.Validar que la sesión existe
         LearningSession session = learningSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Sesión no encontrada con ID: " + sessionId));
 
@@ -306,13 +346,12 @@ public class BookingService {
             throw new RuntimeException("No se puede unir a lista de espera de una sesión que no está programada");
         }
 
-        // 4. Buscar si ya existe un booking para este usuario y sesión
+        // 4.Buscar si ya existe un booking para este usuario y sesión
         List<Booking> existingBookings = bookingRepository.findByLearnerIdAndLearningSessionId(
                 learner.getId(),
                 sessionId
         );
 
-        // Verificar si tiene un booking activo (CONFIRMED o WAITING)
         for (Booking booking : existingBookings) {
             if (BookingStatus.CONFIRMED.equals(booking.getStatus())) {
                 throw new RuntimeException("Ya estás registrado en esta sesión");
@@ -330,7 +369,7 @@ public class BookingService {
             throw new RuntimeException("Aún hay cupos disponibles. Por favor, regístrate normalmente.");
         }
 
-        // 6. Contar cuántos usuarios hay en lista de espera
+        // 6.Contar cuántos usuarios hay en lista de espera
         long waitlistCount = bookingRepository.countByLearningSessionIdAndStatus(sessionId, BookingStatus.WAITING);
 
         logger.info("[WAITLIST] Usuarios en lista de espera: " + waitlistCount);
@@ -339,11 +378,10 @@ public class BookingService {
             throw new RuntimeException("Lista de espera llena. Máximo 20 usuarios permitidos.");
         }
 
-        // 7. Buscar si existe un booking CANCELLED que podamos reutilizar
+        // 7.Buscar si existe un booking CANCELLED que podamos reutilizar
         Booking waitlistBooking = null;
         for (Booking booking : existingBookings) {
             if (BookingStatus.CANCELLED.equals(booking.getStatus())) {
-                // Reutilizar el booking existente
                 waitlistBooking = booking;
                 waitlistBooking.setStatus(BookingStatus.WAITING);
                 waitlistBooking.setBookingDate(new Date());
@@ -353,7 +391,7 @@ public class BookingService {
             }
         }
 
-        // 8. Si no existe booking previo, crear uno nuevo
+        // 8.Si no existe booking previo, crear uno nuevo
         if (waitlistBooking == null) {
             waitlistBooking = new Booking();
             waitlistBooking.setLearningSession(session);
@@ -369,7 +407,7 @@ public class BookingService {
 
         logger.info("[WAITLIST] Usuario agregado a lista de espera - Posición: " + (waitlistCount + 1));
 
-        // 9. Enviar email de confirmación de lista de espera
+        // 9.Enviar email de confirmación de lista de espera
         try {
             bookingEmailService.sendWaitlistConfirmationEmail(savedBooking, person);
             logger.info("[WAITLIST] Email de confirmación enviado");
@@ -389,11 +427,11 @@ public class BookingService {
 
         logger.info("[WAITLIST] Procesando lista de espera para sesión: " + sessionId);
 
-        // 1. Obtener la sesión
+        // 1.Obtener la sesión
         LearningSession session = learningSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-        // 2. Verificar cupos disponibles
+        // 2.Verificar cupos disponibles
         long confirmedBookings = bookingRepository.countConfirmedBookingsBySessionId(sessionId);
         int availableSpots = session.getMaxCapacity() - (int) confirmedBookings;
 
@@ -404,7 +442,7 @@ public class BookingService {
             return;
         }
 
-        // 3. Obtener lista de espera ordenada por fecha
+        // 3.Obtener lista de espera ordenada por fecha
         List<Booking> waitlist = bookingRepository
                 .findByLearningSessionIdAndStatusOrderByBookingDateAsc(
                         sessionId,
@@ -416,21 +454,19 @@ public class BookingService {
             return;
         }
 
-        // 4. Procesar solo los primeros N usuarios (según cupos disponibles)
+        // 4.Procesar solo los primeros N usuarios (según cupos disponibles)
         int spotsToFill = Math.min(availableSpots, waitlist.size());
 
         for (int i = 0; i < spotsToFill; i++) {
             Booking waitlistBooking = waitlist.get(i);
 
-            // Cambiar estado a CONFIRMED y usar el video_call_link de la sesión
             waitlistBooking.setStatus(BookingStatus.CONFIRMED);
-            waitlistBooking.setAccessLink(session.getVideoCallLink()); // Usar video_call_link
+            waitlistBooking.setAccessLink(session.getVideoCallLink());
             bookingRepository.save(waitlistBooking);
 
             logger.info("[WAITLIST] Usuario promovido de lista de espera a confirmado: " +
                     waitlistBooking.getLearner().getPerson().getEmail());
 
-            // Enviar email de notificación
             try {
                 Person person = waitlistBooking.getLearner().getPerson();
                 bookingEmailService.sendSpotAvailableEmail(waitlistBooking, person);
@@ -456,7 +492,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking no encontrado con ID: " + bookingId));
 
-        // 2. Validar que el booking pertenece al usuario
+        // 2.Validar que el booking pertenece al usuario
         Person person = personRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -464,18 +500,18 @@ public class BookingService {
             throw new RuntimeException("No tienes permiso para modificar este booking");
         }
 
-        // 3. Validar que el booking está en estado WAITING
+        // 3.Validar que el booking está en estado WAITING
         if (!BookingStatus.WAITING.equals(booking.getStatus())) {
             throw new RuntimeException("Solo puedes salir de una lista de espera si estás en estado WAITING");
         }
 
-        // 4. Cambiar estado a CANCELLED
+        // 4.Cambiar estado a CANCELLED
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
 
         logger.info("[WAITLIST] Usuario removido de lista de espera exitosamente");
 
-        // 5. Enviar email de confirmación de salida
+        // 5.Enviar email de confirmación de salida
         try {
             bookingEmailService.sendWaitlistExitConfirmationEmail(booking, person);
             logger.info("[WAITLIST] Email de confirmación de salida enviado");
@@ -496,7 +532,7 @@ public class BookingService {
 
         logger.info(" [BOOKING_CANCEL] Iniciando cancelación de booking: " + bookingId);
 
-        // 1. Validar usuario
+        // 1.Validar usuario
         Person person = personRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -509,23 +545,23 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking no encontrado"));
 
-        // 3. Validar permisos
+        // 3.Validar permisos
         if (!booking.getLearner().getId().equals(learner.getId())) {
             throw new RuntimeException("No tienes permiso para cancelar este booking");
         }
 
-        // 4. Validar que no esté ya cancelado
+        // 4.Validar que no esté ya cancelado
         if (BookingStatus.CANCELLED.equals(booking.getStatus())) {
             throw new RuntimeException("Este booking ya está cancelado");
         }
 
-        // 5. Validar que la sesión no haya iniciado
+        // 5.Validar que la sesión no haya iniciado
         LearningSession session = booking.getLearningSession();
         if (session.getStatus() == SessionStatus.ACTIVE || session.getStatus() == SessionStatus.FINISHED) {
             throw new RuntimeException("No se puede cancelar un registro de una sesión que ya inició o terminó");
         }
 
-        // 6. Determinar si es cancelación individual o grupal
+        // 6.Determinar si es cancelación individual o grupal
         boolean isGroupBooking = BookingType.GROUP.equals(booking.getType());
 
         if (isGroupBooking) {
@@ -542,22 +578,18 @@ public class BookingService {
 
         logger.info("[BOOKING_CANCEL] Cancelando booking individual: " + booking.getId());
 
-        // Cancelar el booking
         booking.setStatus(BookingStatus.CANCELLED);
         Booking cancelledBooking = bookingRepository.save(booking);
 
         logger.info("[SUCCESS] Booking individual cancelado. Cupo liberado: 1");
 
-        // Enviar notificaciones
         sendCancellationNotifications(cancelledBooking, person, session, false, 1);
 
-        // AGREGAR: Procesar lista de espera automáticamente
         logger.info("[WAITLIST] Procesando lista de espera después de cancelación...");
         try {
             processWaitlist(session.getId());
         } catch (Exception e) {
             logger.info("[WAITLIST] Error al procesar lista de espera: " + e.getMessage());
-            // No lanzamos excepción para que la cancelación se complete
         }
 
         return cancelledBooking;
@@ -575,7 +607,6 @@ public class BookingService {
             throw new RuntimeException("No se puede determinar la comunidad del booking grupal");
         }
 
-        // Obtener todos los bookings del grupo para esta sesión
         List<Booking> groupBookings = bookingRepository.findByLearningSessionIdAndCommunityId(
                 session.getId(),
                 community.getId()
@@ -583,25 +614,22 @@ public class BookingService {
 
         int cancelledCount = 0;
         for (Booking groupBooking : groupBookings) {
-            if (!BookingStatus.CANCELLED.equals(groupBooking.getStatus())) {
+            if (! BookingStatus.CANCELLED.equals(groupBooking.getStatus())) {
                 groupBooking.setStatus(BookingStatus.CANCELLED);
                 bookingRepository.save(groupBooking);
                 cancelledCount++;
             }
         }
 
-        logger.info("[SUCCESS] Booking grupal cancelado. Cupos liberados: " + cancelledCount);
+        logger.info("[SUCCESS] Booking grupal cancelado.Cupos liberados: " + cancelledCount);
 
-        // Enviar notificaciones
         sendCancellationNotifications(booking, person, session, true, cancelledCount);
 
-        // AGREGAR: Procesar lista de espera automáticamente
         logger.info("[WAITLIST] Procesando lista de espera después de cancelación grupal...");
         try {
             processWaitlist(session.getId());
         } catch (Exception e) {
             logger.info("[WAITLIST] Error al procesar lista de espera: " + e.getMessage());
-            // No lanzamos excepción para que la cancelación se complete
         }
 
         return booking;
@@ -613,11 +641,9 @@ public class BookingService {
     private void sendCancellationNotifications(Booking booking, Person learnerPerson,
                                                LearningSession session, boolean isGroup, int spotsFreed) {
         try {
-            // 1. Email de confirmación al learner
             bookingEmailService.sendBookingCancellationEmail(booking, learnerPerson);
             logger.info("[EMAIL] Confirmación de cancelación enviada a: " + learnerPerson.getEmail());
 
-            // 2. Notificar al instructor
             Person instructorPerson = session.getInstructor().getPerson();
             bookingEmailService.sendInstructorNotificationEmail(
                     session,
@@ -628,11 +654,8 @@ public class BookingService {
             );
             logger.info("[EMAIL] Notificación enviada al instructor: " + instructorPerson.getEmail());
 
-            // 3. IMPLEMENTADO: La lista de espera se procesa automáticamente en cancelIndividualBooking() y cancelGroupBooking()
-
         } catch (Exception e) {
             logger.info("[ERROR] Error al enviar notificaciones: " + e.getMessage());
-            // No lanzamos excepción para que la cancelación se complete
         }
     }
 
