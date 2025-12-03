@@ -4,5 +4,8 @@ public enum NotificationType {
     EMAIL,
     IN_APP,
     REMINDER,
-    ALERT
+    ALERT,
+    CREDENTIAL_ALERT,
+    SESSION,
+    SESSION_REMINDER
 }

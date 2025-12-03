@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.dashboard;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
  */
 @Repository
 public class DashboardRepository {
+    private static final Logger logger = LoggerFactory.getLogger(DashboardRepository.class);
 
     //#region Dependencies
     @Autowired
@@ -50,7 +52,7 @@ public class DashboardRepository {
         String sql = "CALL sp_get_upcoming_sessions(?, ?)";
         List<UpcomingSessionResponse> sessions = jdbcTemplate.query(sql, this::mapUpcomingSession, personId, role);
 
-        // ✅ Si es LEARNER, enriquecer con booking info
+        //  Si es LEARNER, enriquecer con booking info
         if ("LEARNER".equals(role) && !sessions.isEmpty()) {
             enrichWithBookingInfo(sessions, personId);
         }
@@ -111,15 +113,15 @@ public class DashboardRepository {
 
             // Si el usuario no tiene skills, retornar lista vacía
             if (stats.isEmpty()) {
-                System.out.println("⚠️ Usuario " + personId + " no tiene skills registradas");
+                logger.info(" Usuario " + personId + " no tiene skills registradas");
             } else {
-                System.out.println("✅ Encontradas " + stats.size() + " skills para usuario " + personId);
+                logger.info(" Encontradas " + stats.size() + " skills para usuario " + personId);
             }
 
             return stats;
 
         } catch (Exception e) {
-            System.err.println("❌ Error obteniendo skills del usuario: " + e.getMessage());
+            logger.info(" Error obteniendo skills del usuario: " + e.getMessage());
             e.printStackTrace();
 
             // Fallback: retornar lista vacía en caso de error
@@ -127,7 +129,7 @@ public class DashboardRepository {
         }
     }
 
-    // ✅ NUEVO - Monthly Achievements con Mock Data
+    //  - Monthly Achievements con Mock Data
     public List<MonthlyAchievementResponse> getMonthlyAchievements(Long personId) {
         List<MonthlyAchievementResponse> mockData = new ArrayList<>();
         mockData.add(new MonthlyAchievementResponse("Ago", 3, 1));
@@ -137,7 +139,7 @@ public class DashboardRepository {
         return mockData;
     }
 
-    // ✅ NUEVO - Monthly Attendance con Mock Data
+    //   - Monthly Attendance con Mock Data
     public List<MonthlyAttendanceResponse> getMonthlyAttendance(Long personId) {
         List<MonthlyAttendanceResponse> mockData = new ArrayList<>();
         mockData.add(new MonthlyAttendanceResponse("Ago", 15, 20));
@@ -145,6 +147,42 @@ public class DashboardRepository {
         mockData.add(new MonthlyAttendanceResponse("Oct", 20, 25));
         mockData.add(new MonthlyAttendanceResponse("Nov", 22, 28));
         return mockData;
+    }
+
+    /**
+     * Gets account balance for a user based on their role
+     * Queries instructor or learner table depending on user role
+     *
+     * @param personId Person ID
+     * @param role User role (INSTRUCTOR or LEARNER)
+     * @return Account balance in SkillCoins
+     */
+    public Integer getAccountBalance(Long personId, String role) {
+        String sql;
+
+        if ("INSTRUCTOR".equals(role)) {
+            sql = """
+            SELECT skillcoins_balance 
+            FROM instructor 
+            WHERE person_id = ?
+        """;
+        } else if ("LEARNER".equals(role)) {
+            sql = """
+            SELECT skillcoins_balance 
+            FROM learner 
+            WHERE person_id = ?
+        """;
+        } else {
+            throw new IllegalArgumentException("Invalid role: " + role);
+        }
+
+        try {
+            return jdbcTemplate.queryForObject(sql, Integer.class, personId);
+        } catch (Exception e) {
+            logger.info(" Error obteniendo balance para person_id=" + personId + ", role=" + role);
+            e.printStackTrace();
+            return 0; // Retornar 0 si no se encuentra
+        }
     }
     //#endregion
 
@@ -211,10 +249,10 @@ public class DashboardRepository {
                 }
             });
 
-            System.out.println("✅ Enriquecidas " + bookingMap.size() + " sesiones con booking info");
+            logger.info(" Enriquecidas " + bookingMap.size() + " sesiones con booking info");
 
         } catch (Exception e) {
-            System.err.println("❌ Error enriqueciendo sesiones con booking info: " + e.getMessage());
+            logger.info(" Error enriqueciendo sesiones con booking info: " + e.getMessage());
             e.printStackTrace();
             // No lanzar excepción - las sesiones simplemente no tendrán booking info
         }

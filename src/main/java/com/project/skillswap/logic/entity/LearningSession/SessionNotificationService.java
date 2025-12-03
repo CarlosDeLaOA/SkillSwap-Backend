@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.LearningSession;
 
+package com.project.skillswap.logic.entity.LearningSession;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Booking.Booking;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -18,6 +20,7 @@ import java.util.List;
  */
 @Service
 public class SessionNotificationService {
+    private static final Logger logger = LoggerFactory.getLogger(SessionNotificationService.class);
 
     //#region Dependencies
     private final JavaMailSender mailSender;
@@ -48,10 +51,10 @@ public class SessionNotificationService {
             try {
                 sendCancellationEmail(email, session);
                 emailsSent++;
-                System.out.println(" [EMAIL] Cancellation notification sent to: " + email);
+                logger.info(" [EMAIL] Cancellation notification sent to: " + email);
             } catch (MessagingException e) {
-                System.err.println(" [ERROR] Failed to send cancellation email to: " + email);
-                System.err.println(" Error: " + e.getMessage());
+                logger.info(" [ERROR] Failed to send cancellation email to: " + email);
+                logger.info(" Error: " + e.getMessage());
             }
         }
 
@@ -128,7 +131,7 @@ public class SessionNotificationService {
                 "                    <!-- Body -->" +
                 "                    <tr>" +
                 "                        <td style='padding: 40px 30px; color: #ffffff;'>" +
-                "                            <h2 style='color: #ff6b6b; margin-top: 0; font-size: 24px;'>⚠️ Sesión Cancelada</h2>" +
+                "                            <h2 style='color: #ff6b6b; margin-top: 0; font-size: 24px;'>Sesión Cancelada</h2>" +
                 "                            <p style='font-size: 16px; line-height: 1.6; color: #ffffff; margin: 20px 0;'>" +
                 "                                Lamentamos informarte que la siguiente sesión ha sido cancelada:" +
                 "                            </p>" +
@@ -137,15 +140,15 @@ public class SessionNotificationService {
                 "                                <h3 style='color: #aae16b; margin: 0 0 15px 0; font-size: 20px;'>" + session.getTitle() + "</h3>" +
                 "                                <table style='width: 100%; color: #ffffff; font-size: 14px;'>" +
                 "                                    <tr>" +
-                "                                        <td style='padding: 8px 0; color: #b0b0b0;'>📅 Fecha programada:</td>" +
+                "                                        <td style='padding: 8px 0; color: #b0b0b0;'>Fecha programada:</td>" +
                 "                                        <td style='padding: 8px 0; text-align: right; font-weight: bold;'>" + formattedDate + "</td>" +
                 "                                    </tr>" +
                 "                                    <tr>" +
-                "                                        <td style='padding: 8px 0; color: #b0b0b0;'>⏱️ Duración:</td>" +
+                "                                        <td style='padding: 8px 0; color: #b0b0b0;'>Duración:</td>" +
                 "                                        <td style='padding: 8px 0; text-align: right; font-weight: bold;'>" + session.getDurationMinutes() + " minutos</td>" +
                 "                                    </tr>" +
                 "                                    <tr>" +
-                "                                        <td style='padding: 8px 0; color: #b0b0b0;'>👨‍🏫 Instructor:</td>" +
+                "                                        <td style='padding: 8px 0; color: #b0b0b0;'>Instructor:</td>" +
                 "                                        <td style='padding: 8px 0; text-align: right; font-weight: bold;'>" + instructorName + "</td>" +
                 "                                    </tr>" +
                 "                                </table>" +

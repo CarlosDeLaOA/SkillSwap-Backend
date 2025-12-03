@@ -1,7 +1,10 @@
-package com.project.skillswap.logic.entity.Learner;
 
+package com.project.skillswap.logic.entity.Learner;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Booking.Booking;
 import com.project.skillswap.logic.entity.Credential.Credential;
@@ -21,14 +24,15 @@ import java.util.List;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Learner {
+    private static final Logger logger = LoggerFactory.getLogger(Learner.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false, unique = true)
-    @JsonIgnore
+    @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "email", "passwordHash", "profilePhotoUrl", "preferredLanguage", "googleOauthId", "emailVerified", "active", "registrationDate", "lastConnection"}) // ← Solo mostrar fullName
     private Person person;
 
     @Column(name = "skillcoins_balance", precision = 10, scale = 2)

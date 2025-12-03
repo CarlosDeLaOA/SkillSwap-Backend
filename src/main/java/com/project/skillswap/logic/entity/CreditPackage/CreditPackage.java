@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.CreditPackage;
 
+package com.project.skillswap.logic.entity.CreditPackage;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -9,6 +11,7 @@ import java.math.BigDecimal;
 })
 @Entity
 public class CreditPackage {
+    private static final Logger logger = LoggerFactory.getLogger(CreditPackage.class);
 
     //<editor-fold desc="Fields">
     @Id

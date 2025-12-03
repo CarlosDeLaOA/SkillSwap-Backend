@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Feedback;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.LearningSession.LearningSessionRepository;
 import com.project.skillswap.logic.entity.Learner.Learner;
@@ -19,6 +20,7 @@ import java.util.Optional;
 @Order(8)
 @Component
 public class FeedbackSeeder implements ApplicationListener<ContextRefreshedEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(FeedbackSeeder.class);
 
     //#region Dependencies
     private final FeedbackRepository feedbackRepository;
@@ -50,7 +52,7 @@ public class FeedbackSeeder implements ApplicationListener<ContextRefreshedEvent
 
         for (FeedbackData feedbackData : feedbacksToCreate) {
             Optional<LearningSession> session = learningSessionRepository.findById(feedbackData.learningSessionId);
-            Optional<Learner> learner = learnerRepository.findById(feedbackData.learnerId.intValue());
+            Optional<Learner> learner = learnerRepository.findById(feedbackData.learnerId);
 
             if (session.isEmpty() || learner.isEmpty()) {
                 continue;

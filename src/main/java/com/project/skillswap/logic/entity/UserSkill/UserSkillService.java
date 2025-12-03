@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.UserSkill;
 
+package com.project.skillswap.logic.entity.UserSkill;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Skill.Skill;
 import com.project.skillswap.logic.entity.Skill.SkillService;
@@ -16,6 +18,7 @@ import java.util.Optional;
  */
 @Service
 public class UserSkillService {
+    private static final Logger logger = LoggerFactory.getLogger(UserSkillService.class);
 
     //<editor-fold desc="Dependencies">
     @Autowired

@@ -1,7 +1,10 @@
-package com.project.skillswap.logic.entity.Question;
 
+package com.project.skillswap.logic.entity.Question;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Quiz.Quiz;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Table(name = "question", indexes = {
         @Index(name = "idx_question_quiz", columnList = "quiz_id")
@@ -10,12 +13,14 @@ import jakarta.persistence.*;
 })
 @Entity
 public class Question {
+    private static final Logger logger = LoggerFactory.getLogger(Question.class);
 
     //<editor-fold desc="Fields">
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", referencedColumnName = "id", nullable = false)
     private Quiz quiz;

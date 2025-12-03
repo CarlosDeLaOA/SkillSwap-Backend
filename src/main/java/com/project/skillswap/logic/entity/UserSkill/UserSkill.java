@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.UserSkill;
 
+package com.project.skillswap.logic.entity.UserSkill;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Skill.Skill;
@@ -16,6 +18,7 @@ import java.time.LocalDateTime;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class UserSkill {
+    private static final Logger logger = LoggerFactory.getLogger(UserSkill.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

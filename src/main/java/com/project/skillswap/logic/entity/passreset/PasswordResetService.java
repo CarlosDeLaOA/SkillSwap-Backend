@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.passreset;
 
+package com.project.skillswap.logic.entity.passreset;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
 import com.project.skillswap.logic.entity.auth.PasswordResetToken;
@@ -14,6 +16,7 @@ import java.util.List;
 
 @Service
 public class PasswordResetService {
+    private static final Logger logger = LoggerFactory.getLogger(PasswordResetService.class);
 
     //#region Constantes
     private static final Duration TOKEN_TTL = Duration.ofMinutes(15);
@@ -127,31 +130,31 @@ public class PasswordResetService {
             throw new WeakPasswordException("La contraseña no cumple con los requisitos mínimos.");
         }
 
-        // 🔍 LOG ANTES (temporal para debugging)
-        System.out.println("🔍 Password hash ANTES: " + person.getPasswordHash());
+        //  LOG ANTES (temporal para debugging)
+        logger.info(" Password hash ANTES: " + person.getPasswordHash());
 
-        // ✅ Actualiza contraseña del usuario
+        //  Actualiza contraseña del usuario
         String newHash = passwordEncoder.encode(newPassword);
         person.setPasswordHash(newHash);
 
-        // 🔍 LOG DESPUÉS (temporal para debugging)
-        System.out.println("🔍 Password hash DESPUÉS: " + person.getPasswordHash());
-        System.out.println("🔍 New hash generado: " + newHash);
+        //  LOG DESPUÉS (temporal para debugging)
+        logger.info(" Password hash DESPUÉS: " + person.getPasswordHash());
+        logger.info(" New hash generado: " + newHash);
 
-        // ✅ Guarda el cambio y fuerza escritura inmediata
+        //  Guarda el cambio y fuerza escritura inmediata
         Person saved = personRepo.save(person);
         personRepo.flush();
 
-        // 🔍 LOG GUARDADO (temporal para debugging)
-        System.out.println("🔍 Password hash GUARDADO: " + saved.getPasswordHash());
-        System.out.println("🔍 Person ID guardado: " + saved.getId());
+        //  LOG GUARDADO (temporal para debugging)
+        logger.info(" Password hash GUARDADO: " + saved.getPasswordHash());
+        logger.info(" Person ID guardado: " + saved.getId());
 
-        // ✅ Invalida el token usado
+        //  Invalida el token usado
         match.markUsed();
         tokenRepo.save(match);
         tokenRepo.flush();
 
-        // ✅ Invalida todos los demás tokens activos
+        //  Invalida todos los demás tokens activos
         tokenRepo.consumeAllActive(person, Instant.now());
     }
     //#endregion

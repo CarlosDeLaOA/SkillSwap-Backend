@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.auth;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfiguration {
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfiguration.class);
 
     //#region Dependencies
     private final AuthenticationProvider authenticationProvider;
@@ -48,9 +50,13 @@ public class SecurityConfiguration {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
+
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/ws-chat/**").permitAll()
+
                         .requestMatchers("/register/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
                         .requestMatchers("/skills/**").permitAll()
@@ -58,6 +64,18 @@ public class SecurityConfiguration {
                         .requestMatchers("/dashboard/**").authenticated()
                         .requestMatchers("/user-skills/**").permitAll()
                         .requestMatchers("/verification/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/videocall/transcription/*/download").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/videocall/transcription/*/download-txt").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/videocall/transcription/*/download-pdf").permitAll()
+                        .requestMatchers("/videocall/**").authenticated()
+                        .requestMatchers("/ws-documents/**").permitAll()
+                        .requestMatchers("/api/collaborative-documents/**").permitAll()
+                        .requestMatchers("/api/group-documents/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/group-documents/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/communities/create").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/communities/accept-invitation").authenticated()
+                        .requestMatchers("/communities/my-communities").authenticated()
+                        .requestMatchers("/communities/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
@@ -69,5 +87,6 @@ public class SecurityConfiguration {
 
         return http.build();
     }
+
     //#endregion
 }

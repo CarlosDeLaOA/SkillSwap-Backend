@@ -1,5 +1,7 @@
-package com.project.skillswap.logic.entity.LearningSession;
 
+package com.project.skillswap.logic.entity.LearningSession;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Instructor.Instructor;
 import com.project.skillswap.logic.entity.Skill.Skill;
@@ -10,6 +12,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -23,6 +26,7 @@ import java.util.List;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class LearningSession {
+    private static final Logger logger = LoggerFactory.getLogger(LearningSession.class);
 
     //<editor-fold desc="Fields">
     @Id
@@ -84,7 +88,6 @@ public class LearningSession {
     @Column(updatable = false, name = "creation_date")
     private Date creationDate;
 
-
     @Column(name = "cancellation_reason", columnDefinition = "TEXT")
     private String cancellationReason;
 
@@ -94,6 +97,25 @@ public class LearningSession {
     @Column(name = "cancelled_by_instructor_id")
     private Long cancelledByInstructorId;
 
+    //  TRANSCRIPCIÓN CON IA
+    @Column(name = "full_text", columnDefinition = "TEXT")
+    private String fullText;
+
+    @Column(name = "duration_seconds")
+    private Integer durationSeconds;
+
+    @Column(name = "processing_date")
+    private LocalDateTime processingDate;
+
+    // control de grabación
+    @Transient
+    private boolean recording = false;
+
+    @Transient
+    private LocalDateTime recordingStartTime;
+
+    @Transient
+    private LocalDateTime recordingEndTime;
 
     @OneToMany(mappedBy = "learningSession", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"learningSession", "learner", "community"})
@@ -192,6 +214,7 @@ public class LearningSession {
     public void setCancelledByInstructorId(Long cancelledByInstructorId) {
         this.cancelledByInstructorId = cancelledByInstructorId;
     }
+
     public SessionType getType() {
         return type;
     }
@@ -294,6 +317,56 @@ public class LearningSession {
 
     public void setAttendanceRecord(AttendanceRecord attendanceRecord) {
         this.attendanceRecord = attendanceRecord;
+    }
+
+    //  GETTERS Y SETTERS PARA TRANSCRIPCIÓN
+    public String getFullText() {
+        return fullText;
+    }
+
+    public void setFullText(String fullText) {
+        this.fullText = fullText;
+    }
+
+    public Integer getDurationSeconds() {
+        return durationSeconds;
+    }
+
+    public void setDurationSeconds(Integer durationSeconds) {
+        this.durationSeconds = durationSeconds;
+    }
+
+    public LocalDateTime getProcessingDate() {
+        return processingDate;
+    }
+
+    public void setProcessingDate(LocalDateTime processingDate) {
+        this.processingDate = processingDate;
+    }
+
+    //  Getters y Setters para grabación
+    public boolean isRecording() {
+        return recording;
+    }
+
+    public void setRecording(boolean recording) {
+        this.recording = recording;
+    }
+
+    public LocalDateTime getRecordingStartTime() {
+        return recordingStartTime;
+    }
+
+    public void setRecordingStartTime(LocalDateTime recordingStartTime) {
+        this.recordingStartTime = recordingStartTime;
+    }
+
+    public LocalDateTime getRecordingEndTime() {
+        return recordingEndTime;
+    }
+
+    public void setRecordingEndTime(LocalDateTime recordingEndTime) {
+        this.recordingEndTime = recordingEndTime;
     }
     //</editor-fold>
 

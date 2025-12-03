@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.auth;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Person.Person;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -16,6 +17,7 @@ import java.util.UUID;
         }
 )
 public class PasswordResetToken {
+    private static final Logger logger = LoggerFactory.getLogger(PasswordResetToken.class);
 
     // id uuid NOT NULL PRIMARY KEY
     // #NEW: UUID sin @GeneratedValue; lo asignamos en @PrePersist

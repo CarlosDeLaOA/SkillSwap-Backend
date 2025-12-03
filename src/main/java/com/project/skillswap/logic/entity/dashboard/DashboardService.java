@@ -1,10 +1,12 @@
 package com.project.skillswap.logic.entity.dashboard;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service for dashboard business logic
@@ -12,10 +14,14 @@ import java.util.List;
  */
 @Service
 public class DashboardService {
+    private static final Logger logger = LoggerFactory.getLogger(DashboardService.class);
 
     //#region Dependencies
     @Autowired
     private DashboardRepository dashboardRepository;
+
+    @Autowired
+    private SessionHistoryService sessionHistoryService;
     //#endregion
 
     //#region Public Methods
@@ -66,22 +72,58 @@ public class DashboardService {
         return dashboardRepository.getRecentFeedbacks(personId);
     }
 
-    // ✅ NUEVO
     @Transactional(readOnly = true)
     public List<SkillSessionStatsResponse> getSkillSessionStats(Long personId, String role) {
         return dashboardRepository.getSkillSessionStats(personId, role);
     }
 
-    // ✅ NUEVO
     @Transactional(readOnly = true)
     public List<MonthlyAchievementResponse> getMonthlyAchievements(Long personId) {
         return dashboardRepository.getMonthlyAchievements(personId);
     }
 
-    // ✅ NUEVO
     @Transactional(readOnly = true)
     public List<MonthlyAttendanceResponse> getMonthlyAttendance(Long personId) {
         return dashboardRepository.getMonthlyAttendance(personId);
+    }
+
+    /**
+     * Gets account balance for a user
+     *
+     * @param personId Person ID
+     * @param role User role (INSTRUCTOR or LEARNER)
+     * @return Account balance in SkillCoins
+     */
+    @Transactional(readOnly = true)
+    public Integer getAccountBalance(Long personId, String role) {
+        return dashboardRepository.getAccountBalance(personId, role);
+    }
+    //#endregion
+
+    //#region Session History Methods
+    /**
+     * Gets historical sessions for a learner with pagination
+     *
+     * @param learnerId ID of the learner
+     * @param page Page number
+     * @param size Page size
+     * @return Map with paginated sessions and metadata
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getLearnerHistoricalSessions(Long learnerId, int page, int size) {
+        return sessionHistoryService.getLearnerHistoricalSessions(learnerId, page, size);
+    }
+
+    /**
+     * Gets details of a specific session for a learner
+     *
+     * @param sessionId ID of the session
+     * @param learnerId ID of the learner
+     * @return Map with session details and participant count
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getSessionDetails(Long sessionId, Long learnerId) {
+        return sessionHistoryService.getSessionDetails(sessionId, learnerId);
     }
     //#endregion
 }

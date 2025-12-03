@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.verification;
 
+package com.project.skillswap.rest.verification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.verification.VerificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import java.util.Map;
 @RequestMapping("/verification")
 @CrossOrigin(origins = "*")
 public class EmailVerificationRestController {
+    private static final Logger logger = LoggerFactory.getLogger(EmailVerificationRestController.class);
 
     //#region Dependencies
     private final VerificationService verificationService;

@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.dashboard;
 
+package com.project.skillswap.rest.dashboard;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.dashboard.*;
 import com.project.skillswap.logic.entity.http.GlobalResponseHandler;
@@ -24,6 +26,7 @@ import java.util.Map;
 @RequestMapping("/dashboard")
 @CrossOrigin(origins = "*")
 public class DashboardRestController {
+    private static final Logger logger = LoggerFactory.getLogger(DashboardRestController.class);
 
     //#region Dependencies
     @Autowired
@@ -62,12 +65,12 @@ public class DashboardRestController {
                     request
             );
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
         } catch (Exception e) {
-            System.err.println("Error getting learning hours: " + e.getMessage());
+            logger.info("Error getting learning hours: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving learning hours",
@@ -106,12 +109,12 @@ public class DashboardRestController {
                     request
             );
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
         } catch (Exception e) {
-            System.err.println("Error getting upcoming sessions: " + e.getMessage());
+            logger.info("Error getting upcoming sessions: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving upcoming sessions",
@@ -162,12 +165,12 @@ public class DashboardRestController {
                 );
             }
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
         } catch (Exception e) {
-            System.err.println("Error getting recent achievements: " + e.getMessage());
+            logger.info("Error getting recent achievements: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving recent achievements",
@@ -207,12 +210,12 @@ public class DashboardRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
         } catch (Exception e) {
-            System.err.println("Error getting skill session stats: " + e.getMessage());
+            logger.info("Error getting skill session stats: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving skill session stats",
@@ -249,12 +252,12 @@ public class DashboardRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
         } catch (Exception e) {
-            System.err.println("Error getting monthly achievements: " + e.getMessage());
+            logger.info("Error getting monthly achievements: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving monthly achievements",
@@ -291,12 +294,12 @@ public class DashboardRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println("Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Invalid authentication type",
                             "Authenticated user is not of expected type"));
         } catch (Exception e) {
-            System.err.println("Error getting monthly attendance: " + e.getMessage());
+            logger.info("Error getting monthly attendance: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Error retrieving monthly attendance",
@@ -352,5 +355,178 @@ public class DashboardRestController {
         errorResponse.put("message", message);
         return errorResponse;
     }
+
+    /**
+     * Gets account balance for authenticated user
+     * Returns available SkillCoins
+     *
+     * Endpoint: GET /dashboard/account-balance
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with account balance data
+     */
+    @GetMapping("/account-balance")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getAccountBalance(HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            String role = determineUserRole(authenticatedPerson);
+
+            Integer balance = dashboardService.getAccountBalance(
+                    authenticatedPerson.getId(),
+                    role
+            );
+
+            // Crear respuesta simple con el balance
+            Map<String, Integer> response = new HashMap<>();
+            response.put("skillCoins", balance);
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Account balance retrieved successfully",
+                    response,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (Exception e) {
+            logger.info("Error getting account balance: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving account balance",
+                            "Error retrieving account balance: " + e.getMessage()));
+        }
+    }
+
+    //#region Session History Endpoints
+    /**
+     * Gets historical sessions for authenticated learner
+     * Returns completed and cancelled sessions with pagination
+     *
+     * Endpoint: GET /dashboard/session-history
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param page Page number (default: 0)
+     * @param size Page size (default: 10)
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with paginated historical sessions
+     */
+    @GetMapping("/session-history")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getHistoricalSessions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            String role = determineUserRole(authenticatedPerson);
+
+            if (!"LEARNER".equals(role)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Access denied",
+                                "Only learners can access session history"));
+            }
+
+            // Obtener el ID del Learner
+            Long learnerId = authenticatedPerson.getLearner().getId();
+
+            Map<String, Object> response = dashboardService.getLearnerHistoricalSessions(
+                    learnerId,
+                    page,
+                    size
+            );
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Historical sessions retrieved successfully",
+                    response,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (Exception e) {
+            logger.info("Error getting historical sessions: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving historical sessions",
+                            "Error retrieving historical sessions: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Gets details of a specific historical session for authenticated learner
+     * Returns session information and participant count
+     *
+     * Endpoint: GET /dashboard/session-history/{sessionId}
+     * Requires: Valid JWT token in Authorization header
+     *
+     * @param sessionId ID of the session
+     * @param request HttpServletRequest for metadata
+     * @return ResponseEntity with session details
+     */
+    @GetMapping("/session-history/{sessionId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getSessionDetails(
+            @PathVariable Long sessionId,
+            HttpServletRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Person authenticatedPerson = (Person) authentication.getPrincipal();
+
+            String role = determineUserRole(authenticatedPerson);
+
+            if (!"LEARNER".equals(role)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Access denied",
+                                "Only learners can access session details"));
+            }
+
+            // Obtener el ID del Learner
+            Long learnerId = authenticatedPerson.getLearner().getId();
+
+            Map<String, Object> response = dashboardService.getSessionDetails(
+                    sessionId,
+                    learnerId
+            );
+
+            return new GlobalResponseHandler().handleResponse(
+                    "Session details retrieved successfully",
+                    response,
+                    HttpStatus.OK,
+                    request
+            );
+
+        } catch (ClassCastException e) {
+            logger.info("Error: Authentication principal is not a Person: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Invalid authentication type",
+                            "Authenticated user is not of expected type"));
+        } catch (RuntimeException e) {
+            logger.info("Error getting session details: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse("Session not found", e.getMessage()));
+        } catch (Exception e) {
+            logger.info("Error getting session details: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Error retrieving session details",
+                            "Error retrieving session details: " + e.getMessage()));
+        }
+    }
+        //#endregion
+
     //#endregion
 }

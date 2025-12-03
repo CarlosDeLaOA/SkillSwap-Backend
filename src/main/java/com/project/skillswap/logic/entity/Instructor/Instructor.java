@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.Instructor;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
@@ -13,6 +14,7 @@ import java.util.List;
 })
 @Entity
 public class Instructor {
+    private static final Logger logger = LoggerFactory.getLogger(Instructor.class);
 
     //<editor-fold desc="Fields">
     @Id

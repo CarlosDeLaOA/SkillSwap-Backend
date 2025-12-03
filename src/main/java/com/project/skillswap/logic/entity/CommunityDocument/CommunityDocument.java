@@ -1,8 +1,10 @@
 package com.project.skillswap.logic.entity.CommunityDocument;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunity;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.Learner.Learner;
+import com.project.skillswap.logic.entity.Person.Person;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -14,6 +16,7 @@ import java.util.Date;
 })
 @Entity
 public class CommunityDocument {
+    private static final Logger logger = LoggerFactory.getLogger(CommunityDocument.class);
 
     //<editor-fold desc="Fields">
     @Id
@@ -41,6 +44,20 @@ public class CommunityDocument {
     @CreationTimestamp
     @Column(updatable = false, name = "upload_date")
     private Date uploadDate;
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "deleted_by", referencedColumnName = "id")
+    private Person deletedBy;
+
+    @Column(name = "deleted_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date deletedAt;
+
+    @Column(name = "deletion_reason", length = 500)
+    private String deletionReason;
     //</editor-fold>
 
     //<editor-fold desc="Constructors">
@@ -102,6 +119,38 @@ public class CommunityDocument {
 
     public void setUploadDate(Date uploadDate) {
         this.uploadDate = uploadDate;
+    }
+
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public Person getDeletedBy() {
+        return deletedBy;
+    }
+
+    public void setDeletedBy(Person deletedBy) {
+        this.deletedBy = deletedBy;
+    }
+
+    public Date getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Date deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    public String getDeletionReason() {
+        return deletionReason;
+    }
+
+    public void setDeletionReason(String deletionReason) {
+        this.deletionReason = deletionReason;
     }
     //</editor-fold>
 }

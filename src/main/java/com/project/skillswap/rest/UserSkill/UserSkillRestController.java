@@ -1,5 +1,7 @@
-package com.project.skillswap.rest.UserSkill;
 
+package com.project.skillswap.rest.UserSkill;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.Person.Person;
 import com.project.skillswap.logic.entity.Person.PersonRepository;
 import com.project.skillswap.logic.entity.Skill.Skill;
@@ -29,6 +31,7 @@ import java.util.*;
 @RequestMapping("/user-skills")
 @CrossOrigin(origins = "*")
 public class UserSkillRestController {
+    private static final Logger logger = LoggerFactory.getLogger(UserSkillRestController.class);
 
     @Autowired
     private UserSkillRepository userSkillRepository;
@@ -53,12 +56,12 @@ public class UserSkillRestController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Person authenticatedPerson = (Person) authentication.getPrincipal();
 
-            System.out.println(" [UserSkillController] Getting skills for user: " + authenticatedPerson.getId());
+            logger.info(" [UserSkillController] Getting skills for user: " + authenticatedPerson.getId());
 
             List<UserSkill> userSkills = userSkillRepository
                     .findActiveUserSkillsByPersonId(authenticatedPerson.getId());
 
-            System.out.println(" [UserSkillController] Found " + userSkills.size() + " active skills");
+            logger.info(" [UserSkillController] Found " + userSkills.size() + " active skills");
 
             return new GlobalResponseHandler().handleResponse(
                     "User skills retrieved successfully",
@@ -68,13 +71,13 @@ public class UserSkillRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println(" Error getting user skills: " + e.getMessage());
+            logger.info(" Error getting user skills: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error retrieving skills");
@@ -120,7 +123,7 @@ public class UserSkillRestController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
             }
 
-            System.out.println(" [UserSkillController] Retrieved skill " + userSkillId);
+            logger.info(" [UserSkillController] Retrieved skill " + userSkillId);
 
             return new GlobalResponseHandler().handleResponse(
                     "User skill retrieved successfully",
@@ -130,7 +133,7 @@ public class UserSkillRestController {
             );
 
         } catch (Exception e) {
-            System.err.println(" Error getting user skill by ID: " + e.getMessage());
+            logger.info(" Error getting user skill by ID: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error retrieving skill");
@@ -216,7 +219,7 @@ public class UserSkillRestController {
                 }
             }
 
-            System.out.println(" Skills added for user " + person.getId() + ": " + addedUserSkills.size());
+            logger.info(" Skills added for user " + person.getId() + ": " + addedUserSkills.size());
 
             return new GlobalResponseHandler().handleResponse(
                     "Skills added successfully",
@@ -226,13 +229,13 @@ public class UserSkillRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println(" Error adding skills: " + e.getMessage());
+            logger.info(" Error adding skills: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error adding skills");
@@ -291,7 +294,7 @@ public class UserSkillRestController {
             userSkill.setActive(false);
             userSkillRepository.save(userSkill);
 
-            System.out.println(" Skill removed for user " + authenticatedPerson.getId() + ": UserSkill ID " + userSkillId);
+            logger.info(" Skill removed for user " + authenticatedPerson.getId() + ": UserSkill ID " + userSkillId);
 
             return new GlobalResponseHandler().handleResponse(
                     "Skill removed successfully",
@@ -300,13 +303,13 @@ public class UserSkillRestController {
             );
 
         } catch (ClassCastException e) {
-            System.err.println(" Error: Authentication principal is not a Person: " + e.getMessage());
+            logger.info(" Error: Authentication principal is not a Person: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid authentication type");
             errorResponse.put("message", "El usuario autenticado no es del tipo esperado");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         } catch (Exception e) {
-            System.err.println(" Error removing skill: " + e.getMessage());
+            logger.info(" Error removing skill: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Error removing skill");

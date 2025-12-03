@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.auth;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 @Component
 public class JsonAccessDeniedHandler implements AccessDeniedHandler {
+    private static final Logger logger = LoggerFactory.getLogger(JsonAccessDeniedHandler.class);
 
     //#region Dependencies
     private final ObjectMapper mapper = new ObjectMapper();

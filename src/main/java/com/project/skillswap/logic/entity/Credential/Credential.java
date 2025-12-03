@@ -1,9 +1,12 @@
 package com.project.skillswap.logic.entity.Credential;
-
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.skillswap.logic.entity.Learner.Learner;
 import com.project.skillswap.logic.entity.Skill.Skill;
 import com.project.skillswap.logic.entity.LearningSession.LearningSession;
 import com.project.skillswap.logic.entity.Quiz.Quiz;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -17,6 +20,7 @@ import java.util.Date;
 })
 @Entity
 public class Credential {
+    private static final Logger logger = LoggerFactory.getLogger(Credential.class);
 
     //<editor-fold desc="Fields">
     @Id
@@ -25,18 +29,22 @@ public class Credential {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learner_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"credentials", "hibernateLazyInitializer", "handler"})
     private Learner learner;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "skill_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"credentials", "hibernateLazyInitializer", "handler"})
     private Skill skill;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learning_session_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"credentials", "bookings", "hibernateLazyInitializer", "handler"})
     private LearningSession learningSession;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnoreProperties({"credential", "questions", "hibernateLazyInitializer", "handler"})
     private Quiz quiz;
 
     @Column(name = "percentage_achieved", nullable = false, precision = 5, scale = 2)

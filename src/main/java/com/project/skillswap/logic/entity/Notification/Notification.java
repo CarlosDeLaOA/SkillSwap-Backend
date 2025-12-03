@@ -1,10 +1,16 @@
-package com.project.skillswap.logic.entity.Notification;
 
+package com.project.skillswap.logic.entity.Notification;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.skillswap.logic.entity.Person.Person;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Table(name = "notification", indexes = {
         @Index(name = "idx_notification_person", columnList = "person_id"),
@@ -13,6 +19,7 @@ import java.util.Date;
 })
 @Entity
 public class Notification {
+    private static final Logger logger = LoggerFactory.getLogger(Notification.class);
 
     //<editor-fold desc="Fields">
     @Id
@@ -100,6 +107,36 @@ public class Notification {
 
     public void setSendDate(Date sendDate) {
         this.sendDate = sendDate;
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Helper Methods">
+    /**
+     * Obtiene la metadata del mensaje como Map (si el mensaje es JSON)
+     */
+    @Transient
+    public Map<String, Object> getMetadata() {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(this.message, Map.class);
+        } catch (Exception e) {
+            // Si no es JSON, retornar un Map con el mensaje como contenido
+            Map<String, Object> fallback = new HashMap<>();
+            fallback.put("content", this.message);
+            return fallback;
+        }
+    }
+
+    /**
+     * Establece la metadata del mensaje desde un Map
+     */
+    public void setMetadata(Map<String, Object> metadata) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            this.message = mapper.writeValueAsString(metadata);
+        } catch (JsonProcessingException e) {
+            this.message = metadata.getOrDefault("content", "").toString();
+        }
     }
     //</editor-fold>
 }

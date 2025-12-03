@@ -4,5 +4,6 @@ public enum TransactionType {
     PURCHASE,
     SESSION_PAYMENT,
     COLLECTION,
-    REFUND
+    REFUND,
+    WITHDRAWAL
 }
