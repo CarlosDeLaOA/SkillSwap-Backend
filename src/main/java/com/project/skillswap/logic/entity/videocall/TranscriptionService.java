@@ -16,8 +16,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.project.skillswap.logic.entity.LearningSession.SessionCompletionService;
-import com.project.skillswap.logic.entity.Transcription.Transcription;
-import com.project.skillswap.logic.entity.Transcription.TranscriptionRepository;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,9 +30,6 @@ public class TranscriptionService {
     //#region Dependencies
     @Autowired
     private LearningSessionRepository sessionRepository;
-
-    @Autowired
-    private TranscriptionRepository transcriptionRepository;
 
     @Autowired
     private SessionEmailService sessionEmailService;
@@ -136,26 +131,10 @@ public class TranscriptionService {
             // 4. Obtener duración real
             int durationSeconds = estimateAudioDuration(audioFile);
 
-            // 5. Guardar transcripción en tabla separada
-            logger.info("========================================");
-            logger.info(" GUARDANDO TRANSCRIPCIÓN EN BD");
-            logger.info("   Texto length: " + transcription.length());
-            logger.info("   Duración: " + durationSeconds + " segundos");
-            logger.info("========================================");
-
-            Transcription transcriptionEntity = new Transcription();
-            transcriptionEntity.setLearningSession(session);
-            transcriptionEntity.setFullText(transcription);
-            transcriptionEntity.setDurationSeconds(durationSeconds);
-            Transcription savedTranscription = transcriptionRepository.save(transcriptionEntity);
-
-            logger.info("========================================");
-            logger.info(" TRANSCRIPCIÓN GUARDADA");
-            logger.info("   ID Transcription: " + savedTranscription.getId());
-            logger.info("   Session ID: " + session.getId());
-            logger.info("   Full text guardado: " + (savedTranscription.getFullText() != null));
-            logger.info("   Length en BD: " + savedTranscription.getFullText().length());
-            logger.info("========================================");
+            // 5. Guardar transcripción
+            session.setFullText(transcription);
+            session.setDurationSeconds(durationSeconds);
+            sessionRepository.save(session);
 
             // 6. Generar resumen, PDF y enviar emails (no detener proceso si fallan)
             try {
@@ -170,7 +149,7 @@ public class TranscriptionService {
 
             // 7. Guardar JSON
             try {
-                saveTranscriptionAsJson(session, savedTranscription);
+                saveTranscriptionAsJson(session);
             } catch (Exception ignored) {}
 
             // 8. Enviar email al instructor
@@ -357,7 +336,7 @@ public class TranscriptionService {
      * @param session sesión con información de transcripción
      * @throws IOException si no se puede escribir el archivo JSON
      */
-    private void saveTranscriptionAsJson(LearningSession session, Transcription transcription) throws IOException {
+    private void saveTranscriptionAsJson(LearningSession session) throws IOException {
 
         File transcriptionDir = new File(TRANSCRIPTIONS_DIR);
         if (!transcriptionDir.exists()) {
@@ -383,12 +362,12 @@ public class TranscriptionService {
             }
         }
 
-        jsonTranscription.addProperty("fullText", transcription.getFullText());
-        jsonTranscription.addProperty("durationSeconds", transcription.getDurationSeconds());
+        jsonTranscription.addProperty("fullText", session.getFullText());
+        jsonTranscription.addProperty("durationSeconds", session.getDurationSeconds());
         jsonTranscription.addProperty("durationMinutes",
-                transcription.getDurationSeconds() != null ? transcription.getDurationSeconds() / 60 : 0);
+                session.getDurationSeconds() != null ? session.getDurationSeconds() / 60 : 0);
 
-        String fullText = transcription.getFullText();
+        String fullText = session.getFullText();
         jsonTranscription.addProperty("wordCount", fullText != null ? fullText.split("\\s+").length : 0);
         jsonTranscription.addProperty("characterCount", fullText != null ? fullText.length() : 0);
 
