@@ -1,5 +1,6 @@
 package com.project.skillswap.logic.entity.CommunityMember;
 
+import jakarta.transaction.Transactional;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import com.project.skillswap.logic.entity.LearningCommunity.LearningCommunity;
@@ -10,7 +11,8 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
+import java.util.HashSet;
+import java.util.Set;
 import java.util.*;
 
 @Order(12)
@@ -30,7 +32,7 @@ public class CommunityMemberSeeder implements ApplicationListener<ContextRefresh
         this.learningCommunityRepository = learningCommunityRepository;
         this.learnerRepository = learnerRepository;
     }
-
+    @Transactional
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
         if (communityMemberRepository.count() > 0) {
@@ -42,14 +44,34 @@ public class CommunityMemberSeeder implements ApplicationListener<ContextRefresh
 
     private void seedCommunityMembers() {
         List<LearningCommunity> communities = learningCommunityRepository.findAll();
-        List<Learner> learners = learnerRepository.findAll();
+        List<Learner> allLearners = learnerRepository.findAll();
 
-        if (communities.isEmpty() || learners.isEmpty()) {
+        if (communities.isEmpty() || allLearners.isEmpty()) {
             logger.warn("No hay comunidades o learners para crear membresías");
             return;
         }
 
+        // SET para rastrear learners que ya tienen comunidad
+        Set<Long> learnersWithCommunity = new HashSet<>();
+
+        // Identificar learners específicos por email
+        Learner sammyToruno = findLearnerByEmail(allLearners, "storunos@ucenfotec.ac.cr");
+        Learner camilaMorales = findLearnerByEmail(allLearners, "cmoralesso@ucenfotec.ac.cr");
+        Learner miaSolano = findLearnerByEmail(allLearners, "moralescamila500@outlook.com");
+
+        // Lista de learners disponibles
+        List<Learner> availableLearners = new ArrayList<>(allLearners);
+
+        // EXCLUIR a Sammy Toruño de las comunidades
+        if (sammyToruno != null) {
+            availableLearners.remove(sammyToruno);
+            logger.info("Sammy Toruño será EXCLUIDA de todas las comunidades");
+        }
+
+        Collections.shuffle(availableLearners);
+
         int totalMembers = 0;
+        boolean camilaAndMiaAssigned = false;
 
         for (LearningCommunity community : communities) {
             // El creador siempre es miembro con rol CREATOR
@@ -58,33 +80,68 @@ public class CommunityMemberSeeder implements ApplicationListener<ContextRefresh
             creatorMember.setLearner(community.getCreator());
             creatorMember.setRole(MemberRole.CREATOR);
             creatorMember.setActive(true);
-
-            // Fecha de unión = fecha de creación de la comunidad
             creatorMember.setJoinDate(community.getCreationDate());
 
             communityMemberRepository.save(creatorMember);
+            learnersWithCommunity.add(community.getCreator().getId());
             totalMembers++;
 
-            // Agregar miembros adicionales (entre 3 y maxMembers-1)
-            int membersToAdd = 3 + random.nextInt(Math.max(1, community.getMaxMembers() - 4));
+            // EN LA PRIMERA COMUNIDAD DISPONIBLE: agregar a Camila y Mia juntas
+            if (!camilaAndMiaAssigned && camilaMorales != null && miaSolano != null) {
+                // Verificar que ninguna sea la creadora
+                boolean camilaIsCreator = camilaMorales.getId().equals(community.getCreator().getId());
+                boolean miaIsCreator = miaSolano.getId().equals(community.getCreator().getId());
 
-            // Mezclar learners para selección aleatoria
-            List<Learner> availableLearners = new ArrayList<>(learners);
-            Collections.shuffle(availableLearners);
+                if (!camilaIsCreator) {
+                    CommunityMember camilaMember = new CommunityMember();
+                    camilaMember.setLearningCommunity(community);
+                    camilaMember.setLearner(camilaMorales);
+                    camilaMember.setRole(MemberRole.MEMBER);
+                    camilaMember.setActive(true);
 
+                    Calendar joinCal = Calendar.getInstance();
+                    joinCal.setTime(community.getCreationDate());
+                    joinCal.add(Calendar.DAY_OF_MONTH, random.nextInt(5) + 1);
+                    camilaMember.setJoinDate(joinCal.getTime());
+
+                    communityMemberRepository.save(camilaMember);
+                    learnersWithCommunity.add(camilaMorales.getId());
+                    totalMembers++;
+                    logger.info("Camila Morales agregada a: " + community.getName());
+                }
+
+                if (!miaIsCreator) {
+                    CommunityMember miaMember = new CommunityMember();
+                    miaMember.setLearningCommunity(community);
+                    miaMember.setLearner(miaSolano);
+                    miaMember.setRole(MemberRole.MEMBER);
+                    miaMember.setActive(true);
+
+                    Calendar joinCal = Calendar.getInstance();
+                    joinCal.setTime(community.getCreationDate());
+                    joinCal.add(Calendar.DAY_OF_MONTH, random.nextInt(5) + 2);
+                    miaMember.setJoinDate(joinCal.getTime());
+
+                    communityMemberRepository.save(miaMember);
+                    learnersWithCommunity.add(miaSolano.getId());
+                    totalMembers++;
+                    logger.info("Mia Solano agregada a: " + community.getName());
+                }
+
+                camilaAndMiaAssigned = true;
+            }
+
+            int membersToAdd = 3 + random.nextInt(7); // 3-9 miembros adicionales
             int addedMembers = 0;
+
             for (Learner learner : availableLearners) {
-                // No agregar al creador de nuevo
+                // Verificar que no sea el creador
                 if (learner.getId().equals(community.getCreator().getId())) {
                     continue;
                 }
 
-                // Verificar que no esté ya en la comunidad
-                boolean alreadyMember = communityMemberRepository.findAll().stream()
-                        .anyMatch(m -> m.getLearningCommunity().getId().equals(community.getId())
-                                && m.getLearner().getId().equals(learner.getId()));
-
-                if (alreadyMember) {
+                // Verificar que NO esté ya en otra comunidad
+                if (learnersWithCommunity.contains(learner.getId())) {
                     continue;
                 }
 
@@ -97,10 +154,11 @@ public class CommunityMemberSeeder implements ApplicationListener<ContextRefresh
                 // Fecha de unión (después de la creación de la comunidad)
                 Calendar joinCal = Calendar.getInstance();
                 joinCal.setTime(community.getCreationDate());
-                joinCal.add(Calendar.DAY_OF_MONTH, random.nextInt(30) + 1); // 1-30 días después
+                joinCal.add(Calendar.DAY_OF_MONTH, random.nextInt(30) + 1);
                 member.setJoinDate(joinCal.getTime());
 
                 communityMemberRepository.save(member);
+                learnersWithCommunity.add(learner.getId());
                 addedMembers++;
                 totalMembers++;
 
@@ -111,5 +169,18 @@ public class CommunityMemberSeeder implements ApplicationListener<ContextRefresh
         }
 
         logger.info("CommunityMemberSeeder: " + totalMembers + " membresías creadas");
+        if (sammyToruno != null) {
+            logger.info("✓ Sammy Toruño NO tiene comunidad (ID: " + sammyToruno.getId() + ")");
+        }
+        if (camilaAndMiaAssigned) {
+            logger.info("✓ Camila Morales y Mia Solano están en la MISMA comunidad");
+        }
+    }
+
+    private Learner findLearnerByEmail(List<Learner> learners, String email) {
+        return learners.stream()
+                .filter(l -> l.getPerson().getEmail().equals(email))
+                .findFirst()
+                .orElse(null);
     }
 }

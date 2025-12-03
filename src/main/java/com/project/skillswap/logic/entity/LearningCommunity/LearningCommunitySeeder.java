@@ -132,7 +132,7 @@ public class LearningCommunitySeeder implements ApplicationListener<ContextRefre
             community.setName(communityNames[i % communityNames.length] +
                     (i >= communityNames.length ? " " + (i / communityNames.length + 1) : ""));
             community.setDescription(descriptions[random.nextInt(descriptions.length)]);
-            community.setMaxMembers(5 + random.nextInt(11)); // 5-15 miembros
+            community.setMaxMembers(10);
             community.setInvitationCode(generateInvitationCode());
             community.setActive(true);
 
