@@ -18,8 +18,6 @@ import java.util.Map;
  * Servicio para gestionar el historial de sesiones de SkillSeekers en el dashboard.
  * Permite a los estudiantes ver las sesiones en las que han participado.
  *
- * @author Byte&Bite Team
- * @version 1.0
  */
 @Service
 public class SessionHistoryService {
